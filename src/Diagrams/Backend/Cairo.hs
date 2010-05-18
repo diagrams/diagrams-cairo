@@ -13,7 +13,7 @@ data Cairo = Cairo
 instance Backend Cairo where
   type BSpace Cairo = P2
   type Render Cairo = C.Render
-  runRender _ r = C.withPDFSurface "test.pdf" 100 100 $ \surface ->
+  runRender _ _ r = C.withPDFSurface "test.pdf" 100 100 $ \surface ->
                     C.renderWith surface r
 
 instance Renderable Box Cairo where
