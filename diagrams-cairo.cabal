@@ -1,0 +1,21 @@
+Name:                diagrams-cairo
+Version:             0.1
+Synopsis:            Cairo backend for diagrams drawing EDSL
+Description:         XXX WRITE ME
+Homepage:            http://code.haskell.org/diagrams/
+License:             BSD3
+License-file:        LICENSE
+Author:              Brent Yorgey
+Maintainer:          byorgey@cis.upenn.edu
+Stability:           Experimental
+Category:            Graphics
+Build-type:          Simple
+Cabal-version:       >=1.2
+
+Library
+  Exposed-modules:     Diagrams.Backend.Cairo
+  Hs-source-dirs:      src
+  Build-depends:       base >= 4.2 && < 4.3,
+                       diagrams-core >= 0.1 && < 0.2,
+                       diagrams-lib >= 0.1 && < 0.2,
+                       cairo >= 0.10.1 && < 0.11
