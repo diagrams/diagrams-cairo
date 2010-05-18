@@ -1,9 +1,10 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses #-}
 module Diagrams.Backend.Cairo where
 
 import qualified Graphics.Rendering.Cairo as C
 
 import Graphics.Rendering.Diagrams.Backends
+import Graphics.Rendering.Diagrams.Renderable
 
 import Diagrams.TwoD
 
@@ -16,4 +17,11 @@ instance Backend Cairo where
                     C.renderWith surface r
 
 instance Renderable Box Cairo where
-  render _ (Box v1 v2 v3 v4)
+  render _ (Box v1 v2 v3 v4) = do
+    C.newPath
+    uncurry C.moveTo v1
+    uncurry C.lineTo v2
+    uncurry C.lineTo v3
+    uncurry C.lineTo v4
+    C.closePath
+    C.stroke
