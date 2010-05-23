@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 module Diagrams.Backend.Cairo where
 
 import qualified Graphics.Rendering.Cairo as C
@@ -6,6 +6,7 @@ import qualified Graphics.Rendering.Cairo as C
 import Graphics.Rendering.Diagrams
 
 import Diagrams.TwoD
+import Diagrams.Path
 
 data Cairo = Cairo
 
@@ -26,4 +27,19 @@ instance Renderable Box Cairo where
     uncurry C.lineTo v3
     uncurry C.lineTo v4
     C.closePath
+    C.stroke
+
+instance Renderable (Segment P2) Cairo where
+  render _ (Linear v) = uncurry C.lineTo v
+  render _ (Cubic v1 v2 v3) = undefined     -- XXX TODO
+
+instance Renderable (RelPath P2) Cairo where
+  render _ (RelPath segs) = do
+    mapM_ (render Cairo) segs
+
+instance Renderable (Path P2) Cairo where
+  render _ (Path v r) = do
+    C.newPath
+    uncurry C.moveTo v
+    render Cairo r
     C.stroke
