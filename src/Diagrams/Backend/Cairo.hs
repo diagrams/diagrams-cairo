@@ -29,6 +29,22 @@ instance Renderable Box Cairo where
     C.closePath
     C.stroke
 
+instance Renderable Ellipse Cairo where
+  render _ ell@(Ellipse a b c d e f) = do
+--     let (xc,yc) = ellipseCenter ell
+--     let (xs,ys) = ellipseScale ell
+--     let th = ellipseAngle ell
+    let (xc,yc,xs,ys,th) = ellipseCenterScaleAngle ell
+    C.newPath
+    C.save
+    C.translate xc yc
+    C.rotate th
+    C.scale xs ys
+    C.arc 0 0 1 0 (2*pi)
+    C.closePath
+    C.restore
+    C.stroke
+
 instance Renderable (Segment P2) Cairo where
   render _ (Linear v) = uncurry C.lineTo v
   render _ (Cubic v1 v2 v3) = undefined     -- XXX TODO
