@@ -47,7 +47,7 @@ instance Renderable Ellipse Cairo where
 
 instance Renderable (Segment P2) Cairo where
   render _ (Linear v) = uncurry C.relLineTo v
-  render _ (Cubic v1 v2 v3) = undefined     -- XXX TODO
+  render _ (Cubic (x1,y1) (x2,y2) (x3,y)) = C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (RelPath P2) Cairo where
   render _ (RelPath segs) = do
