@@ -46,7 +46,7 @@ instance Renderable Ellipse Cairo where
     C.stroke
 
 instance Renderable (Segment P2) Cairo where
-  render _ (Linear v) = uncurry C.lineTo v
+  render _ (Linear v) = uncurry C.relLineTo v
   render _ (Cubic v1 v2 v3) = undefined     -- XXX TODO
 
 instance Renderable (RelPath P2) Cairo where
