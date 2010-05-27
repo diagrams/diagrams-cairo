@@ -1,5 +1,11 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
-module Diagrams.Backend.Cairo where
+module Diagrams.Backend.Cairo 
+       
+  ( Cairo(..) -- rendering token 
+
+  , Option(..) -- for CairoOptions, rendering options specific to Cairo
+  , OutputFormat(..) -- output format options
+  ) where
 
 import qualified Graphics.Rendering.Cairo as C
 
@@ -10,15 +16,36 @@ import Diagrams.Path
 
 data Cairo = Cairo
 
+data OutputFormat = 
+  PNG { pngSize :: (Int, Int) -- in pixels
+      } |
+  PS { psSize :: (Double, Double) -- in points
+     } |
+  PDF { pdfSize :: (Double, Double) -- in points
+      } |
+  SVG { svgSize :: (Double, Double) -- in points 
+      }
+
 instance Backend Cairo where
   type BSpace Cairo = P2
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
-  data Option Cairo = OutputFile String  -- XXX add more options!
+  data Option Cairo = CairoOptions  
+          { fileName :: String
+          , outputFormat :: OutputFormat
+          }
 
-  renderDia _ _ d = C.withPDFSurface "test.pdf" 100 100 $ \surface ->
-                    C.renderWith surface (mapM_ (render Cairo) (prims d))
-
+  renderDia _ options d = let
+    	surfaceF surface = C.renderWith surface (mapM_ (render Cairo) (prims d))
+   in case outputFormat options of
+          PNG (w,h) -> do
+            C.withImageSurface C.FormatARGB32 w h $ \surface -> do
+              surfaceF surface
+              C.surfaceWriteToPNG surface (fileName options)
+          PS  (w,h) -> C.withPSSurface (fileName options) w h surfaceF
+          PDF (w,h) -> C.withPDFSurface (fileName options) w h surfaceF
+          SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
+          
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do
     C.newPath
@@ -31,9 +58,6 @@ instance Renderable Box Cairo where
 
 instance Renderable Ellipse Cairo where
   render _ ell@(Ellipse a b c d e f) = do
---     let (xc,yc) = ellipseCenter ell
---     let (xs,ys) = ellipseScale ell
---     let th = ellipseAngle ell
     let (xc,yc,xs,ys,th) = ellipseCenterScaleAngle ell
     C.newPath
     C.save
