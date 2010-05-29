@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
-module Diagrams.Backend.Cairo 
-       
-  ( Cairo(..) -- rendering token 
+module Diagrams.Backend.Cairo
+
+  ( Cairo(..) -- rendering token
 
   , Option(..) -- for CairoOptions, rendering options specific to Cairo
   , OutputFormat(..) -- output format options
@@ -12,25 +12,30 @@ import qualified Graphics.Rendering.Cairo as C
 import Graphics.Rendering.Diagrams
 
 import Diagrams.TwoD
+import Diagrams.TwoD.Ellipse
+import Diagrams.TwoD.Shapes
+import Diagrams.Segment
 import Diagrams.Path
+
+import Control.Monad (when)
 
 data Cairo = Cairo
 
-data OutputFormat = 
+data OutputFormat =
   PNG { pngSize :: (Int, Int) -- in pixels
       } |
   PS { psSize :: (Double, Double) -- in points
      } |
   PDF { pdfSize :: (Double, Double) -- in points
       } |
-  SVG { svgSize :: (Double, Double) -- in points 
+  SVG { svgSize :: (Double, Double) -- in points
       }
 
 instance Backend Cairo where
   type BSpace Cairo = P2
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
-  data Option Cairo = CairoOptions  
+  data Option Cairo = CairoOptions
           { fileName :: String
           , outputFormat :: OutputFormat
           }
@@ -45,7 +50,7 @@ instance Backend Cairo where
           PS  (w,h) -> C.withPSSurface (fileName options) w h surfaceF
           PDF (w,h) -> C.withPDFSurface (fileName options) w h surfaceF
           SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
-          
+
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do
     C.newPath
@@ -73,13 +78,10 @@ instance Renderable (Segment P2) Cairo where
   render _ (Linear v) = uncurry C.relLineTo v
   render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C.relCurveTo x1 y1 x2 y2 x3 y3
 
-instance Renderable (RelPath P2) Cairo where
-  render _ (RelPath segs) = do
-    mapM_ (render Cairo) segs
-
 instance Renderable (Path P2) Cairo where
-  render _ (Path v r) = do
+  render _ (Path c v segs) = do
     C.newPath
     uncurry C.moveTo v
-    render Cairo r
+    mapM_ (render Cairo) segs
+    when c $ C.closePath
     C.stroke
