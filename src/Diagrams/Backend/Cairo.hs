@@ -1,4 +1,7 @@
 {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
+{-|
+  The Cairo backend.
+-}
 module Diagrams.Backend.Cairo
 
   ( Cairo(..) -- rendering token
@@ -19,16 +22,19 @@ import Diagrams.Path
 
 import Control.Monad (when)
 
+-- | This data declaration is simply used as a token to distinguish this rendering engine.
 data Cairo = Cairo
 
+-- | Cairo is able to output to several file formats, which each have their own associated properties that affect the output.
 data OutputFormat =
-  PNG { pngSize :: (Int, Int) -- in pixels
+  -- | PNG is unique, in that it is not a vector format
+  PNG { pngSize :: (Int, Int) -- ^ the size of the output is given in pixels
       } |
-  PS { psSize :: (Double, Double) -- in points
+  PS { psSize :: (Double, Double) -- ^ the size of the output is given in points
      } |
-  PDF { pdfSize :: (Double, Double) -- in points
+  PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
       } |
-  SVG { svgSize :: (Double, Double) -- in points
+  SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
       }
 
 instance Backend Cairo where
@@ -36,8 +42,8 @@ instance Backend Cairo where
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
   data Option Cairo = CairoOptions
-          { fileName :: String
-          , outputFormat :: OutputFormat
+          { fileName :: String -- ^ the name of the file you want generated
+          , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
 
   renderDia _ options d = let
