@@ -6,7 +6,7 @@ module Diagrams.Backend.Cairo
 
   ( Cairo(..) -- rendering token
 
-  , Option(..) -- for CairoOptions, rendering options specific to Cairo
+  , Options(..) -- for CairoOptions, rendering options specific to Cairo
   , OutputFormat(..) -- output format options
   ) where
 
@@ -41,7 +41,7 @@ instance Backend Cairo where
   type BSpace Cairo = P2
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
-  data Option Cairo = CairoOptions
+  data Options Cairo = CairoOptions
           { fileName :: String -- ^ the name of the file you want generated
           , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
