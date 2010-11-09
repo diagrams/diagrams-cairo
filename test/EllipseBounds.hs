@@ -14,7 +14,7 @@ d = translate (30,30) $ scale 10 (beside (2,1) box box `atop` circle)
 d' :: Diagram Cairo
 d' = translate (30,30) $ scale 10 (beside (2,1) box box `atop` ell1)
 
-ell1 = rotate (-pi/6) $ horizontalScale 2 $ verticalScale 0.5 circle
+ell1 = rotate (-pi/6) $ scaleX 2 $ scaleY 0.5 circle
 
 d2, d2', d3, d4, d5 :: Diagram Cairo
 d2 = translate (30,30) $ scale 10 (beside (2,1) box ell1)  -- intersects
@@ -25,9 +25,9 @@ d4 = translate (30,30) $ scale 10 (beside (50,50) box ell1)
 d5 = translate (30,30) $ scale 10 (beside (2,2) box circle)
 
 e :: Diagram Cairo
-e = translate (50,70) $ rotate (pi/6) $ horizontalScale 30 $ verticalScale 10 circle
+e = translate (50,70) $ rotate (pi/6) $ scaleX 30 $ scaleY 10 circle
 
-ell = rotate (pi/6) $ horizontalScale 30 $ verticalScale 10 circle
+ell = rotate (pi/6) $ scaleX 30 $ scaleY 10 circle
 box10 = scale 10 box
 
 f :: Diagram Cairo

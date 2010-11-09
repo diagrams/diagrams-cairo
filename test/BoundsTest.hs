@@ -12,7 +12,7 @@ import Data.VectorSpace
 
 p = stroke $ Path False zeroV [Linear (1.0,0.0),Linear (0.0,1.0)]
 bez = stroke $ Path False zeroV [Cubic (1.0,0.0) (0.0,1.0) (1.0,1.0)]
-ell = horizontalScale 2 $ verticalScale 0.5 circle
+ell = scaleX 2 $ scaleY 0.5 circle
 
 -- correct:
 b1 = runBoundsTest box
