@@ -14,12 +14,9 @@ p = stroke $ Path False zeroV [Linear (1.0,0.0),Linear (0.0,1.0)]
 bez = stroke $ Path False zeroV [Cubic (1.0,0.0) (0.0,1.0) (1.0,1.0)]
 ell = scaleX 2 $ scaleY 0.5 circle
 
--- correct:
 b1 = runBoundsTest box
 b2 = runBoundsTest circle
 b3 = runBoundsTest p
-
--- failures:
 b4 = runBoundsTest bez
 b5 = runBoundsTest ell
 b6 = runBoundsTest (scale 2 box)
@@ -27,6 +24,8 @@ b7 = runBoundsTest (scale 2 circle)
 b8 = runBoundsTest (scale 2 p)
 b9 = runBoundsTest (scale 2 bez)
 b10 = runBoundsTest (scale 2 ell)
+b11 = runBoundsTest (rotate (pi/6) box)
+b12 = runBoundsTest (scaleX 3 $ scaleY 2 $ bez)
 
 runBoundsTest :: Diagram Cairo -> Diagram Cairo
 runBoundsTest d = scale 20 $ translate (10,10) (sampleBounds2D 10 d)
@@ -42,4 +41,4 @@ sampleBounds2D n d = foldr atop d bs
           getBounds (Bounds f) = f
 
 opts = CairoOptions "test2.pdf" $ PDF (400, 400)
-main = renderDia Cairo opts b5
+main = renderDia Cairo opts b13
