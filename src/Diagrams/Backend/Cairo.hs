@@ -58,8 +58,9 @@ instance Backend Cairo where
 
   withStyle _ s r = do
     C.save
-    cairoStyle s
     r
+    cairoStyle s
+    C.stroke
     C.restore
 
   doRender _ options r =
@@ -74,10 +75,24 @@ instance Backend Cairo where
           SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
 
 cairoStyle :: Style -> C.Render ()
-cairoStyle s = mconcat . catMaybes . map (flip fmap (getAttr s)) $ [hLColor]
-  where hLColor (SomeColor c) = do
+cairoStyle s = mconcat . catMaybes $ [ handle fColor
+                                     , handle lColor  -- see Note [color order]
+                                     ]
+  where handle f = fmap f (getAttr s)
+        lColor (LineColor (SomeColor c)) = do
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
+        fColor (FillColor (SomeColor c)) = do
+          let (r,g,b,a) = colorToRGBA c
+          C.setSourceRGBA r g b a
+          C.fillPreserve
+
+{- ~~~~ Note [color order]
+
+   It's important for the line and fill colors to be handled in the
+   given order (fill color first, then line color) because of the way
+   Cairo handles them (both are taken from the sourceRGBA).
+-}
 
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do
@@ -87,7 +102,6 @@ instance Renderable Box Cairo where
     uncurry C.lineTo v3
     uncurry C.lineTo v4
     C.closePath
-    C.stroke
 
 instance Renderable Ellipse Cairo where
   render _ ell@(Ellipse a b c d e f) = do
@@ -100,7 +114,6 @@ instance Renderable Ellipse Cairo where
     C.arc 0 0 1 0 (2*pi)
     C.closePath
     C.restore
-    C.stroke
 
 instance Renderable (Segment P2) Cairo where
   render _ (Linear v) = uncurry C.relLineTo v
@@ -112,4 +125,3 @@ instance Renderable (Path P2) Cairo where
     uncurry C.moveTo v
     mapM_ (render Cairo) segs
     when c $ C.closePath
-    C.stroke
