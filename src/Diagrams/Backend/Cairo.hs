@@ -14,6 +14,7 @@ import qualified Graphics.Rendering.Cairo as C
 
 import Graphics.Rendering.Diagrams
 
+import Diagrams.Attributes
 import Diagrams.TwoD
 import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Shapes
@@ -21,11 +22,16 @@ import Diagrams.Segment
 import Diagrams.Path
 
 import Control.Monad (when)
+import Data.Maybe (catMaybes)
 
--- | This data declaration is simply used as a token to distinguish this rendering engine.
+import Data.Monoid
+
+-- | This data declaration is simply used as a token to distinguish
+--   this rendering engine.
 data Cairo = Cairo
 
--- | Cairo is able to output to several file formats, which each have their own associated properties that affect the output.
+-- | Cairo is able to output to several file formats, which each have
+--   their own associated properties that affect the output.
 data OutputFormat =
   -- | PNG is unique, in that it is not a vector format
   PNG { pngSize :: (Int, Int) -- ^ the size of the output is given in pixels
@@ -37,6 +43,10 @@ data OutputFormat =
   SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
       }
 
+instance Monoid (C.Render ()) where
+  mempty  = return ()
+  mappend = (>>)
+
 instance Backend Cairo where
   type BSpace Cairo = P2
   type Render Cairo = C.Render ()
@@ -46,9 +56,15 @@ instance Backend Cairo where
           , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
 
-  renderDia _ options d = let
-    	surfaceF surface = C.renderWith surface (mapM_ (render Cairo) (prims d))
-   in case outputFormat options of
+  withStyle _ s r = do
+    C.save
+    cairoStyle s
+    r
+    C.restore
+
+  doRender _ options r =
+    let surfaceF surface = C.renderWith surface r
+    in  case outputFormat options of
           PNG (w,h) -> do
             C.withImageSurface C.FormatARGB32 w h $ \surface -> do
               surfaceF surface
@@ -56,6 +72,12 @@ instance Backend Cairo where
           PS  (w,h) -> C.withPSSurface (fileName options) w h surfaceF
           PDF (w,h) -> C.withPDFSurface (fileName options) w h surfaceF
           SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
+
+cairoStyle :: Style -> C.Render ()
+cairoStyle s = mconcat . catMaybes . map (flip fmap (getAttr s)) $ [hLColor]
+  where hLColor (SomeColor c) = do
+          let (r,g,b,a) = colorToRGBA c
+          C.setSourceRGBA r g b a
 
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do

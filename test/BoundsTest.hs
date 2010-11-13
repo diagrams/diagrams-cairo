@@ -1,20 +1,23 @@
 import Graphics.Rendering.Diagrams
 import Graphics.Rendering.Diagrams.Transform
 
-import Diagrams.TwoD
-
 import Diagrams.Backend.Cairo
+
+import Diagrams.Attributes
+import Diagrams.TwoD
 import Diagrams.Combinators
 import Diagrams.Path
 import Diagrams.Segment
 
 import Data.VectorSpace
 
+import Data.Colour.Names
+
 p = stroke $ Path False zeroV [Linear (1.0,0.0),Linear (0.0,1.0)]
 bez = stroke $ Path False zeroV [Cubic (1.0,0.0) (0.0,1.0) (1.0,1.0)]
 ell = scaleX 2 $ scaleY 0.5 circle
 
-b1 = runBoundsTest box
+b1 = runBoundsTest (lc red $ box)
 b2 = runBoundsTest circle
 b3 = runBoundsTest p
 b4 = runBoundsTest bez
@@ -41,4 +44,4 @@ sampleBounds2D n d = foldr atop d bs
           getBounds (Bounds f) = f
 
 opts = CairoOptions "test2.pdf" $ PDF (400, 400)
-main = renderDia Cairo opts b13
+main = renderDia Cairo opts b1
