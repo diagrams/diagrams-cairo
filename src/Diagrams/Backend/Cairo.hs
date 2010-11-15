@@ -33,15 +33,15 @@ data Cairo = Cairo
 -- | Cairo is able to output to several file formats, which each have
 --   their own associated properties that affect the output.
 data OutputFormat =
-  -- | PNG is unique, in that it is not a vector format
-  PNG { pngSize :: (Int, Int) -- ^ the size of the output is given in pixels
-      } |
-  PS { psSize :: (Double, Double) -- ^ the size of the output is given in points
-     } |
-  PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
-      } |
-  SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
-      }
+    -- | PNG is unique, in that it is not a vector format
+    PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
+        }
+  | PS  { psSize :: (Double, Double)  -- ^ the size of the output is given in points
+        }
+  | PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
+        }
+  | SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
+        }
 
 instance Monoid (C.Render ()) where
   mempty  = return ()
@@ -52,7 +52,7 @@ instance Backend Cairo where
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
   data Options Cairo = CairoOptions
-          { fileName :: String -- ^ the name of the file you want generated
+          { fileName     :: String       -- ^ the name of the file you want generated
           , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
 
@@ -70,7 +70,7 @@ instance Backend Cairo where
             C.withImageSurface C.FormatARGB32 w h $ \surface -> do
               surfaceF surface
               C.surfaceWriteToPNG surface (fileName options)
-          PS  (w,h) -> C.withPSSurface (fileName options) w h surfaceF
+          PS  (w,h) -> C.withPSSurface  (fileName options) w h surfaceF
           PDF (w,h) -> C.withPDFSurface (fileName options) w h surfaceF
           SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
 
@@ -83,13 +83,13 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lDashing
                                      ]
   where handle f = fmap f (getAttr s)
-        lColor (LineColor (SomeColor c)) = do
-          let (r,g,b,a) = colorToRGBA c
-          C.setSourceRGBA r g b a
         fColor (FillColor (SomeColor c)) = do
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
           C.fillPreserve
+        lColor (LineColor (SomeColor c)) = do
+          let (r,g,b,a) = colorToRGBA c
+          C.setSourceRGBA r g b a
         lWidth (LineWidth w) = do
           C.setLineWidth w
         lCap lc = do
@@ -107,8 +107,8 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
 -}
 
 fromLineCap :: LineCap -> C.LineCap
-fromLineCap LineCapButt = C.LineCapButt
-fromLineCap LineCapRound = C.LineCapRound
+fromLineCap LineCapButt   = C.LineCapButt
+fromLineCap LineCapRound  = C.LineCapRound
 fromLineCap LineCapSquare = C.LineCapSquare
 
 fromLineJoin :: LineJoin -> C.LineJoin
