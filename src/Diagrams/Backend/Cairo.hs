@@ -79,6 +79,8 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lColor  -- see Note [color order]
                                      , handle lWidth
                                      , handle lCap
+                                     , handle lJoin
+                                     , handle lDashing
                                      ]
   where handle f = fmap f (getAttr s)
         lColor (LineColor (SomeColor c)) = do
@@ -92,6 +94,10 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
           C.setLineWidth w
         lCap lc = do
           C.setLineCap (fromLineCap lc)
+        lJoin lj = do
+          C.setLineJoin (fromLineJoin lj)
+        lDashing (Dashing ds offs) = do
+          C.setDash ds offs
 
 {- ~~~~ Note [color order]
 
@@ -104,6 +110,11 @@ fromLineCap :: LineCap -> C.LineCap
 fromLineCap LineCapButt = C.LineCapButt
 fromLineCap LineCapRound = C.LineCapRound
 fromLineCap LineCapSquare = C.LineCapSquare
+
+fromLineJoin :: LineJoin -> C.LineJoin
+fromLineJoin LineJoinMiter = C.LineJoinMiter
+fromLineJoin LineJoinRound = C.LineJoinRound
+fromLineJoin LineJoinBevel = C.LineJoinBevel
 
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do
