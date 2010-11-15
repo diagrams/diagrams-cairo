@@ -77,6 +77,7 @@ instance Backend Cairo where
 cairoStyle :: Style -> C.Render ()
 cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lColor  -- see Note [color order]
+                                     , handle lWidth
                                      ]
   where handle f = fmap f (getAttr s)
         lColor (LineColor (SomeColor c)) = do
@@ -86,6 +87,8 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
           C.fillPreserve
+        lWidth (LineWidth w) = do
+          C.setLineWidth w
 
 {- ~~~~ Note [color order]
 
