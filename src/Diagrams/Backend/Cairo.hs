@@ -78,6 +78,7 @@ cairoStyle :: Style -> C.Render ()
 cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lColor  -- see Note [color order]
                                      , handle lWidth
+                                     , handle lCap
                                      ]
   where handle f = fmap f (getAttr s)
         lColor (LineColor (SomeColor c)) = do
@@ -89,6 +90,8 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
           C.fillPreserve
         lWidth (LineWidth w) = do
           C.setLineWidth w
+        lCap lc = do
+          C.setLineCap (fromLineCap lc)
 
 {- ~~~~ Note [color order]
 
@@ -96,6 +99,11 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
    given order (fill color first, then line color) because of the way
    Cairo handles them (both are taken from the sourceRGBA).
 -}
+
+fromLineCap :: LineCap -> C.LineCap
+fromLineCap LineCapButt = C.LineCapButt
+fromLineCap LineCapRound = C.LineCapRound
+fromLineCap LineCapSquare = C.LineCapSquare
 
 instance Renderable Box Cairo where
   render _ (Box v1 v2 v3 v4) = do
