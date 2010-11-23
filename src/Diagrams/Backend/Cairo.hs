@@ -48,7 +48,7 @@ instance Monoid (C.Render ()) where
   mappend = (>>)
 
 instance Backend Cairo where
-  type BSpace Cairo = P2
+  type BSpace Cairo = R2
   type Render Cairo = C.Render ()
   type Result Cairo = IO ()
   data Options Cairo = CairoOptions
@@ -117,7 +117,7 @@ fromLineJoin LineJoinRound = C.LineJoinRound
 fromLineJoin LineJoinBevel = C.LineJoinBevel
 
 instance Renderable Box Cairo where
-  render _ (Box v1 v2 v3 v4) = do
+  render _ (Box (P v1) (P v2) (P v3) (P v4)) = do
     C.newPath
     uncurry C.moveTo v1
     uncurry C.lineTo v2
@@ -137,12 +137,12 @@ instance Renderable Ellipse Cairo where
     C.closePath
     C.restore
 
-instance Renderable (Segment P2) Cairo where
+instance Renderable (Segment R2) Cairo where
   render _ (Linear v) = uncurry C.relLineTo v
   render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C.relCurveTo x1 y1 x2 y2 x3 y3
 
-instance Renderable (Path P2) Cairo where
-  render _ (Path c v segs) = do
+instance Renderable (Path R2) Cairo where
+  render _ (Path c (P v) segs) = do
     C.newPath
     uncurry C.moveTo v
     mapM_ (render Cairo) segs
