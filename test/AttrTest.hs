@@ -10,4 +10,4 @@ import Data.Colour.Names
 b1 = lc red $ fc blue $ box
 
 opts = CairoOptions "attr.pdf" $ PDF (400, 400)
-main = renderDia Cairo opts (translate (30,30) $ scale 15 $ b1)
+main = renderDia Cairo opts b1

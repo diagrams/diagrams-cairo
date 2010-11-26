@@ -15,21 +15,21 @@ bez = stroke $ Path False origin [Cubic (1.0,0.0) (0.0,1.0) (1.0,1.0)]
 ell = scaleX 2 $ scaleY 0.5 circle
 
 b1 = runBoundsTest box
-b2 = runBoundsTest circle
+b2 = runBoundsTest circle    -- FFF
 b3 = runBoundsTest p
 b4 = runBoundsTest bez
-b5 = runBoundsTest ell
+b5 = runBoundsTest ell       -- FFF
 b6 = runBoundsTest (scale 2 box)
-b7 = runBoundsTest (scale 2 circle)
+b7 = runBoundsTest (scale 2 circle)  -- FFF
 b8 = runBoundsTest (scale 2 p)
 b9 = runBoundsTest (scale 2 bez)
-b10 = runBoundsTest (scale 2 ell)
+b10 = runBoundsTest (scale 2 ell)    -- FFF
 b11 = runBoundsTest (rotate (pi/6) box)
 b12 = runBoundsTest (scaleX 3 $ scaleY 2 $ bez)
-b13 = runBoundsTest (translate (1,0) box)  -- X
+b13 = runBoundsTest (translate (1,0) box)
 
 runBoundsTest :: Diagram Cairo -> Diagram Cairo
-runBoundsTest d = scale 20 $ translate (10,10) (sampleBounds2D 10 d)
+runBoundsTest = sampleBounds2D 10
 
 sampleBounds2D :: Int -> Diagram Cairo -> Diagram Cairo
 sampleBounds2D n d = foldr atop d bs
@@ -42,4 +42,4 @@ sampleBounds2D n d = foldr atop d bs
           getBounds (Bounds f) = f
 
 opts = CairoOptions "test2.pdf" $ PDF (400, 400)
-main = renderDia Cairo opts b3
+main = renderDia Cairo opts b11
