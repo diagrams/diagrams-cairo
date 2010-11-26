@@ -65,14 +65,15 @@ instance Backend Cairo where
 
   doRender _ options r =
     let surfaceF surface = C.renderWith surface r
+        file = fileName options
     in  case outputFormat options of
           PNG (w,h) -> do
             C.withImageSurface C.FormatARGB32 w h $ \surface -> do
               surfaceF surface
-              C.surfaceWriteToPNG surface (fileName options)
-          PS  (w,h) -> C.withPSSurface  (fileName options) w h surfaceF
-          PDF (w,h) -> C.withPDFSurface (fileName options) w h surfaceF
-          SVG (w,h) -> C.withSVGSurface (fileName options) w h surfaceF
+              C.surfaceWriteToPNG surface file
+          PS  (w,h) -> C.withPSSurface  file w h surfaceF
+          PDF (w,h) -> C.withPDFSurface file w h surfaceF
+          SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
 cairoStyle :: Style -> C.Render ()
 cairoStyle s = mconcat . catMaybes $ [ handle fColor
