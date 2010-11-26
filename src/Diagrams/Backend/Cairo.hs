@@ -75,6 +75,20 @@ instance Backend Cairo where
           PDF (w,h) -> C.withPDFSurface file w h surfaceF
           SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
+  adjustDia _ opts d = translate tr . scale s $ d'
+    where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
+          (w,h)   = getSize $ outputFormat opts
+          (wd,hd) = size2D d'
+          xscale  = if wd == 0 then 1 else w / wd
+          yscale  = if hd == 0 then 1 else h / hd
+          s       = min xscale yscale
+          tr      = (0.5 *. P (w,h)) .-. (s *. center2D d')
+
+          getSize (PNG (w,h)) = (fromIntegral w, fromIntegral h)
+          getSize (PS  s) = s
+          getSize (PDF s) = s
+          getSize (SVG s) = s
+
 cairoStyle :: Style -> C.Render ()
 cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lColor  -- see Note [color order]
