@@ -89,7 +89,7 @@ instance Backend Cairo where
           getSize (PDF s) = s
           getSize (SVG s) = s
 
-cairoStyle :: Style -> C.Render ()
+cairoStyle :: Style R2 -> C.Render ()
 cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lColor  -- see Note [color order]
                                      , handle lWidth
