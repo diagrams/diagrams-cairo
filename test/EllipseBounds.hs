@@ -1,6 +1,4 @@
-{-# LANGUAGE PackageImports #-}
-
-import "diagrams-core" Graphics.Rendering.Diagrams
+import Graphics.Rendering.Diagrams
 import Graphics.Rendering.Diagrams.Transform
 
 import Diagrams.TwoD
