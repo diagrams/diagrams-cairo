@@ -141,8 +141,10 @@ instance Renderable Box Cairo where
     C.closePath
 
 instance Renderable Ellipse Cairo where
-  render _ ell@(Ellipse a b c d e f) = do
-    let (xc,yc,xs,ys,th) = ellipseCenterScaleAngle ell
+  render _ ell = do
+    let P (xc,yc) = ellipseCenter ell
+        (xs,ys)   = ellipseScale ell
+        th        = ellipseAngle ell
     C.newPath
     C.save
     C.translate xc yc
