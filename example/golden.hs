@@ -30,22 +30,15 @@ step a b = besideAlign (-1,0) (0,1) a b'
   where b' = rotate (-pi/2) . scale (1/phi) $ b
   
 besideAlign :: R2 -> R2 -> D -> D -> D
-besideAlign u v a b = beside' u a b'
+besideAlign u v a b = beside u b' a
   where b' = translate (v ^* d) b
         (Bounds bb) = bounds b
         (Bounds ba) = bounds a
         d = (ba v - bb v)
 
--- TODO: figure out why this doesn't work the same as beside 
--- that is based on rebase.
-beside' :: R2 -> D -> D -> D
-beside' v a b = translate (ba v *^ v) a `atop` translate (bb (negateV v) *^ negateV v) b
-  where (Bounds bb) = bounds b
-        (Bounds ba) = bounds a
-
 golden :: D
 golden = foldr1 step (replicate 10 square)
-  
+
 main :: IO ()
 main = renderDia Cairo opts golden
   where opts = CairoOptions "golden.png" $ PNG (400, 300)
