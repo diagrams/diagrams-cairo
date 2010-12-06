@@ -1,21 +1,9 @@
-import Graphics.Rendering.Diagrams
-
-import Diagrams.TwoD
-import Diagrams.TwoD.Arc
-
+import Diagrams.Prelude
 import Diagrams.Backend.Cairo
-import Diagrams.Path
-import Diagrams.Segment
-import Diagrams.Attributes
-import Diagrams.Combinators
 
 import Data.VectorSpace
-import Data.Colour (withOpacity)
-import Data.Colour.Names
 
-import Data.Monoid (Any)
-
-type D = AnnDiagram Cairo Any
+type D = Diagram Cairo
 
 square :: D
 square = translate (-1/2,-1/2) $ b `atop` a
@@ -28,7 +16,7 @@ phi = (1 + sqrt 5) / 2
 step :: D -> D -> D
 step a b = besideAlign (-1,0) (0,1) a b'
   where b' = rotate (-pi/2) . scale (1/phi) $ b
-  
+
 besideAlign :: R2 -> R2 -> D -> D -> D
 besideAlign u v a b = beside u b' a
   where b' = translate (v ^* d) b

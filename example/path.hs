@@ -1,10 +1,4 @@
-import Graphics.Rendering.Diagrams
-import Graphics.Rendering.Diagrams.Transform
-
-import Diagrams.Combinators
-import Diagrams.TwoD
-import Diagrams.Path
-
+import Diagrams.Prelude
 import Diagrams.Backend.Cairo
 
 d :: Diagram Cairo

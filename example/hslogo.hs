@@ -3,24 +3,24 @@
    Based on Metapost version Brian Sniffen.
    This was based on a public domain PNG by Jeff Wheeler,
    and on logo contest entries by George Pollard, Darrin Thompson, and others.
-   
+
    (c) 2009 Brian Sniffen, All rights reserved.
-   
+
    Redistribution and use in source and binary forms, with or without
    modification, are permitted provided that the following conditions
    are met:
-   
+
    1. Redistributions of source code must retain the above copyright
    notice, this list of conditions and the following disclaimer.
-   
+
    2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
-   
+
    3. Neither the name of the author nor the names of his contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
-   
+
    THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS ``AS IS'' AND ANY EXPRESS
    OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -33,11 +33,9 @@
    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
    POSSIBILITY OF SUCH DAMAGE. -}
 
-import Graphics.Rendering.Diagrams
+import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo
-import Diagrams.Path
-import Diagrams.Attributes
 
 import Data.VectorSpace
 import Data.Colour.SRGB
@@ -47,7 +45,7 @@ mkPath = stroke . close . pathFromVertices . map P
 
 rangle, lambdabody, lambdaleg, lambda :: Double -> Double -> Diagram Cairo
 
-rangle h m = mkPath 
+rangle h m = mkPath
   [ zeroV,       (4*h,4*m*h), (0,8*m*h)
   , (3*h,8*m*h), (7*h,4*m*h), (3*h,0)
   ]
@@ -55,8 +53,8 @@ lambdabody h m = translate (4*h,0) (rangle h m)
 lambdaleg h m = translate (4*h,0) path
   where path = mkPath [(11*h,0), (8*h,0), (0,8*m*h), (3*h,8*m*h)]
 
-lambda h m = mkPath 
-  [ (4*h,0),  (8*h,4*m*h), (4*h,8*m*h),     (7*h,8*m*h) 
+lambda h m = mkPath
+  [ (4*h,0),  (8*h,4*m*h), (4*h,8*m*h),     (7*h,8*m*h)
   , (15*h,0), (12*h,0),    (9.5*h,2.5*m*h), (7*h,0)
   ]
 
@@ -69,11 +67,11 @@ lambda h m = mkPath
 -- closer than 1 unit to each other.
 equalsign :: Double -> Double -> Double -> Double -> Diagram Cairo
 equalsign h m maxx miny = mkPath q
-  where 
+  where
     maxy = miny + 4/3;
     cutoff = ((16*h,0*h), (8*h,8*m*h))
     p1 = ((maxx*h,miny*m*h), (0*h,miny*m*h)) `intersection` cutoff;
-    p2 = ((maxx*h,maxy*m*h), (0*h,maxy*m*h)) `intersection` cutoff;   
+    p2 = ((maxx*h,maxy*m*h), (0*h,maxy*m*h)) `intersection` cutoff;
     q  = [p1, p2, (maxx*h,maxy*m*h), (maxx*h,miny*m*h)]
 
 stdrangle, stdlambda, stdlambdabody, stdlambdaleg, lowerequal, upperequal :: Diagram Cairo
@@ -106,7 +104,7 @@ cross3Z (x0,y0) (x1,y1) = x0 * y1 - x1 * y0
 -- included data indicating if the lines were parallel or colinear
 -- among other things.
 intersection :: (t ~ Scalar t, Fractional t, VectorSpace t) =>
-     ((t, t), (t, t)) -> ((t, t), (t, t)) -> (t, t) 
+     ((t, t), (t, t)) -> ((t, t), (t, t)) -> (t, t)
 intersection (a0,a1) (b0,b1) = a0 ^+^ (va ^* t)
   where vb = b1 ^-^ b0
         va = a1 ^-^ a0

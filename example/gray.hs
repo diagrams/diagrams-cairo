@@ -1,13 +1,11 @@
-import Graphics.Rendering.Diagrams
-import Diagrams.TwoD.Arc
-import Diagrams.TwoD
-import Diagrams.Path
+import Diagrams.Prelude
 import Diagrams.Backend.Cairo
-import Data.List.Split
-import Data.Maybe
+
+import Data.List.Split      (chunk)
+import Data.Maybe           (catMaybes)
 import Control.Applicative
-import Data.Monoid
-import Data.List
+import Data.Monoid          (mconcat)
+import Data.List            (transpose)
 
 gray 0 = [[]]
 gray n = map (False:) g ++ map (True:) (reverse g)
