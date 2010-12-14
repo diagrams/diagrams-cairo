@@ -23,7 +23,7 @@ findEdges = catMaybes . (zipWith edge <*> tail)
                            | otherwise = Nothing
 
 mkRingsDia :: [[(Angle, Angle)]] -> Diagram Cairo
-mkRingsDia = mconcat . zipWith mkRingDia [1,1.5..]
-  where mkRingDia r = mconcat . map (stroke . scale r . uncurry arc)
+mkRingsDia = freeze . mconcat . zipWith mkRingDia [2,3..]
+  where mkRingDia r = lw 1.05 . mconcat . map (stroke . scale r . uncurry arc)
 
 main = renderDia Cairo (CairoOptions "gray.pdf" $ PDF (400, 400)) (rings 10)

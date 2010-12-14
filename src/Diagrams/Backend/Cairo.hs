@@ -11,15 +11,14 @@ module Diagrams.Backend.Cairo
   ) where
 
 import qualified Graphics.Rendering.Cairo as C
+import qualified Graphics.Rendering.Cairo.Matrix as CM
 
-import Graphics.Rendering.Diagrams
+import Diagrams.Prelude
 
-import Diagrams.Attributes
-import Diagrams.TwoD
+import Graphics.Rendering.Diagrams.Transform
+
 import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Shapes
-import Diagrams.Segment
-import Diagrams.Path
 
 import Control.Monad (when)
 import Data.Maybe (catMaybes)
@@ -97,7 +96,10 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lJoin
                                      , handle lDashing
                                      ]
-  where handle f = fmap f (getAttr s)
+  where handle f = renderAttr f `fmap` getAttr s
+        renderAttr f (a,t) = do
+          cairoTransf t
+          f a
         fColor (FillColor (SomeColor c)) = do
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
@@ -113,6 +115,13 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
           C.setLineJoin (fromLineJoin lj)
         lDashing (Dashing ds offs) = do
           C.setDash ds offs
+
+cairoTransf :: Transformation R2 -> C.Render ()
+cairoTransf t = C.transform m
+  where m = CM.Matrix a1 a2 b1 b2 c1 c2
+        (a1,a2) = apply t (1,0)
+        (b1,b2) = apply t (0,1)
+        (c1,c2) = transl t
 
 {- ~~~~ Note [color order]
 
