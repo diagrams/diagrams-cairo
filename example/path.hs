@@ -1,6 +1,7 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo
 
+{--Diagram required backend vectors space--}
 d :: Diagram Cairo
 d = stroke $ pathFromOffsets (P (0,0)) [(1,1), (1,2), (1,3), (7,2)]
 
