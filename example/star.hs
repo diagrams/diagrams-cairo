@@ -1,9 +1,7 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo
-import Diagrams.TwoD.Shapes
-import Data.Colour.SRGB
+import Data.Colour.Names
 
-star :: Diagram Cairo
-star = rotate (pi/2) (createStar 5 2)
+d = fc blue $ starPolygon 17 5
 
-main = renderDia Cairo (CairoOptions "Star.pdf" (PDF (100.0,100.0))) star
+main = renderDia Cairo (CairoOptions "Star.pdf" (PDF (100.0,100.0))) d
