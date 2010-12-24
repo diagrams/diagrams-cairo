@@ -140,15 +140,6 @@ fromLineJoin LineJoinMiter = C.LineJoinMiter
 fromLineJoin LineJoinRound = C.LineJoinRound
 fromLineJoin LineJoinBevel = C.LineJoinBevel
 
-instance Renderable Box Cairo where
-  render _ (Box (P v1) (P v2) (P v3) (P v4)) = do
-    C.newPath
-    uncurry C.moveTo v1
-    uncurry C.lineTo v2
-    uncurry C.lineTo v3
-    uncurry C.lineTo v4
-    C.closePath
-
 instance Renderable Ellipse Cairo where
   render _ ell = do
     let P (xc,yc) = ellipseCenter ell
