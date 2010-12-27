@@ -13,29 +13,33 @@
 --
 -----------------------------------------------------------------------------
 
-module Diagrams.Backend.Cairo.CmdLine where
+module Diagrams.Backend.Cairo.CmdLine
+       ( defaultMain
+       , multiMain
+       ) where
 
-import Diagrams.Prelude
+import Diagrams.Prelude hiding (width, height)
 import Diagrams.Backend.Cairo
 
+import Data.List.Split
+
 import System.Console.CmdArgs.Implicit
+import System.Environment
 
 data DiagramOpts = DiagramOpts
-                   { outWidth  :: Int
-                   , outHeight :: Int
+                   { width  :: Int
+                   , height :: Int
                    , output    :: FilePath
                    , selection :: Maybe String
                    }
   deriving (Show, Data, Typeable)
 
-diagramOpts = DiagramOpts
-  { outWidth =  100
-             &= name "width"
+diagramOpts prog sel = DiagramOpts
+  { width =  100
              &= typ "INT"
              &= help "Desired width of the output image"
 
-  , outHeight = 100
-              &= name "height"
+  , height = 100
               &= typ "INT"
               &= help "Desired height of the output image"
 
@@ -46,10 +50,36 @@ diagramOpts = DiagramOpts
   , selection = def
               &= typ "NAME"
               &= help "Name of the diagram to render"
+              &= (if sel then typ "NAME" else ignore)
   }
+  &= summary "Command-line diagram generation."
+  &= program prog
 
 defaultMain :: Diagram Cairo -> IO ()
-defaultMain = undefined
+defaultMain d = do
+  prog <- getProgName
+  opts <- cmdArgs (diagramOpts prog False)
+  chooseRender opts d
+
+chooseRender :: DiagramOpts -> Diagram Cairo -> IO ()
+chooseRender opts d = do
+  case splitOn "." (output opts) of
+    [""] -> putStrLn "No output file given."
+    ps | last ps `elem` ["png", "ps", "pdf", "svg"] -> do
+           let outfmt = case last ps of
+                 "png" -> PNG (width opts, height opts)
+                 "ps"  -> PS  (fromIntegral $ width opts, fromIntegral $ height opts)
+                 "pdf" -> PDF (fromIntegral $ width opts, fromIntegral $ height opts)
+                 "svg" -> SVG (fromIntegral $ width opts, fromIntegral $ height opts)
+           renderDia Cairo (CairoOptions (output opts) outfmt) d
+       | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
 multiMain :: [(String, Diagram Cairo)] -> IO ()
-multiMain = undefined
+multiMain ds = do
+  prog <- getProgName
+  opts <- cmdArgs (diagramOpts prog True)
+  case selection opts of
+    Nothing  -> putStrLn "No diagram selected."
+    Just sel -> case lookup sel ds of
+      Nothing -> putStrLn $ "Unknown diagram: " ++ sel
+      Just d  -> chooseRender opts d

@@ -16,8 +16,11 @@ Cabal-version:       >=1.2
 
 Library
   Exposed-modules:     Diagrams.Backend.Cairo
+                       Diagrams.Backend.Cairo.CmdLine
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.4,
                        diagrams-core >= 0.1 && < 0.2,
                        diagrams-lib >= 0.1 && < 0.2,
-                       cairo >= 0.10.1 && < 0.13
+                       cairo >= 0.10.1 && < 0.13,
+                       cmdargs >= 0.6 && < 0.7,
+                       split >= 0.1.2 && < 0.2
