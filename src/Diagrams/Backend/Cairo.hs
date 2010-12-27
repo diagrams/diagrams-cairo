@@ -24,6 +24,7 @@ import Control.Monad (when)
 import Data.Maybe (catMaybes)
 
 import Data.Monoid
+import qualified Data.Foldable as F
 
 -- | This data declaration is simply used as a token to distinguish
 --   this rendering engine.
@@ -158,9 +159,13 @@ instance Renderable (Segment R2) Cairo where
   render _ (Linear v) = uncurry C.relLineTo v
   render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C.relCurveTo x1 y1 x2 y2 x3 y3
 
-instance Renderable (Path R2) Cairo where
-  render _ (Path c (P v) segs) = do
-    C.newPath
-    uncurry C.moveTo v
+instance Renderable (Trail R2) Cairo where
+  render _ (Trail segs c) = do
     mapM_ (render Cairo) segs
     when c $ C.closePath
+
+instance Renderable (Path R2) Cairo where
+  render _ (Path trs) = C.newPath >> F.mapM_ renderTrail trs
+    where renderTrail (tr, P p) = do
+            uncurry C.moveTo p
+            render Cairo tr
