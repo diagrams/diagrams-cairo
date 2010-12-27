@@ -1,9 +1,9 @@
-import Diagrams.Prelude 
+import Diagrams.Prelude
 import Diagrams.Backend.Cairo
 import Diagrams.TwoD.Shapes
 import Data.Colour.SRGB
 p :: Diagram Cairo
-p = fc (sRGB 0.4 0.4 0.4) (polygon 10)
+p = fc (sRGB 0.4 0.4 0.4) (polygon with {sides=10})
 
 bigP:: Diagram Cairo
 bigP = scale 2 p
