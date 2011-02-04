@@ -97,7 +97,9 @@ cairoStyle s = mconcat . catMaybes $ [ handle fColor
                                      , handle lJoin
                                      , handle lDashing
                                      ]
-  where handle f = renderAttr f `fmap` getAttr s
+  where handle :: (AttributeClass t) => (t -> C.Render ()) -> Maybe (C.Render ())
+        handle f = renderAttr f `fmap` getAttr s
+        renderAttr :: (AttributeClass a) => (a -> C.Render ()) -> (a, Transformation R2) -> C.Render ()
         renderAttr f (a,t) = do
           cairoTransf t
           f a
