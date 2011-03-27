@@ -1,12 +1,23 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
-{-|
-  The Cairo backend.
--}
+{-# LANGUAGE TypeFamilies
+           , MultiParamTypeClasses
+           , FlexibleInstances
+  #-}
+
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Diagrams.Backend.Cairo.CmdLine
+-- Copyright   :  (c) 2011 Diagrams-cairo team (see LICENSE)
+-- License     :  BSD-style (see LICENSE)
+-- Maintainer  :  diagrams-discuss@googlegroups.com
+--
+-- A full-featured rendering backend for diagrams using Cairo.
+--
+-----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
 
-  ( Cairo(..) -- rendering token
+  ( Cairo(..)        -- rendering token
 
-  , Options(..) -- for CairoOptions, rendering options specific to Cairo
+  , Options(..)      -- for CairoOptions, rendering options specific to Cairo
   , OutputFormat(..) -- output format options
   ) where
 
@@ -36,7 +47,7 @@ data OutputFormat =
     -- | PNG is unique, in that it is not a vector format
     PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
         }
-  | PS  { psSize :: (Double, Double)  -- ^ the size of the output is given in points
+  | PS  { psSize  :: (Double, Double) -- ^ the size of the output is given in points
         }
   | PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
         }

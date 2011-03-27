@@ -2,11 +2,9 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.CmdLine
--- Copyright   :  (c) 2010 Diagrams team (see LICENSE)
+-- Copyright   :  (c) 2011 Diagrams-cairo team (see LICENSE)
 -- License     :  BSD-style (see LICENSE)
--- Maintainer  :  byorgey@cis.upenn.edu
--- Stability   :  experimental
--- Portability :  portable
+-- Maintainer  :  diagrams-discuss@googlegroups.com
 --
 -- Convenient creation of command-line-driven executables for
 -- rendering diagrams using the Cairo backend.
