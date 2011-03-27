@@ -1,6 +1,8 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
+import Data.Colour.Names hiding (gray)
+
 import Data.List.Split      (chunk)
 import Data.Maybe           (catMaybes)
 import Control.Applicative
