@@ -16,6 +16,8 @@
 module Diagrams.Backend.Cairo.CmdLine
        ( defaultMain
        , multiMain
+
+       , Cairo
        ) where
 
 import Diagrams.Prelude hiding (width, height)

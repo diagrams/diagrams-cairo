@@ -1,5 +1,5 @@
 import Diagrams.Prelude
-import Diagrams.Backend.Cairo
+import Diagrams.Backend.Cairo.CmdLine
 import Diagrams.TwoD.Shapes
 import Data.Colour.SRGB
 
@@ -11,4 +11,4 @@ sierpinski n = beside (0, 1) (beside (1, 0) s s) s
 s :: Diagram Cairo
 s = sierpinski 6
 
-main = renderDia Cairo (CairoOptions "Sierpinski.pdf" (PDF (100.0,100.0))) s
+main = defaultMain s
