@@ -1,5 +1,5 @@
 import Diagrams.Prelude
-import Diagrams.Backend.Cairo
+import Diagrams.Backend.Cairo.CmdLine
 
 import Data.List.Split      (chunk)
 import Data.Maybe           (catMaybes)
@@ -26,4 +26,4 @@ mkRingsDia :: [[(Angle, Angle)]] -> Diagram Cairo
 mkRingsDia = freeze . mconcat . zipWith mkRingDia [2,3..]
   where mkRingDia r = lw 1.05 . mconcat . map (stroke . scale r . uncurry arc)
 
-main = renderDia Cairo (CairoOptions "gray.pdf" $ PDF (400, 400)) (rings 10)
+main = defaultMain $ rings 10
