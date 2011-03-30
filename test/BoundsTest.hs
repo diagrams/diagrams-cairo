@@ -38,8 +38,8 @@ sampleBounds2D n d = foldr atop d bs
     where b  = getBounds (bounds d)
           bs :: [Diagram Cairo]
           bs = [stroke $ mkLine (P $ s *^ v) (perp v) | v <- vs, let s = b v]
-          vs = [(cos t, sin t) | i <- [0..n]
-                               , let t = ((fromIntegral i) * 2.0 * pi) / (fromIntegral n)]
+          vs = [(2 * cos t, 2 * sin t) | i <- [0..n]
+                                       , let t = ((fromIntegral i) * 2.0 * pi) / (fromIntegral n)]
           mkLine a v = setStart a $ fromSegments [Linear v]
           perp (x,y) = (-y,x)
           getBounds (Bounds f) = f
