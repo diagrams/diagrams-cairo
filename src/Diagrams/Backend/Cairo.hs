@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies
            , MultiParamTypeClasses
            , FlexibleInstances
+           , TypeSynonymInstances
   #-}
 
 -----------------------------------------------------------------------------
@@ -58,11 +59,10 @@ instance Monoid (C.Render ()) where
   mempty  = return ()
   mappend = (>>)
 
-instance Backend Cairo where
-  type BSpace Cairo = R2
-  type Render Cairo = C.Render ()
-  type Result Cairo = IO ()
-  data Options Cairo = CairoOptions
+instance Backend Cairo R2 where
+  type Render  Cairo R2 = C.Render ()
+  type Result  Cairo R2 = IO ()
+  data Options Cairo R2 = CairoOptions
           { fileName     :: String       -- ^ the name of the file you want generated
           , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
@@ -154,7 +154,7 @@ fromLineJoin LineJoinMiter = C.LineJoinMiter
 fromLineJoin LineJoinRound = C.LineJoinRound
 fromLineJoin LineJoinBevel = C.LineJoinBevel
 
-instance Renderable Ellipse Cairo where
+instance Renderable Ellipse Cairo R2 where
   render _ ell = do
     let P (xc,yc) = ellipseCenter ell
         (xs,ys)   = ellipseScale ell
@@ -168,16 +168,16 @@ instance Renderable Ellipse Cairo where
     C.closePath
     C.restore
 
-instance Renderable (Segment R2) Cairo where
+instance Renderable (Segment R2) Cairo R2 where
   render _ (Linear v) = uncurry C.relLineTo v
   render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C.relCurveTo x1 y1 x2 y2 x3 y3
 
-instance Renderable (Trail R2) Cairo where
+instance Renderable (Trail R2) Cairo R2 where
   render _ (Trail segs c) = do
     mapM_ (render Cairo) segs
     when c $ C.closePath
 
-instance Renderable (Path R2) Cairo where
+instance Renderable (Path R2) Cairo R2 where
   render _ (Path trs) = C.newPath >> F.mapM_ renderTrail trs
     where renderTrail (tr, P p) = do
             uncurry C.moveTo p

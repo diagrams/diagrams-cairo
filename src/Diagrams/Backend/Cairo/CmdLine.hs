@@ -55,13 +55,13 @@ diagramOpts prog sel = DiagramOpts
   &= summary "Command-line diagram generation."
   &= program prog
 
-defaultMain :: Diagram Cairo -> IO ()
+defaultMain :: Diagram Cairo R2 -> IO ()
 defaultMain d = do
   prog <- getProgName
   opts <- cmdArgs (diagramOpts prog False)
   chooseRender opts d
 
-chooseRender :: DiagramOpts -> Diagram Cairo -> IO ()
+chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
 chooseRender opts d = do
   case splitOn "." (output opts) of
     [""] -> putStrLn "No output file given."
@@ -74,7 +74,7 @@ chooseRender opts d = do
            renderDia Cairo (CairoOptions (output opts) outfmt) d
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
-multiMain :: [(String, Diagram Cairo)] -> IO ()
+multiMain :: [(String, Diagram Cairo R2)] -> IO ()
 multiMain ds = do
   prog <- getProgName
   opts <- cmdArgs (diagramOpts prog True)
