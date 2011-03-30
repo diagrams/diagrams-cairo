@@ -41,7 +41,7 @@ import Data.VectorSpace
 import Data.Colour.SRGB
 
 mkPath :: [BSpace Cairo] -> Diagram Cairo
-mkPath = stroke . close . pathFromVertices . map P
+mkPath = stroke . close . fromVertices . map P
 
 rangle, lambdabody, lambdaleg, lambda :: Double -> Double -> Diagram Cairo
 
