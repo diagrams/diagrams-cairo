@@ -20,7 +20,7 @@ Library
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.4,
                        process >= 1.0 && < 1.1,
-                       directory >= 1.0 && < 1.1,
+                       directory >= 1.0 && < 1.2,
                        old-time >= 1.0 && < 1.1,
                        unix >= 2.4 && < 2.5,
                        diagrams-core >= 0.1 && < 0.2,
