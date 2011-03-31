@@ -5,14 +5,15 @@ import Diagrams.Backend.Cairo.CmdLine
 type D = AnnDiagram Cairo R2 Any
 
 p :: Trail R2
-p = fromOffsets [(1,5), (1,-5)]
+p = fromOffsets [(1,2), (1,-5)]
 
 burst n = close . mconcat . take n . iterate (rotateBy (-1/(fromIntegral n))) $ p
 
-sun = (strokeT $ burst 20)
+sun = (strokeT $ burst 25)
       # lineJoin LineJoinRound
       # fc yellow
       # lc red
+      # lw 1
       # centerXY
       # lw 1
 
