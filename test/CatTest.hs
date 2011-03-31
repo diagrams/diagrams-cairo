@@ -18,12 +18,16 @@ myColors = cycle $ [ aqua
                    ]
 
 circles = map (lw 0) $
-  zipWith3 (\c s -> fc c . scale s) myColors [1..10] (repeat circle)
+  zipWith3 (\c s d -> d # fc c # scale s) myColors [1..10] (repeat circle)
 
-foo, bar :: Diagram Cairo R2
-foo = cat (1,-0.5) $ circles
-bar = decorateTrail (scale 30 $ polygonPath with { sides = length circles }) circles
+foo1 = cat (1,-0.5) $ circles
+foo2 = cat (1,0) $ map alignTop circles
+foo3 = cat (1,0) $ map alignBottom circles
+bar = decorateTrail (polygonPath with { sides = length circles } # scale 30)
+                    circles
 
--- bar = cat (1,0) [fc blue circle, circle, circle]
+showOrigin = ((circle # fc red # lw 0) `atop`)
 
-main = defaultMain (beside (0,-1) foo bar)
+dia = cat (0,-1) (map (showOrigin . centerX) [foo1, foo2, foo3, bar])
+
+main = defaultMain dia
