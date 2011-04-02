@@ -1,13 +1,9 @@
-import Graphics.Rendering.Diagrams
+import Diagrams.Prelude
+import Diagrams.Backend.Cairo.CmdLine
 
-import Diagrams.Backend.Cairo
+b1 = square # scale 20
+--            # lc red
+--            # fc blue
+            # lw 0.002
 
-import Diagrams.Attributes
-import Diagrams.TwoD
-
-import Data.Colour.Names
-
-b1 = lc red $ fc blue $ box
-
-opts = CairoOptions "attr.pdf" $ PDF (400, 400)
-main = renderDia Cairo opts b1
+main = defaultMain (pad 1.1 b1)

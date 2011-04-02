@@ -86,10 +86,10 @@ instance Backend Cairo R2 where
           PDF (w,h) -> C.withPDFSurface file w h surfaceF
           SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
-  -- Set the line width to 1 (in case it was not set), freeze the
-  -- diagram in its final form, and then do final adjustments to make it
-  -- fit the requested size.
-  adjustDia _ opts d = translate tr . scale s $ d' # lw 1 # freeze
+  -- Set the line width to 1 and line color to black (in case they
+  -- were not set), freeze the diagram in its final form, and then do
+  -- final adjustments to make it fit the requested size.
+  adjustDia _ opts d = translate tr . scale s $ d' # lw 1 # lc black # freeze
     where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
           (w,h)   = getSize $ outputFormat opts
           (wd,hd) = size2D d'
