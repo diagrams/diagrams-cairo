@@ -2,6 +2,8 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
+type D = AnnDiagram Cairo R2 Any
+
 p :: Trail R2
 p = fromOffsets [(1,5), (1,-5)]
 
@@ -12,7 +14,10 @@ sun = (strokeT $ burst 20)
       # fc yellow
       # lc red
       # centerXY
+      # lw 1
 
-dia = mconcat . reverse . take 8 . iterate (scale 0.8) $ sun
+dia = mconcat . reverse . take 15 . iterate (scale 0.8) $ sun
 
-main = defaultMain dia
+pad d = withBounds (scale 1.1 d) d
+
+main = defaultMain (pad dia)
