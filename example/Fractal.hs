@@ -33,6 +33,4 @@ p = polygon with { sides = 5, orientation = OrientToX }
 
 showOrigin d = (circle # fc red # scale (0.05)) `atop` d
 
-pad d = withBounds (scale 1.1 d) d
-
-main = defaultMain (pad $ pentaflake' 4)
+main = defaultMain (pad 1.1 $ pentaflake' 4)

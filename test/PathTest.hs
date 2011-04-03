@@ -15,10 +15,7 @@ sun = (strokeT $ burst 25)
       # lc red
       # lw 1
       # centerXY
-      # lw 1
 
 dia = mconcat . reverse . take 15 . iterate (scale 0.8) $ sun
 
-pad d = withBounds (scale 1.1 d) d
-
-main = defaultMain (pad dia)
+main = defaultMain (pad 1.1 dia)
