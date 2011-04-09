@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies
            , MultiParamTypeClasses
            , FlexibleInstances
+           , FlexibleContexts
            , TypeSynonymInstances
   #-}
 
@@ -55,26 +56,27 @@ data OutputFormat =
   | SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
         }
 
-instance Monoid (C.Render ()) where
-  mempty  = return ()
-  mappend = (>>)
+instance Monoid (Render Cairo R2) where
+  mempty  = C $ return ()
+  (C r1) `mappend` (C r2) = C (r1 >> r2)
 
 instance Backend Cairo R2 where
-  type Render  Cairo R2 = C.Render ()
+  data Render  Cairo R2 = C (C.Render ())
   type Result  Cairo R2 = IO ()
   data Options Cairo R2 = CairoOptions
           { fileName     :: String       -- ^ the name of the file you want generated
           , outputFormat :: OutputFormat -- ^ the output format and associated options
           }
 
-  withStyle _ s r = do
+  withStyle _ s t (C r) = C $ do
     C.save
     r
+    cairoTransf t
     cairoStyle s
     C.stroke
     C.restore
 
-  doRender _ options r =
+  doRender _ options (C r) =
     let surfaceF surface = C.renderWith surface r
         file = fileName options
     in  case outputFormat options of
@@ -103,20 +105,20 @@ instance Backend Cairo R2 where
           getSize (PDF s) = s
           getSize (SVG s) = s
 
-cairoStyle :: Style R2 -> C.Render ()
-cairoStyle s = mconcat . catMaybes $ [ handle fColor
-                                     , handle lColor  -- see Note [color order]
-                                     , handle lWidth
-                                     , handle lCap
-                                     , handle lJoin
-                                     , handle lDashing
-                                     ]
-  where handle :: (AttributeClass t) => (t -> C.Render ()) -> Maybe (C.Render ())
-        handle f = renderAttr f `fmap` getAttr s
-        renderAttr :: (AttributeClass a) => (a -> C.Render ()) -> (a, Transformation R2) -> C.Render ()
-        renderAttr f (a,t) = do
-          cairoTransf t
-          f a
+renderC :: (Renderable a Cairo, V a ~ R2) => a -> C.Render ()
+renderC a = case (render Cairo a) of C r -> r
+
+cairoStyle :: Style -> C.Render ()
+cairoStyle s = foldr (>>) (return ())
+             . catMaybes $ [ handle fColor
+                           , handle lColor  -- see Note [color order]
+                           , handle lWidth
+                           , handle lCap
+                           , handle lJoin
+                           , handle lDashing
+                           ]
+  where handle :: (AttributeClass a) => (a -> C.Render ()) -> Maybe (C.Render ())
+        handle f = f `fmap` getAttr s
         fColor (FillColor (SomeColor c)) = do
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
@@ -158,7 +160,7 @@ fromLineJoin LineJoinRound = C.LineJoinRound
 fromLineJoin LineJoinBevel = C.LineJoinBevel
 
 instance Renderable Ellipse Cairo where
-  render _ ell = do
+  render _ ell = C $ do
     let P (xc,yc) = ellipseCenter ell
         (xs,ys)   = ellipseScale ell
         th        = ellipseAngle ell
@@ -172,16 +174,16 @@ instance Renderable Ellipse Cairo where
     C.restore
 
 instance Renderable (Segment R2) Cairo where
-  render _ (Linear v) = uncurry C.relLineTo v
-  render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C.relCurveTo x1 y1 x2 y2 x3 y3
+  render _ (Linear v) = C $ uncurry C.relLineTo v
+  render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
-  render _ (Trail segs c) = do
-    mapM_ (render Cairo) segs
+  render _ (Trail segs c) = C $ do
+    mapM_ renderC segs
     when c $ C.closePath
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C.newPath >> F.mapM_ renderTrail trs
+  render _ (Path trs) = C $ C.newPath >> F.mapM_ renderTrail trs
     where renderTrail (tr, P p) = do
             uncurry C.moveTo p
-            render Cairo tr
+            renderC tr
