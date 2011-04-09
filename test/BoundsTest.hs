@@ -1,17 +1,10 @@
-import Graphics.Rendering.Diagrams
-import Graphics.Rendering.Diagrams.Transform
+import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-import Diagrams.TwoD
-import Diagrams.Combinators
-import Diagrams.Path
-import Diagrams.Segment
-
-import Data.VectorSpace
-
 type D = Diagram Cairo R2
 
+p, bez, ell :: D
 p = stroke $ fromSegments [Linear (1.0,0.0),Linear (0.0,1.0)]
 bez = stroke $ fromSegments [Cubic (1.0,0.0) (0.0,1.0) (1.0,1.0)]
 ell = scaleX 2 $ scaleY 0.5 circle
@@ -32,11 +25,12 @@ b13 = runBoundsTest (translate (1,0) square)
 b14 = runBoundsTest (rotate (2*pi/3) ell)
 
 runBoundsTest :: D -> D
-runBoundsTest = sampleBounds2D 10
+runBoundsTest = lw 0.05 . sampleBounds2D 10
 
 sampleBounds2D :: Int -> D -> D
 sampleBounds2D n d = foldr atop d bs
     where b  = getBounds (bounds d)
+          bs :: [D]
           bs = [stroke $ mkLine (P $ s *^ v) (perp v) | v <- vs, let s = b v]
           vs = [(2 * cos t, 2 * sin t) | i <- [0..n]
                                        , let t = ((fromIntegral i) * 2.0 * pi) / (fromIntegral n)]
@@ -44,4 +38,4 @@ sampleBounds2D n d = foldr atop d bs
           perp (x,y) = (-y,x)
           getBounds (Bounds f) = f
 
-main = defaultMain b12
+main = defaultMain b14
