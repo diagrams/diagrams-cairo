@@ -34,6 +34,10 @@ renderStack s = disks `atop` post
 renderHanoi :: Hanoi -> D
 renderHanoi h = cat' (scale 7 unitX) with { catMethod = Distrib } stacks
               # centerX
+              -- centerX isn't quite what we want, we actually want it
+              -- aligned to the middle of the center peg!  Will have
+              -- to revisit this once we develop more tools for
+              -- working with named points.
   where stacks = map renderStack h
 
 solveHanoi :: Int -> [Move]
