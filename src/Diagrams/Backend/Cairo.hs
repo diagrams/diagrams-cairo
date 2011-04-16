@@ -91,7 +91,9 @@ instance Backend Cairo R2 where
   -- Set the line width to 1 and line color to black (in case they
   -- were not set), freeze the diagram in its final form, and then do
   -- final adjustments to make it fit the requested size.
-  adjustDia _ opts d = translate tr . scale s $ d' # lw 0.01 # lc black # freeze
+  adjustDia _ opts d = d' # lw 0.01 # lc black # freeze
+                          # scale s
+                          # translate tr
     where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
           (w,h)   = getSize $ outputFormat opts
           (wd,hd) = size2D d'
