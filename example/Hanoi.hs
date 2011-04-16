@@ -21,7 +21,7 @@ renderDisk n = square
                # lw 0.1
 
 renderStack :: Stack -> D
-renderStack s = disks `atop` post
+renderStack s = disks `atop` post `atop` (phantom (renderDisk 5))  -- cheating!
   where disks = (vcat . map renderDisk $ s)
                 # alignBottom
         post  = square
