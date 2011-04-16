@@ -34,11 +34,8 @@ renderStack s = disks `atop` post
 renderHanoi :: Hanoi -> D
 renderHanoi h = cat' (scale 7 unitX) with { catMethod = Distrib } stacks
               # centerX
-              -- centerX isn't quite what we want, we actually want it
-              -- aligned to the middle of the center peg!  Will have
-              -- to revisit this once we develop more tools for
-              -- working with named points.
-  where stacks = map renderStack h
+  where stacks  = map renderStack h
+--        stacks' = modList (length stacks `div` 2) (named "CenterPeg") stacks
 
 solveHanoi :: Int -> [Move]
 solveHanoi n = solveHanoi' n 0 1 2
@@ -52,7 +49,8 @@ doMove (x,y) h = h''
         h''            = addDisk y d h'
         removeDisk x h = (head (h!!x), modList x tail h)
         addDisk y d    = modList y (d:)
-        modList i f l  = let (xs,(y:ys)) = splitAt i l in xs ++ (f y : ys)
+
+modList i f l  = let (xs,(y:ys)) = splitAt i l in xs ++ (f y : ys)
 
 hanoiSequence :: Int -> [Hanoi]
 hanoiSequence n = scanl (flip ($)) [[0..n-1], [], []] (map doMove (solveHanoi n))
