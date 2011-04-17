@@ -21,14 +21,13 @@ module Diagrams.Backend.Cairo.CmdLine
 import Diagrams.Prelude hiding (width, height)
 import Diagrams.Backend.Cairo
 
-import System.Console.CmdArgs.Implicit
+import System.Console.CmdArgs.Implicit hiding (args)
 
 import Prelude hiding      (catch)
 
 import Control.Applicative ((<$>))
-import Control.Monad       (when, forever)
+import Control.Monad       (when)
 import Data.List.Split
-import Data.Monoid
 
 import System.Environment  (getArgs, getProgName)
 import System.Directory    (getModificationTime)
@@ -52,6 +51,7 @@ data DiagramOpts = DiagramOpts
                    }
   deriving (Show, Data, Typeable)
 
+diagramOpts :: String -> Bool -> DiagramOpts
 diagramOpts prog sel = DiagramOpts
   { width =  100
              &= typ "INT"
@@ -96,6 +96,7 @@ chooseRender opts d = do
                  "ps"  -> PS  (fromIntegral $ width opts, fromIntegral $ height opts)
                  "pdf" -> PDF (fromIntegral $ width opts, fromIntegral $ height opts)
                  "svg" -> SVG (fromIntegral $ width opts, fromIntegral $ height opts)
+                 _     -> PDF (fromIntegral $ width opts, fromIntegral $ height opts)
            renderDia Cairo (CairoOptions (output opts) outfmt) d
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
@@ -113,13 +114,13 @@ waitForChange :: Maybe ClockTime -> DiagramOpts -> String -> [String] -> IO ()
 waitForChange lastAttempt opts prog args = do
     hSetBuffering stdout NoBuffering
     go lastAttempt
-  where go lastAttempt = do
+  where go lastAtt = do
           threadDelay (floor 1e6 * interval opts)
           -- putStrLn $ "Checking... (last attempt = " ++ show lastAttempt ++ ")"
-          (newBin, newAttempt) <- recompile lastAttempt prog
+          (newBin, newAttempt) <- recompile lastAtt prog
           if newBin
             then executeFile prog False args Nothing
-            else go $ getFirst (First newAttempt <> First lastAttempt)
+            else go $ getFirst (First newAttempt <> First lastAtt)
 
 -- | @recompile t prog@ attempts to recompile @prog@, assuming the
 --   last attempt was made at time @t@.  If @t@ is @Nothing@ assume

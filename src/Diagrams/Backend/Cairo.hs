@@ -31,7 +31,6 @@ import Diagrams.Prelude
 import Graphics.Rendering.Diagrams.Transform
 
 import Diagrams.TwoD.Ellipse
-import Diagrams.TwoD.Shapes
 
 import Control.Monad (when)
 import Data.Maybe (catMaybes)
@@ -102,10 +101,10 @@ instance Backend Cairo R2 where
           s       = min xscale yscale
           tr      = (0.5 *. P (w,h)) .-. (s *. center2D d')
 
-          getSize (PNG (w,h)) = (fromIntegral w, fromIntegral h)
-          getSize (PS  s) = s
-          getSize (PDF s) = s
-          getSize (SVG s) = s
+          getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
+          getSize (PS  sz) = sz
+          getSize (PDF sz) = sz
+          getSize (SVG sz) = sz
 
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> C.Render ()
 renderC a = case (render Cairo a) of C r -> r
@@ -130,8 +129,8 @@ cairoStyle s = foldr (>>) (return ())
           C.setSourceRGBA r g b a
         lWidth (LineWidth w) = do
           C.setLineWidth w
-        lCap lc = do
-          C.setLineCap (fromLineCap lc)
+        lCap lcap = do
+          C.setLineCap (fromLineCap lcap)
         lJoin lj = do
           C.setLineJoin (fromLineJoin lj)
         lDashing (Dashing ds offs) = do
