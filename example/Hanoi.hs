@@ -21,7 +21,7 @@ renderDisk n = square
                # lw 0.1
 
 renderStack :: Stack -> D
-renderStack s = disks `atop` post `atop` (phantom (renderDisk 5))  -- cheating!
+renderStack s = disks `atop` post
   where disks = (vcat . map renderDisk $ s)
                 # alignBottom
         post  = square
@@ -32,10 +32,11 @@ renderStack s = disks `atop` post `atop` (phantom (renderDisk 5))  -- cheating!
                 # alignBottom
 
 renderHanoi :: Hanoi -> D
-renderHanoi h = cat' (scale 7 unitX) with { catMethod = Distrib } stacks
-              # centerX
-  where stacks  = map renderStack h
---        stacks' = modList (length stacks `div` 2) (named "CenterPeg") stacks
+renderHanoi h = s # moveOriginTo p
+  where stacks   = map renderStack h
+        stacks'  = modList (length stacks `div` 2) (named "CenterPeg") stacks
+        s        = cat' (scale 7 unitX) with { catMethod = Distrib } stacks'
+        Just [p] = lookupN "CenterPeg" $ names s
 
 solveHanoi :: Int -> [Move]
 solveHanoi n = solveHanoi' n 0 1 2
