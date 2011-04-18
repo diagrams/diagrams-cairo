@@ -36,14 +36,17 @@
 import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo
+import Diagrams.Backend.Cairo.CmdLine
 
 import Data.VectorSpace
 import Data.Colour.SRGB
 
-mkPath :: [BSpace Cairo] -> Diagram Cairo
+type D = Diagram Cairo R2
+
+mkPath :: [R2] -> D
 mkPath = stroke . close . fromVertices . map P
 
-rangle, lambdabody, lambdaleg, lambda :: Double -> Double -> Diagram Cairo
+rangle, lambdabody, lambdaleg, lambda :: Double -> Double -> D
 
 rangle h m = mkPath
   [ zeroV,       (4*h,4*m*h), (0,8*m*h)
@@ -65,7 +68,7 @@ lambda h m = mkPath
 -- gap from the lambda.
 -- These gaps are all by horizontal measure---the components are
 -- closer than 1 unit to each other.
-equalsign :: Double -> Double -> Double -> Double -> Diagram Cairo
+equalsign :: Double -> Double -> Double -> Double -> D
 equalsign h m maxx miny = mkPath q
   where
     maxy = miny + 4/3;
@@ -74,7 +77,7 @@ equalsign h m maxx miny = mkPath q
     p2 = ((maxx*h,maxy*m*h), (0*h,maxy*m*h)) `intersection` cutoff;
     q  = [p1, p2, (maxx*h,maxy*m*h), (maxx*h,miny*m*h)]
 
-stdrangle, stdlambda, stdlambdabody, stdlambdaleg, lowerequal, upperequal :: Diagram Cairo
+stdrangle, stdlambda, stdlambdabody, stdlambdaleg, lowerequal, upperequal :: D
 
 stdrangle     = rangle     1 (3/2)
 stdlambda     = lambda     1 (3/2)
@@ -83,7 +86,7 @@ stdlambdaleg  = lambdaleg  1 (3/2)
 lowerequal    = equalsign  1 (3/2) 17 (7/3)
 upperequal    = equalsign  1 (3/2) 17 (13/3)
 
-logo :: Diagram Cairo
+logo :: D
 logo =     light   stdrangle
     `atop` lighter stdlambda
     `atop` light   lowerequal
@@ -92,8 +95,7 @@ logo =     light   stdrangle
         lighter = fc (sRGB 0.6 0.6 0.6)
 
 main :: IO ()
-main = renderDia Cairo opts logo
-  where opts = CairoOptions "hslogo.png" $ PNG (400, 400)
+main = defaultMain logo
 
 -- If we take the given vectors and put them in R^3 as (x,y,0),
 -- we are resulting in the z component of their cross product.
