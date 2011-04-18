@@ -75,17 +75,17 @@ instance Backend Cairo R2 where
     C.stroke
     C.restore
 
-  doRender _ options (C r) =
+  doRender _ options (C r) = do
     let surfaceF surface = C.renderWith surface r
         file = fileName options
-    in  case outputFormat options of
-          PNG (w,h) -> do
-            C.withImageSurface C.FormatARGB32 w h $ \surface -> do
-              surfaceF surface
-              C.surfaceWriteToPNG surface file
-          PS  (w,h) -> C.withPSSurface  file w h surfaceF
-          PDF (w,h) -> C.withPDFSurface file w h surfaceF
-          SVG (w,h) -> C.withSVGSurface file w h surfaceF
+    case outputFormat options of
+      PNG (w,h) -> do
+        C.withImageSurface C.FormatARGB32 w h $ \surface -> do
+          surfaceF surface
+          C.surfaceWriteToPNG surface file
+      PS  (w,h) -> C.withPSSurface  file w h surfaceF
+      PDF (w,h) -> C.withPDFSurface file w h surfaceF
+      SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
   -- Set the line width to 1 and line color to black (in case they
   -- were not set), freeze the diagram in its final form, and then do
