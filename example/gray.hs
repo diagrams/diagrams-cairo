@@ -1,13 +1,15 @@
-import Diagrams.Prelude
-import Diagrams.Backend.Cairo.CmdLine
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
-import Data.Colour.Names hiding (gray)
+import Diagrams.Prelude hiding (gray)
+import Diagrams.Backend.Cairo.CmdLine
 
 import Data.List.Split      (chunk)
 import Data.Maybe           (catMaybes)
 import Control.Applicative
 import Data.Monoid          (mconcat)
 import Data.List            (transpose)
+
+type D = Diagram Cairo R2
 
 gray 0 = [[]]
 gray n = map (False:) g ++ map (True:) (reverse g)
@@ -24,8 +26,8 @@ findEdges = catMaybes . (zipWith edge <*> tail)
   where edge (_,c1) (a,c2) | c1 /= c2  = Just a
                            | otherwise = Nothing
 
-mkRingsDia :: [[(Angle, Angle)]] -> Diagram Cairo
+mkRingsDia :: [[(Angle, Angle)]] -> D
 mkRingsDia = freeze . mconcat . zipWith mkRingDia [2,3..]
   where mkRingDia r = lw 1.05 . mconcat . map (stroke . scale r . uncurry arc)
 
-main = defaultMain $ rings 10
+main = defaultMain $ pad 1.1 (rings 10)
