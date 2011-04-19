@@ -26,6 +26,9 @@ s2 = (strokeT $ s <> (rotateBy (1/3) s))
 s3 = (strokeT $ s <> (rotateBy (1/3) s) <> (rotateBy (2/3) s))
    # centerXY
 
+str :: D
+str = strokeT $ fromOffsets [(1,0)]
+
 b1 = runBoundsTest square
 b2 = runBoundsTest circle
 b3 = runBoundsTest p
@@ -43,6 +46,7 @@ b14 = runBoundsTest (rotate (2*pi/3) ell)
 b15 = runBoundsTest s1
 b16 = runBoundsTest s2
 b17 = runBoundsTest s3
+b18 = runBoundsTest str
 
 runBoundsTest :: D -> D
 runBoundsTest = lw 0.05 . sampleBounds2D 100
@@ -58,4 +62,4 @@ sampleBounds2D n d = foldr (flip atop) (d # lc red) bs
           perp (x,y) = (-y,x)
           getBounds (Bounds f) = f
 
-main = defaultMain b3
+main = defaultMain b18
