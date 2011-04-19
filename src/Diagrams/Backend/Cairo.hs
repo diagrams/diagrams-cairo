@@ -96,9 +96,10 @@ instance Backend Cairo R2 where
     where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
           (w,h)   = getSize $ outputFormat opts
           (wd,hd) = size2D d'
-          xscale  = if wd == 0 then 1 else w / wd
-          yscale  = if hd == 0 then 1 else h / hd
-          s       = min xscale yscale
+          xscale  = w / wd
+          yscale  = h / hd
+          s       = let s' = min xscale yscale
+                    in  if isInfinite s' then 1 else s'
           tr      = (0.5 *. P (w,h)) .-. (s *. center2D d')
 
           getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
