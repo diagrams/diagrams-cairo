@@ -17,7 +17,6 @@ t = (polygonPath with {sides = 3, orientation = OrientToX})
 s :: Trail R2
 s = fromSegments [Cubic v1 v1 (v1 ^+^ v2)]
 
-
 s1 = (strokeT $ s)
    # centerXY
 
@@ -49,7 +48,7 @@ runBoundsTest :: D -> D
 runBoundsTest = lw 0.05 . sampleBounds2D 100
 
 sampleBounds2D :: Int -> D -> D
-sampleBounds2D n d = foldr atop d bs
+sampleBounds2D n d = foldr (flip atop) (d # lc red) bs
     where b  = getBounds (bounds d)
           bs :: [D]
           bs = [stroke $ mkLine (P $ s *^ v) (perp v) | v <- vs, let s = b v]
@@ -59,4 +58,4 @@ sampleBounds2D n d = foldr atop d bs
           perp (x,y) = (-y,x)
           getBounds (Bounds f) = f
 
-main = defaultMain b15
+main = defaultMain b3
