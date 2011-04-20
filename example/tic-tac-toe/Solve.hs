@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 module Solve where
 
 import Data.Array
@@ -5,8 +7,10 @@ import Data.Tree
 import Data.Function (on)
 import Data.List (groupBy, maximumBy)
 import Data.Maybe (isNothing, isJust)
+import Data.Monoid
 import Control.Applicative (liftA2)
 import Control.Arrow ((&&&))
+import Control.Monad (guard)
 
 data Player = X | O
   deriving (Show, Eq, Ord)
@@ -14,15 +18,15 @@ data Player = X | O
 next X = O
 next O = X
 
-data Result = Win Player Int -- ^ This player can win in n moves
-            | Cats           -- ^ Tie game
+data Result = Win Player Int [Loc] -- ^ This player can win in n moves
+            | Cats                 -- ^ Tie game
   deriving (Show, Eq)
 
 compareResultsFor :: Player -> (Result -> Result -> Ordering)
 compareResultsFor X = compare `on` resultToScore
-    where resultToScore (Win X n) = (1/(1+fromIntegral n))
-          resultToScore Cats      = 0
-          resultToScore (Win O n) = (-1/(1+fromIntegral n))
+    where resultToScore (Win X n _) = (1/(1+fromIntegral n))
+          resultToScore Cats        = 0
+          resultToScore (Win O n _) = (-1/(1+fromIntegral n))
 compareResultsFor O = flip (compareResultsFor X)
 
 type Loc = (Int,Int)
@@ -83,8 +87,8 @@ solveFor p = foldTree (solveStep p)
 --   outcome for p.
 solveStep :: Player -> Game -> [Tree (Game, Result)] -> Tree (Game, Result)
 solveStep p g@(Game brd curPlayer moves) conts
-  | isWin g        = Node (g, Win (next curPlayer) 0) []
-  | isFull g       = Node (g, Cats) []
+  | Just res <- gameOver g = Node (g, res) []
+
   | curPlayer == p = let c   = bestContFor p conts
                          res = inc . snd . rootLabel $ c
                      in  Node (g, res) [c]
@@ -97,20 +101,43 @@ bestResultFor :: Player -> [Tree (Game, Result)] -> Result
 bestResultFor p = inc . snd . rootLabel . bestContFor p
 
 inc :: Result -> Result
-inc (Win p n) = Win p (n+1)
-inc Cats      = Cats
+inc (Win p n ls) = Win p (n+1) ls
+inc Cats         = Cats
 
--- | Check whether a game is a win for some player.
-isWin :: Game -> Bool
-isWin (Game board _ _) = any isLine (rows ++ cols ++ diags)
-  where isLine = liftA2 (||) (all (== Just X)) (all (== Just O)) . map (board!)
-        rows   = [ [ (r,c) | c <- [0..2] ] | r <- [0..2] ]
-        cols   = [ [ (r,c) | r <- [0..2] ] | c <- [0..2] ]
-        diags  = [ [ (i,i) | i <- [0..2] ]
-                 , [ (i,2-i) | i <- [0..2] ]
-                 ]
+-- | Check whether the game is over, returning the result if it is.
+gameOver :: Game -> Maybe Result
+gameOver (Game board _ _)
+  = getFirst $ mconcat (map (checkWin board) threes) `mappend` checkCats board
 
--- | Check whether a game is full, i.e. there are no blank squares. If
---   'isWin' returns false and 'isFull' is true, it is a cats game.
-isFull :: Game -> Bool
-isFull (Game board _ _) = all isJust (elems board)
+checkWin :: Board -> [Loc] -> First Result
+checkWin board = First
+               . (>>= winAsResult)      -- Maybe Result
+               . mapM strength          -- Maybe [(Loc, Player)]
+               . map (id &&& (board!))  -- [(Loc, Maybe Player)]
+
+winAsResult :: [(Loc, Player)] -> Maybe Result
+winAsResult (unzip -> (ls,ps))
+  | Just p <- allEqual ps = Just (Win p 0 ls)
+winAsResult _ = Nothing
+
+checkCats :: Board -> First Result
+checkCats b | all isJust (elems b) = First (Just Cats)
+            | otherwise            = First Nothing
+
+allEqual :: Eq a => [a] -> Maybe a
+allEqual = foldr1 combine . map Just
+  where combine (Just x) (Just y) | x == y = Just x
+                                  | otherwise = Nothing
+        combine Nothing _         = Nothing
+        combine _ Nothing         = Nothing
+
+strength :: Functor f => (a, f b) -> f (a,b)
+strength (a, f) = fmap ((,) a) f
+
+threes :: [[Loc]]
+threes = rows ++ cols ++ diags
+  where rows     = [ [ (r,c) | c <- [0..2] ] | r <- [0..2] ]
+        cols     = [ [ (r,c) | r <- [0..2] ] | c <- [0..2] ]
+        diags    = [ [ (i,i) | i <- [0..2] ]
+                   , [ (i,2-i) | i <- [0..2] ]
+                   ]

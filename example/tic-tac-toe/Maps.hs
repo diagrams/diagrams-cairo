@@ -10,7 +10,7 @@ import Data.List.Split (chunk)
 import Data.Maybe (fromMaybe, catMaybes)
 import qualified Data.Map as M
 import Data.Tree
-import Control.Arrow (second, (&&&))
+import Control.Arrow (second, (&&&), (***))
 import Data.Array (assocs)
 
 import Solve
@@ -29,39 +29,69 @@ o = circle
   # scale 0.4
   # freeze
 
+-- | Render a list of lists of diagrams in a grid.
 grid :: [[D]] -> D
 grid = centerXY
      . vcat' with {catMethod = Distrib}
      . map (hcat' with {catMethod = Distrib})
 
-getMove (Node (Game _ _ (Move _ m : _), _) _) = m
+-- | Given a mapping from (r,c) locations (in a 3x3 grid) to diagrams,
+--   render them in a grid, surrounded by a square.
+renderGrid :: M.Map Loc D -> D
+renderGrid g
+  = (grid
+  . chunk 3
+  . map (fromMaybe (phantom x) . flip M.lookup g)
+  $ [ (r,c) | r <- [0..2], c <- [0..2] ])
 
-renderSolved :: Tree (Game, Result) -> D
-renderSolved (Node (Game board player1 moves, _)
-                [Node (Game board' player2 (Move _ loc : moves'), _) conts])
-    = renderGrid g
-  where g = M.fromList $
-              [(loc, renderPlayer player1 # lc red)] ++
-              ((map . second) renderPlayer . catMaybes . map strength . assocs $ board) ++
-              (map (getMove &&& (scale (1/3) . renderSolved)) $ conts)
+    `atop`
+    (square # lw 0.02 # scale 3 # freeze)
 
-renderSolved _ = error "renderSolved should be called on solved trees only"
+-- | Given a solved game tree, where the first move is being made by
+--   the player for whom the tree is solved, render a map of optimal play.
+renderSolvedP :: Tree (Game, Result) -> D
+renderSolvedP (Node (Game board _ _, _) [])   -- cats game, this player does not
+    = renderGrid  (curMoves board)            -- get another move
+renderSolvedP (Node (Game board player1 _, _)
+                    [g'@(Node (Game _ _ (Move _ loc : _), res) conts)])
+    = renderResult res <>    -- Draw a line through a win
+      renderGrid cur   <>    -- Draw the optimal move + current moves
+      renderOtherP g'        -- Recursively render responses to other moves
 
-strength :: Functor f => (a, f b) -> f (a,b)
-strength (a, f) = fmap ((,) a) f
+  where cur = M.singleton loc (renderPlayer player1 # lc red)  -- the optimal move
+              <> curMoves board                                -- current moves
+
+renderSolvedP _ = error "renderSolvedP should be called on solved trees only"
+
+-- | Given a solved game tree, where the first move is being made by the
+--   opponent of the player for whom the tree is solved, render a map of optimal
+--   play.
+renderOtherP :: Tree (Game, Result) -> D
+renderOtherP (Node _ conts)
+    -- just recursively render each game arising from an opponent's move in a grid.
+  = renderGrid . M.fromList . map (getMove &&& (scale (1/3) . renderSolvedP)) $ conts
+  where getMove (Node (Game _ _ (Move _ m : _), _) _) = m
+
+-- | Extract the current moves from a board.
+curMoves :: Board -> M.Map Loc D
+curMoves = M.fromList . (map . second) renderPlayer . catMaybes . map strength . assocs
+
+-- | Render a line through a win.
+renderResult :: Result -> D
+renderResult (Win _ 0 ls) = winLine # freeze
+  where winLine :: D
+        winLine = stroke (fromVertices (map (P . conv) ls))
+                          # lw 0.2
+                          # lc blue
+                          # lineCap LineCapRound
+        conv (r,c) = (fromIntegral $ c - 1, fromIntegral $ 1 - r)
+renderResult _ = mempty
 
 renderPlayer X = x
 renderPlayer O = o
 
-renderGrid :: M.Map Loc D -> D
-renderGrid g
-  = grid
-  . chunk 3
-  . map (fromMaybe (phantom x) . flip M.lookup g)
-  $ [ (r,c) | r <- [0..2], c <- [0..2] ]
+xMap = renderSolvedP . solveFor X $ gameTree
+oMap = renderOtherP  . solveFor O $ gameTree
 
-treeTake :: Int -> Tree a -> Tree a
-treeTake 0 (Node a _)  = Node a []
-treeTake n (Node a ts) = Node a (map (treeTake (n-1)) ts)
-
-main = defaultMain (pad 1.1 . renderSolved . solveFor X $ gameTree)
+main = -- defaultMain (pad 1.1 xMap)
+       defaultMain (pad 1.1 oMap)
