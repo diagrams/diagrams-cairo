@@ -50,8 +50,10 @@ renderGrid g
 -- | Given a solved game tree, where the first move is being made by
 --   the player for whom the tree is solved, render a map of optimal play.
 renderSolvedP :: Tree (Game, Result) -> D
-renderSolvedP (Node (Game board _ _, _) [])   -- cats game, this player does not
-    = renderGrid  (curMoves board)            -- get another move
+renderSolvedP (Node (Game _ p _, _) [])   -- cats game, this player does not
+    = renderPlayer (next p) # scale 3     -- get another move; instead of
+                                          -- recursively rendering this game
+                                          -- just render an X or an O
 renderSolvedP (Node (Game board player1 _, _)
                     [g'@(Node (Game _ _ (Move _ loc : _), res) conts)])
     = renderResult res <>    -- Draw a line through a win
@@ -93,5 +95,5 @@ renderPlayer O = o
 xMap = renderSolvedP . solveFor X $ gameTree
 oMap = renderOtherP  . solveFor O $ gameTree
 
-main = -- defaultMain (pad 1.1 xMap)
-       defaultMain (pad 1.1 oMap)
+main = defaultMain (pad 1.1 xMap)
+       -- defaultMain (pad 1.1 oMap)
