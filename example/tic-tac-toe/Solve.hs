@@ -8,24 +8,21 @@ import Data.Maybe (isNothing, isJust)
 import Control.Applicative (liftA2)
 import Control.Arrow ((&&&))
 
--- TODO:
---   Take the *shortest* path to a win!
-
 data Player = X | O
   deriving (Show, Eq, Ord)
 
 next X = O
 next O = X
 
-data Result = Win Player
-            | Cats
+data Result = Win Player Int -- ^ This player can win in n moves
+            | Cats           -- ^ Tie game
   deriving (Show, Eq)
 
 compareResultsFor :: Player -> (Result -> Result -> Ordering)
-compareResultsFor X = compare `on` resultToInt
-    where resultToInt (Win X) = 1
-          resultToInt Cats    = 0
-          resultToInt (Win O) = -1
+compareResultsFor X = compare `on` resultToScore
+    where resultToScore (Win X n) = (1/(1+fromIntegral n))
+          resultToScore Cats      = 0
+          resultToScore (Win O n) = (-1/(1+fromIntegral n))
 compareResultsFor O = flip (compareResultsFor X)
 
 type Loc = (Int,Int)
@@ -86,10 +83,10 @@ solveFor p = foldTree (solveStep p)
 --   outcome for p.
 solveStep :: Player -> Game -> [Tree (Game, Result)] -> Tree (Game, Result)
 solveStep p g@(Game brd curPlayer moves) conts
-  | isWin g        = Node (g, Win $ next curPlayer) []
+  | isWin g        = Node (g, Win (next curPlayer) 0) []
   | isFull g       = Node (g, Cats) []
   | curPlayer == p = let c   = bestContFor p conts
-                         res = snd . rootLabel $ c
+                         res = inc . snd . rootLabel $ c
                      in  Node (g, res) [c]
   | otherwise      = Node (g, bestResultFor (next p) conts) conts
 
@@ -97,7 +94,11 @@ bestContFor :: Player -> [Tree (Game, Result)] -> Tree (Game, Result)
 bestContFor p = maximumBy (compareResultsFor p `on` (snd . rootLabel))
 
 bestResultFor :: Player -> [Tree (Game, Result)] -> Result
-bestResultFor p = snd . rootLabel . bestContFor p
+bestResultFor p = inc . snd . rootLabel . bestContFor p
+
+inc :: Result -> Result
+inc (Win p n) = Win p (n+1)
+inc Cats      = Cats
 
 -- | Check whether a game is a win for some player.
 isWin :: Game -> Bool
