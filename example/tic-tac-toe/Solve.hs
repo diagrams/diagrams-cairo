@@ -1,4 +1,4 @@
-module SolveTicTacToe where
+module Solve where
 
 import Data.Array
 import Data.Tree

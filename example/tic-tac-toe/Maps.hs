@@ -6,7 +6,7 @@
 import Diagrams.Prelude hiding (Result)
 import Diagrams.Backend.Cairo.CmdLine
 
-import SolveTicTacToe
+import Solve
 
 type D = Diagram Cairo R2
 
