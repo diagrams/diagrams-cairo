@@ -8,6 +8,9 @@ import Data.Maybe (isNothing, isJust)
 import Control.Applicative (liftA2)
 import Control.Arrow ((&&&))
 
+-- TODO:
+--   Take the *shortest* path to a win!
+
 data Player = X | O
   deriving (Show, Eq, Ord)
 
