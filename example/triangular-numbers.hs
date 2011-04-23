@@ -84,4 +84,5 @@ law4Dia = exampleRow law4' [2..4]
 
 -- showOrigin = ((circle # fc red) `atop`)
 
-main = defaultMain (pad 1.05 $ (law4Dia # centerXY))
+main = defaultMain (pad 1.05 $ vcat' with {sep=5} . map centerXY $
+                             [law1Dia, law2Dia, law3Dia, law4Dia])
