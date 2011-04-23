@@ -115,7 +115,7 @@ waitForChange lastAttempt opts prog args = do
     hSetBuffering stdout NoBuffering
     go lastAttempt
   where go lastAtt = do
-          threadDelay (floor 1e6 * interval opts)
+          threadDelay (1000000 * interval opts)
           -- putStrLn $ "Checking... (last attempt = " ++ show lastAttempt ++ ")"
           (newBin, newAttempt) <- recompile lastAtt prog
           if newBin
