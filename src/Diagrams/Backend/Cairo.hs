@@ -23,14 +23,13 @@ module Diagrams.Backend.Cairo
   , OutputFormat(..) -- output format options
   ) where
 
-import qualified Graphics.Rendering.Cairo as C
-import qualified Graphics.Rendering.Cairo.Matrix as CM
-
-import Diagrams.Prelude
-
 import Graphics.Rendering.Diagrams.Transform
 
+import Diagrams.Prelude
 import Diagrams.TwoD.Ellipse
+
+import qualified Graphics.Rendering.Cairo as C
+import qualified Graphics.Rendering.Cairo.Matrix as CM
 
 import Control.Monad (when)
 import Data.Maybe (catMaybes)
