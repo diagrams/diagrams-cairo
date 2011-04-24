@@ -7,7 +7,7 @@ import Data.VectorSpace
 type D = Diagram Cairo R2
 
 sq :: D
-sq = stroke (arc (pi / 2) pi) `atop` translate (-0.5, 0.5) square
+sq = (lw 1 . stroke $ arc (pi / 2) pi) `atop` (translate (-0.5, 0.5) . lw 0.5 $ square)
 
 phi :: Double
 phi = (1 + sqrt 5) / 2
@@ -24,7 +24,7 @@ besideAlign u v a b = beside u b' a
         d = (ba v - bb v)
 
 golden :: D
-golden = foldr1 step (replicate 10 sq) # lw 0.005
+golden = pad 1.05 . freeze . scale 100 $ foldr1 step (replicate 10 sq)
 
 main :: IO ()
 main = defaultMain golden
