@@ -1,6 +1,8 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
+import Diagrams.TwoD.Align  -- for abbreviations
+
 fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 
 thick = 0.15
@@ -43,22 +45,20 @@ paradox n = sq ||| strutX s2 ||| rect
 
         sqShapes = (traps # centerY) ||| (tris # centerY)
                  # centerXY
-        traps = (trap2 # alignLeft
+        traps = (trap2 # aL
                        # translateY (s1 - s2))
                 <>
                 trap1
-        tris  = (tri1 # alignBottom # alignLeft)
+        tris  = (tri1 # aBL)
              <> (tri2 # rotateBy (1/2)
-                      # alignBottom # alignLeft)
+                      # aBL)
 
         rect = rDiags <> grid (2*f2 + f1) f2 <> rShapes
-        rShapes = ((bot # alignLeft # alignTop)
-               <> (top # alignLeft # alignTop))
+        rShapes = ((bot # aTL)
+               <>  (top # aTL))
                   # centerXY
-        bot = (trap1 # alignBottom) |||
-                  (rotateBy (-1/4) tri1 # alignBottom)
-        top = (rotateBy (1/4) tri2 # alignTop) |||
-                  (trap2 # alignTop)
+        bot = (trap1 # aB) ||| (rotateBy (-1/4) tri1 # aB)
+        top = (rotateBy (1/4) tri2 # aT) ||| (trap2 # aT)
 
         rDiags = (fromVertices [P (0,s2), P (2*s2+s1, 0)] <>
                   fromVertices [P (s2,0), P (s2,s1)] <>
