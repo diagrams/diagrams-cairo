@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.CmdLine
@@ -39,14 +39,18 @@ import System.Time         (ClockTime, getClockTime)
 import Control.Concurrent  (threadDelay)
 import Control.Exception   (catch, SomeException(..), bracket)
 
+#ifdef CMDLINELOOP
 import System.Posix.Process (executeFile)
+#endif
 
 data DiagramOpts = DiagramOpts
                    { width     :: Int
                    , height    :: Int
                    , output    :: FilePath
                    , selection :: Maybe String
+#ifdef CMDLINELOOP 
                    , loop      :: Bool
+#endif
                    , interval  :: Int
                    }
   deriving (Show, Data, Typeable)
@@ -68,10 +72,10 @@ diagramOpts prog sel = DiagramOpts
   , selection = def
               &= help "Name of the diagram to render"
               &= (if sel then typ "NAME" else ignore)
-
+#ifdef CMDLINELOOP
   , loop = False
             &= help "Run in a self-recompiling loop"
-
+#endif
   , interval = 1 &= typ "SECONDS"
                  &= help "When running in a loop, check for changes every n seconds."
   }
@@ -84,7 +88,9 @@ defaultMain d = do
   args <- getArgs
   opts <- cmdArgs (diagramOpts prog False)
   chooseRender opts d
+#ifdef CMDLINELOOP
   when (loop opts) (waitForChange Nothing opts prog args)
+#endif
 
 chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
 chooseRender opts d = do
@@ -110,6 +116,7 @@ multiMain ds = do
       Nothing -> putStrLn $ "Unknown diagram: " ++ sel
       Just d  -> chooseRender opts d
 
+#ifdef CMDLINELOOP
 waitForChange :: Maybe ClockTime -> DiagramOpts -> String -> [String] -> IO ()
 waitForChange lastAttempt opts prog args = do
     hSetBuffering stdout NoBuffering
@@ -154,3 +161,5 @@ recompile lastAttempt prog = do
 
  where getModTime f = catch (Just <$> getModificationTime f)
                             (\(SomeException _) -> return Nothing)
+       prog' = reverse . drop 4 . reverse . stripProg $ prog
+#endif
