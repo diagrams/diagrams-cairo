@@ -161,5 +161,4 @@ recompile lastAttempt prog = do
 
  where getModTime f = catch (Just <$> getModificationTime f)
                             (\(SomeException _) -> return Nothing)
-       prog' = reverse . drop 4 . reverse . stripProg $ prog
 #endif
