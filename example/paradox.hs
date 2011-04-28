@@ -1,3 +1,4 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
@@ -20,7 +21,7 @@ trap s1 s2 = lw 0 . strokeT . close
 tri s1 s2  = lw 0 .  strokeT . close
            $ fromOffsets [(s1,0), (0,s1+s2)]
 
-paradox n = sq ||| strutX s2 ||| rect
+paradox n drawDiags = sq ||| strutX s2 ||| rect
   where f1 = fibs !! n
         f2 = fibs !! (n+1)
         s1 = fromIntegral f1
@@ -33,7 +34,9 @@ paradox n = sq ||| strutX s2 ||| rect
         tri1  = tri s1 s2  # fc red
         tri2  = tri s1 s2  # fc blue
 
-        sq = sqDiags <> grid (f1+f2) (f1+f2) <> sqShapes
+        sq = (if drawDiags then sqDiags else mempty)
+             <> grid (f1+f2) (f1+f2)
+             <> sqShapes
         sqDiags = (fromVertices [P (0,s2), P (s2,s1)] <>
                    fromVertices [P (s2,0), P (s2,s1+s2)] <>
                    fromVertices [P (s2,0), P (s1+s2,s1+s2)])
@@ -51,7 +54,9 @@ paradox n = sq ||| strutX s2 ||| rect
              <> tri2 # rotateBy (1/2)
                      # aBL
 
-        rect = rDiags <> grid (2*f2 + f1) f2 <> rShapes
+        rect = (if drawDiags then rDiags else mempty)
+               <> grid (2*f2 + f1) f2
+               <> rShapes
 
         rShapes = (bot # aTL <> top # aTL) # centerXY
         bot = trap1 # aB ||| rotateBy (-1/4) tri1 # aB
@@ -67,6 +72,6 @@ paradox n = sq ||| strutX s2 ||| rect
                  # freeze
                  # centerXY
 
-dia = paradox 4
+dia = paradox 4 True
 
 main = defaultMain (pad 1.1 dia)
