@@ -35,7 +35,7 @@ renderHanoi :: Hanoi -> D
 renderHanoi h = s # moveOriginTo p
   where stacks   = map (named "peg" . renderStack) h
         s        = hcat' with {catMethod = Distrib, sep = 7} stacks
-        Just [p] = lookupN (mid |> toName "peg") $ names s
+        Just [p] = lookupN (mid ||> "peg") $ names s
         mid      = length stacks `div` 2
 
 solveHanoi :: Int -> [Move]
