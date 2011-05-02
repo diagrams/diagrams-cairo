@@ -33,10 +33,10 @@ renderStack s = disks `atop` post
 
 renderHanoi :: Hanoi -> D
 renderHanoi h = s # moveOriginTo p
-  where stacks   = map renderStack h
-        stacks'  = modList (length stacks `div` 2) (named "CenterPeg") stacks
-        s        = hcat' with {catMethod = Distrib, sep = 7} stacks'
-        Just [p] = lookupN "CenterPeg" $ names s
+  where stacks   = map (named "peg" . renderStack) h
+        s        = hcat' with {catMethod = Distrib, sep = 7} stacks
+        Just [p] = lookupN (mid |> toName "peg") $ names s
+        mid      = length stacks `div` 2
 
 solveHanoi :: Int -> [Move]
 solveHanoi n = solveHanoi' n 0 1 2
