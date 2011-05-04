@@ -17,17 +17,19 @@ t = (polygonPath with {sides = 3, orientation = OrientToX})
 
 seg = Cubic v1 v1 (v1 ^+^ v2)
 
-path = scale 5 . close $ fromSegments [seg]
+path = translate (3,4) . rotateBy (-1/200) . scale 5 . close $ fromSegments [seg]
 
 dot c = circle # fc c
                # lw 0
-               # scale 0.1
+               # scale 0.03
 
 points = mconcat [ if (isInsideWinding p path) then dot red # moveTo p else mempty
                  | x <- range
                  , y <- range
                  , let p = P (x,y)
                  ]
-  where range = [-10, -9.8 .. 10]
+  where range = [-5, -4.9 .. 5]
 
-main = defaultMain (points <> stroke path # lw 0.05)
+main = do
+  print path
+  defaultMain (points <> stroke path # lw 0.05)
