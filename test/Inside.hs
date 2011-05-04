@@ -9,8 +9,15 @@ import qualified Data.Set as S
 
        -- polygonPath with {sides=8}
 
-path = close . fromOffsets $ [(0,10), (3,0), (0, -8), (2,0), (0,2), (-4,0), (0, 3)
-                             ,(9, 0), (0, -7)]
+-- path = close . fromOffsets $ [(0,10), (3,0), (0, -8), (2,0), (0,2), (-4,0), (0, 3)
+--                              ,(9, 0), (0, -7)]
+
+t = (polygonPath with {sides = 3, orientation = OrientToX})
+[v1,v2] = trailOffsets t
+
+seg = Cubic v1 v1 (v1 ^+^ v2)
+
+path = scale 5 . close $ fromSegments [seg]
 
 dot c = circle # fc c
                # lw 0
@@ -23,4 +30,4 @@ points = mconcat [ if (isInsideWinding p path) then dot red # moveTo p else memp
                  ]
   where range = [-10, -9.8 .. 10]
 
-main = defaultMain (points <> stroke path)
+main = defaultMain (points <> stroke path # lw 0.05)
