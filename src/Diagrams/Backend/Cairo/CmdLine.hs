@@ -25,6 +25,7 @@ import System.Console.CmdArgs.Implicit hiding (args)
 
 import Prelude hiding      (catch)
 
+import Data.Maybe          (fromMaybe)
 import Control.Applicative ((<$>))
 import Control.Monad       (when)
 import Data.List.Split
@@ -48,10 +49,11 @@ data DiagramOpts = DiagramOpts
                    , height    :: Int
                    , output    :: FilePath
                    , selection :: Maybe String
-#ifdef CMDLINELOOP 
+#ifdef CMDLINELOOP
                    , loop      :: Bool
-#endif
+                   , src       :: Maybe String
                    , interval  :: Int
+#endif
                    }
   deriving (Show, Data, Typeable)
 
@@ -75,9 +77,12 @@ diagramOpts prog sel = DiagramOpts
 #ifdef CMDLINELOOP
   , loop = False
             &= help "Run in a self-recompiling loop"
-#endif
+  , src  = def
+            &= typFile
+            &= help "Source file to watch"
   , interval = 1 &= typ "SECONDS"
                  &= help "When running in a loop, check for changes every n seconds."
+#endif
   }
   &= summary "Command-line diagram generation."
   &= program prog
@@ -124,7 +129,7 @@ waitForChange lastAttempt opts prog args = do
   where go lastAtt = do
           threadDelay (1000000 * interval opts)
           -- putStrLn $ "Checking... (last attempt = " ++ show lastAttempt ++ ")"
-          (newBin, newAttempt) <- recompile lastAtt prog
+          (newBin, newAttempt) <- recompile lastAtt prog (src opts)
           if newBin
             then executeFile prog False args Nothing
             else go $ getFirst (First newAttempt <> First lastAtt)
@@ -137,10 +142,10 @@ waitForChange lastAttempt opts prog args = do
 --   of this attempt.  Otherwise (if nothing has changed since the
 --   last attempt), return @Nothing@.  Also return a Bool saying
 --   whether a successful recompilation happened.
-recompile :: Maybe ClockTime -> String -> IO (Bool, Maybe ClockTime)
-recompile lastAttempt prog = do
+recompile :: Maybe ClockTime -> String -> Maybe String -> IO (Bool, Maybe ClockTime)
+recompile lastAttempt prog mSrc = do
   let errFile = prog ++ ".errors"
-      srcFile = prog ++ ".hs"          -- XXX make this into an option?
+      srcFile = fromMaybe (prog ++ ".hs") mSrc
   binT <- maybe (getModTime prog) (return . Just) lastAttempt
   srcT <- getModTime srcFile
   if (srcT > binT)
