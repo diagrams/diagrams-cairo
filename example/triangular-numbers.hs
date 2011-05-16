@@ -36,31 +36,31 @@ law1 n c1 c2 = law3 1 n c1 c2
 law2 n c1 c2 = top === strutY rowSpc === (base `atop` mid)
   where base = row 2 n 1 c1
              # centerX
-             # alignBottom
+             # alignB
         mid  = row 1 n 0 c1
              # reflectY
              # centerX
-             # alignBottom
+             # alignB
         top  = tri c2 (n+1)
              # centerX
 
 -- (2k+1)T(n) + T(kn - 1) = T((k+1)n)
 law3 k n c1 c2 = top === strutY rowSpc === (mid `atop` base)
   where base = row (k+1) n 0 c1 # centerX
-                                # alignBottom
+                                # alignB
         mid  = row k n 0 c1 # reflectY
                             # centerX
-                            # alignBottom
+                            # alignB
                             # translateY (2 + rowSpc)
         top  = tri c2 (k*n - 1) # centerX
 
 -- T(n) T(k) + T(n-1) T(k-1) = T(nk)
 law4 k n c1 c2 = vcat' with {sep = rowSpc} (map tRow [1..k])
-  where tRow k = (row k n 0 c1 # centerX # alignTop)
+  where tRow k = (row k n 0 c1 # centerX # alignT)
                 `atop`
-                 (row (k-1) (n-1) 1 c2 # reflectY # centerX # alignTop)
+                 (row (k-1) (n-1) 1 c2 # reflectY # centerX # alignT)
 
-exampleRow f = hcat' with {sep = 4} . map (alignBottom . f)
+exampleRow f = hcat' with {sep = 4} . map (alignB . f)
 
 law1Dia = exampleRow law1' [2..4]
   where law1' n = law1 n blue red

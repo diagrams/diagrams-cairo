@@ -23,13 +23,13 @@ renderDisk n = square
 renderStack :: Stack -> D
 renderStack s = disks `atop` post
   where disks = (vcat . map renderDisk $ s)
-                # alignBottom
+                # alignB
         post  = square
                 # scaleY 6
                 # scaleX 0.8
                 # lw 0
                 # fc saddlebrown
-                # alignBottom
+                # alignB
 
 renderHanoi :: Hanoi -> D
 renderHanoi = hcat' with {catMethod = Distrib, sep = 7} . map renderStack
