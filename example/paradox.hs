@@ -47,20 +47,20 @@ paradox n drawDiags = sq ||| strutX s2 ||| rect
 
         sqShapes = (traps # centerY ||| tris # centerY)
                  # centerXY
-        traps = trap2 # aL
+        traps = trap2 # alignL
                       # translateY (s1 - s2)
              <> trap1
-        tris  = tri1 # aBL
+        tris  = tri1 # alignBL
              <> tri2 # rotateBy (1/2)
-                     # aBL
+                     # alignBL
 
         rect = (if drawDiags then rDiags else mempty)
                <> grid (2*f2 + f1) f2
                <> rShapes
 
-        rShapes = (bot # aTL <> top # aTL) # centerXY
-        bot = trap1 # aB ||| rotateBy (-1/4) tri1 # aB
-        top = rotateBy (1/4) tri2 # aT ||| trap2 # aT
+        rShapes = (bot # alignTL <> top # alignTL) # centerXY
+        bot = trap1 # alignB ||| rotateBy (-1/4) tri1 # alignB
+        top = rotateBy (1/4) tri2 # alignT ||| trap2 # alignT
 
         rDiags = (fromVertices [P (0,s2), P (2*s2+s1, 0)] <>
                   fromVertices [P (s2,0), P (s2,s1)] <>
