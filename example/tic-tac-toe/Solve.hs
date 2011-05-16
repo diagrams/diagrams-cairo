@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE PatternGuards, ViewPatterns #-}
 
 module Solve where
 
