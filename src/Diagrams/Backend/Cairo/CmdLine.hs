@@ -59,13 +59,13 @@ data DiagramOpts = DiagramOpts
 
 diagramOpts :: String -> Bool -> DiagramOpts
 diagramOpts prog sel = DiagramOpts
-  { width =  100
+  { width =  400
              &= typ "INT"
-             &= help "Desired width of the output image"
+             &= help "Desired width of the output image (default 400)"
 
-  , height = 100
+  , height = 400
               &= typ "INT"
-              &= help "Desired height of the output image"
+              &= help "Desired height of the output image (default 400)"
 
   , output = def
            &= typFile
