@@ -1,5 +1,5 @@
 Name:                diagrams-cairo
-Version:             0.1
+Version:             0.2
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         This package provides a modular backend for rendering
                      diagrams created with the diagrams EDSL using the 
