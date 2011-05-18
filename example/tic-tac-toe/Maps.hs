@@ -6,7 +6,7 @@
 import Diagrams.Prelude hiding (Result)
 import Diagrams.Backend.Cairo.CmdLine
 
-import Data.List.Split (chunk)
+import Data.List.Split (chunk)                   -- cabal install split
 import Data.Maybe (fromMaybe, catMaybes)
 import qualified Data.Map as M
 import Data.Tree
@@ -30,22 +30,22 @@ o = circle
   # freeze
 
 -- | Render a list of lists of diagrams in a grid.
-grid :: [[D]] -> D
-grid = centerXY
-     . vcat' with {catMethod = Distrib}
-     . map (hcat' with {catMethod = Distrib})
+grid :: Double -> [[D]] -> D
+grid s = centerXY
+       . vcat' with {catMethod = Distrib, sep = s}
+       . map (hcat' with {catMethod = Distrib, sep = s})
 
 -- | Given a mapping from (r,c) locations (in a 3x3 grid) to diagrams,
 --   render them in a grid, surrounded by a square.
 renderGrid :: M.Map Loc D -> D
 renderGrid g
-  = (grid
+  = (grid 1
   . chunk 3
   . map (fromMaybe (phantom x) . flip M.lookup g)
   $ [ (r,c) | r <- [0..2], c <- [0..2] ])
 
     `atop`
-    (square # lw 0.02 # scale 3 # freeze)
+    square # lw 0.02 # scale 3 # freeze
 
 -- | Given a solved game tree, where the first move is being made by
 --   the player for whom the tree is solved, render a map of optimal play.
