@@ -2,8 +2,6 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
-import Diagrams.TwoD.Align  -- for abbreviations
-
 fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 
 thick = 0.15
