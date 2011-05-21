@@ -3,6 +3,7 @@
            , FlexibleInstances
            , FlexibleContexts
            , TypeSynonymInstances
+           , DeriveDataTypeable
   #-}
 
 -----------------------------------------------------------------------------
@@ -37,9 +38,12 @@ import Data.Maybe (catMaybes)
 import Data.Monoid
 import qualified Data.Foldable as F
 
+import Data.Typeable
+
 -- | This data declaration is simply used as a token to distinguish
 --   this rendering engine.
 data Cairo = Cairo
+  deriving (Eq,Ord,Read,Show,Typeable)
 
 -- | Cairo is able to output to several file formats, which each have
 --   their own associated properties that affect the output.
