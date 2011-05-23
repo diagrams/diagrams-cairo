@@ -64,7 +64,7 @@ instance Monoid (Render Cairo R2) where
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (C.Render ())
-  type Result  Cairo R2 = IO ()
+  type Result  Cairo R2 = (IO (), C.Render ())
   data Options Cairo R2 = CairoOptions
           { fileName     :: String       -- ^ the name of the file you want generated
           , outputFormat :: OutputFormat -- ^ the output format and associated options
@@ -78,17 +78,18 @@ instance Backend Cairo R2 where
     C.stroke
     C.restore
 
-  doRender _ options (C r) = do
-    let surfaceF surface = C.renderWith surface r
-        file = fileName options
-    case outputFormat options of
-      PNG (w,h) -> do
-        C.withImageSurface C.FormatARGB32 w h $ \surface -> do
-          surfaceF surface
-          C.surfaceWriteToPNG surface file
-      PS  (w,h) -> C.withPSSurface  file w h surfaceF
-      PDF (w,h) -> C.withPDFSurface file w h surfaceF
-      SVG (w,h) -> C.withSVGSurface file w h surfaceF
+  doRender _ options (C r) = (renderIO, r)
+    where renderIO = do
+            let surfaceF s = C.renderWith s r
+                file = fileName options
+            case outputFormat options of
+              PNG (w,h) -> do
+                C.withImageSurface C.FormatARGB32 w h $ \surface -> do
+                  surfaceF surface
+                  C.surfaceWriteToPNG surface file
+              PS  (w,h) -> C.withPSSurface  file w h surfaceF
+              PDF (w,h) -> C.withPDFSurface file w h surfaceF
+              SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
   -- Set the line width to 0.01 and line color to black (in case they
   -- were not set), freeze the diagram in its final form, and then do

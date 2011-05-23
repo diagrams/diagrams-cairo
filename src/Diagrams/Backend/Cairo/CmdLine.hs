@@ -108,7 +108,7 @@ chooseRender opts d = do
                  "pdf" -> PDF (fromIntegral $ width opts, fromIntegral $ height opts)
                  "svg" -> SVG (fromIntegral $ width opts, fromIntegral $ height opts)
                  _     -> PDF (fromIntegral $ width opts, fromIntegral $ height opts)
-           renderDia Cairo (CairoOptions (output opts) outfmt) d
+           fst $ renderDia Cairo (CairoOptions (output opts) outfmt) d
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
 multiMain :: [(String, Diagram Cairo R2)] -> IO ()
