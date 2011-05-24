@@ -98,7 +98,7 @@ defaultMain d = do
 #endif
 
 chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
-chooseRender opts d = do
+chooseRender opts d =
   case splitOn "." (output opts) of
     [""] -> putStrLn "No output file given."
     ps | last ps `elem` ["png", "ps", "pdf", "svg"] -> do

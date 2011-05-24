@@ -83,7 +83,7 @@ instance Backend Cairo R2 where
             let surfaceF s = C.renderWith s r
                 file = fileName options
             case outputFormat options of
-              PNG (w,h) -> do
+              PNG (w,h) ->
                 C.withImageSurface C.FormatARGB32 w h $ \surface -> do
                   surfaceF surface
                   C.surfaceWriteToPNG surface file
@@ -115,7 +115,7 @@ renderC :: (Renderable a Cairo, V a ~ R2) => a -> C.Render ()
 renderC a = case (render Cairo a) of C r -> r
 
 cairoStyle :: Style -> C.Render ()
-cairoStyle s = foldr (>>) (return ())
+cairoStyle s = sequence_
              . catMaybes $ [ handle fColor
                            , handle lColor  -- see Note [color order]
                            , handle lWidth
@@ -132,13 +132,13 @@ cairoStyle s = foldr (>>) (return ())
         lColor (LineColor (SomeColor c)) = do
           let (r,g,b,a) = colorToRGBA c
           C.setSourceRGBA r g b a
-        lWidth (LineWidth w) = do
+        lWidth (LineWidth w) =
           C.setLineWidth w
-        lCap lcap = do
+        lCap lcap =
           C.setLineCap (fromLineCap lcap)
-        lJoin lj = do
+        lJoin lj =
           C.setLineJoin (fromLineJoin lj)
-        lDashing (Dashing ds offs) = do
+        lDashing (Dashing ds offs) =
           C.setDash ds offs
 
 cairoTransf :: Transformation R2 -> C.Render ()
@@ -186,7 +186,7 @@ instance Renderable (Segment R2) Cairo where
 instance Renderable (Trail R2) Cairo where
   render _ (Trail segs c) = C $ do
     mapM_ renderC segs
-    when c $ C.closePath
+    when c C.closePath
 
 instance Renderable (Path R2) Cairo where
   render _ (Path trs) = C $ C.newPath >> F.mapM_ renderTrail trs
