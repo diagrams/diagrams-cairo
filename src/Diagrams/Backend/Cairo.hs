@@ -169,7 +169,7 @@ instance Renderable Ellipse Cairo where
   render _ ell = C $ do
     let P (xc,yc) = ellipseCenter ell
         (xs,ys)   = ellipseScale ell
-        th        = ellipseAngle ell
+        Rad th    = ellipseAngle ell
     C.newPath
     C.save
     C.translate xc yc
