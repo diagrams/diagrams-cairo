@@ -4,6 +4,7 @@
            , FlexibleContexts
            , TypeSynonymInstances
            , DeriveDataTypeable
+           , ViewPatterns
   #-}
 
 -----------------------------------------------------------------------------
@@ -125,20 +126,17 @@ cairoStyle s = sequence_
                            ]
   where handle :: (AttributeClass a) => (a -> C.Render ()) -> Maybe (C.Render ())
         handle f = f `fmap` getAttr s
-        fColor (FillColor (SomeColor c)) = do
-          let (r,g,b,a) = colorToRGBA c
+        fColor c = do
+          let (r,g,b,a) = colorToRGBA . getFillColor $ c
           C.setSourceRGBA r g b a
           C.fillPreserve
-        lColor (LineColor (SomeColor c)) = do
-          let (r,g,b,a) = colorToRGBA c
+        lColor c = do
+          let (r,g,b,a) = colorToRGBA . getLineColor $ c
           C.setSourceRGBA r g b a
-        lWidth (LineWidth w) =
-          C.setLineWidth w
-        lCap lcap =
-          C.setLineCap (fromLineCap lcap)
-        lJoin lj =
-          C.setLineJoin (fromLineJoin lj)
-        lDashing (Dashing ds offs) =
+        lWidth = C.setLineWidth . getLineWidth
+        lCap   = C.setLineCap . fromLineCap . getLineCap
+        lJoin  = C.setLineJoin . fromLineJoin . getLineJoin
+        lDashing (getDashing -> Dashing ds offs) =
           C.setDash ds offs
 
 cairoTransf :: Transformation R2 -> C.Render ()
