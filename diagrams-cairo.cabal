@@ -30,7 +30,7 @@ Library
                        diagrams-core >= 0.2 && < 0.3,
                        diagrams-lib >= 0.2 && < 0.3,
                        cairo >= 0.10.1 && < 0.13,
-                       cmdargs >= 0.6 && < 0.7,
+                       cmdargs >= 0.6 && < 0.8,
                        split >= 0.1.2 && < 0.2
   if !os(windows)
     cpp-options: -DCMDLINELOOP
