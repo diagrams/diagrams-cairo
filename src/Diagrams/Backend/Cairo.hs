@@ -188,6 +188,6 @@ instance Renderable (Trail R2) Cairo where
 
 instance Renderable (Path R2) Cairo where
   render _ (Path trs) = C $ C.newPath >> F.mapM_ renderTrail trs
-    where renderTrail (tr, P p) = do
+    where renderTrail (P p, tr) = do
             uncurry C.moveTo p
             renderC tr
