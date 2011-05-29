@@ -33,6 +33,7 @@ import Diagrams.TwoD.Ellipse
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
+import Control.Applicative ((<$>))
 import Control.Monad (when)
 import Data.Maybe (catMaybes)
 
@@ -128,11 +129,17 @@ cairoStyle s = sequence_
         handle f = f `fmap` getAttr s
         fColor c = do
           let (r,g,b,a) = colorToRGBA . getFillColor $ c
-          C.setSourceRGBA r g b a
+          let a' = case getOpacity <$> getAttr s of
+                     Nothing -> a
+                     Just d  -> a * d
+          C.setSourceRGBA r g b a'
           C.fillPreserve
         lColor c = do
           let (r,g,b,a) = colorToRGBA . getLineColor $ c
-          C.setSourceRGBA r g b a
+          let a' = case getOpacity <$> getAttr s of
+                     Nothing -> a
+                     Just d  -> a * d
+          C.setSourceRGBA r g b a'
         lWidth = C.setLineWidth . getLineWidth
         lCap   = C.setLineCap . fromLineCap . getLineCap
         lJoin  = C.setLineJoin . fromLineJoin . getLineJoin
