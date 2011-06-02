@@ -74,6 +74,7 @@ instance Backend Cairo R2 where
 
   withStyle _ s t (C r) = C $ do
     C.save
+    doClip s
     r
     cairoTransf t
     cairoStyle s
@@ -116,7 +117,12 @@ instance Backend Cairo R2 where
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> C.Render ()
 renderC a = case (render Cairo a) of C r -> r
 
-cairoStyle :: Style -> C.Render ()
+doClip :: Style v -> C.Render ()
+doClip s = case getAttr s of
+  Just (Clip ps) -> mapM_ (\p -> renderC p >> C.clip) ps
+  Nothing -> return ()
+
+cairoStyle :: Style v -> C.Render ()
 cairoStyle s = sequence_
              . catMaybes $ [ handle fColor
                            , handle lColor  -- see Note [color order]
