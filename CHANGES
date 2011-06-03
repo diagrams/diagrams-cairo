@@ -6,3 +6,13 @@
 
 0.1.2: 18 May 2011
   * link to new website
+
+0.2: 3 June 2011
+
+  * add Typeable and other instances for Cairo type
+
+  * generalize Result type to (IO (), Render ()), so programs that
+    don't want to generate a file but just want a Render operation
+    (e.g. to use to paint a gtk window) can use the second component.
+
+  * add support for opacity attribute and path clipping
