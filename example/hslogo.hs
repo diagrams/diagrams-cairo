@@ -33,7 +33,7 @@
    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
    POSSIBILITY OF SUCH DAMAGE. -}
 
-import Diagrams.Prelude
+import Diagrams.Prelude hiding (intersection)
 
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.CmdLine
