@@ -29,6 +29,8 @@ import Graphics.Rendering.Diagrams.Transform
 
 import Diagrams.Prelude
 import Diagrams.TwoD.Ellipse
+import Diagrams.TwoD.Path (Clip(..))
+import Diagrams.TwoD.Text (Text(..), getFontSize)
 
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
@@ -74,10 +76,10 @@ instance Backend Cairo R2 where
 
   withStyle _ s t (C r) = C $ do
     C.save
-    doClip s
+    cairoMiscStyle s
     r
     cairoTransf t
-    cairoStyle s
+    cairoStrokeStyle s
     C.stroke
     C.restore
 
@@ -94,10 +96,14 @@ instance Backend Cairo R2 where
               PDF (w,h) -> C.withPDFSurface file w h surfaceF
               SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
-  -- Set the line width to 0.01 and line color to black (in case they
-  -- were not set), freeze the diagram in its final form, and then do
+  -- XXX todo, move most of this into diagrams-core!
+  -- Set some default attributes (in case they have not been set):
+  --   * Line width 0.01
+  --   * Line color black
+  --   * Font size 1
+  -- Then freeze the diagram in its final form, and then do
   -- final adjustments to make it fit the requested size.
-  adjustDia _ opts d = d' # lw 0.01 # lc black # freeze
+  adjustDia _ opts d = d' # lw 0.01 # lc black # fontSize 1 # freeze
                           # scale s
                           # translate tr
     where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
@@ -117,20 +123,27 @@ instance Backend Cairo R2 where
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> C.Render ()
 renderC a = case (render Cairo a) of C r -> r
 
-doClip :: Style v -> C.Render ()
-doClip s = case getAttr s of
-  Just (Clip ps) -> mapM_ (\p -> renderC p >> C.clip) ps
-  Nothing -> return ()
+cairoMiscStyle :: Style v -> C.Render ()
+cairoMiscStyle s =
+  sequence_
+  . catMaybes $ [ handle clip
+                , handle fSize
+                ]
+  where handle :: (AttributeClass a) => (a -> C.Render ()) -> Maybe (C.Render ())
+        handle f = f `fmap` getAttr s
+        clip  = mapM_ (\p -> renderC p >> C.clip) . getClip
+        fSize = C.setFontSize . getFontSize
 
-cairoStyle :: Style v -> C.Render ()
-cairoStyle s = sequence_
-             . catMaybes $ [ handle fColor
-                           , handle lColor  -- see Note [color order]
-                           , handle lWidth
-                           , handle lCap
-                           , handle lJoin
-                           , handle lDashing
-                           ]
+cairoStrokeStyle :: Style v -> C.Render ()
+cairoStrokeStyle s =
+  sequence_
+  . catMaybes $ [ handle fColor
+                , handle lColor  -- see Note [color order]
+                , handle lWidth
+                , handle lCap
+                , handle lJoin
+                , handle lDashing
+                ]
   where handle :: (AttributeClass a) => (a -> C.Render ()) -> Maybe (C.Render ())
         handle f = f `fmap` getAttr s
         fColor c = do
@@ -204,3 +217,10 @@ instance Renderable (Path R2) Cairo where
     where renderTrail (P p, tr) = do
             uncurry C.moveTo p
             renderC tr
+
+instance Renderable Text Cairo where
+  render _ (Text tr str) = C $ do
+    C.save
+    cairoTransf (tr <> reflectionY)
+    C.showText str
+    C.restore
