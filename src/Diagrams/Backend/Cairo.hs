@@ -31,6 +31,7 @@ import Diagrams.Prelude
 import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Path (Clip(..))
 import Diagrams.TwoD.Text (Text(..), getFontSize)
+import Diagrams.TwoD.Adjust (adjustDia2D)
 
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
@@ -96,26 +97,8 @@ instance Backend Cairo R2 where
               PDF (w,h) -> C.withPDFSurface file w h surfaceF
               SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
-  -- XXX todo, move most of this into diagrams-core!
-  -- Set some default attributes (in case they have not been set):
-  --   * Line width 0.01
-  --   * Line color black
-  --   * Font size 1
-  -- Then freeze the diagram in its final form, and then do
-  -- final adjustments to make it fit the requested size.
-  adjustDia _ opts d = d' # lw 0.01 # lc black # fontSize 1 # freeze
-                          # scale s
-                          # translate tr
-    where d'      = reflectY d   -- adjust for cairo's upside-down coordinate system
-          (w,h)   = getSize $ outputFormat opts
-          (wd,hd) = size2D d'
-          xscale  = w / wd
-          yscale  = h / hd
-          s       = let s' = min xscale yscale
-                    in  if isInfinite s' then 1 else s'
-          tr      = (0.5 *. P (w,h)) .-. (s *. center2D d')
-
-          getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
+  adjustDia c opts d = adjustDia2D (getSize . outputFormat) c opts (d # reflectY)
+    where getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
           getSize (PS  sz) = sz
           getSize (PDF sz) = sz
           getSize (SVG sz) = sz
