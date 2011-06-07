@@ -25,6 +25,7 @@ Library
                        Diagrams.Backend.Cairo.CmdLine
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.4,
+                       mtl >= 2.0 && < 2.1,
                        process >= 1.0 && < 1.1,
                        directory >= 1.0 && < 1.2,
                        old-time >= 1.0 && < 1.1,
