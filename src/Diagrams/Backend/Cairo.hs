@@ -237,7 +237,7 @@ instance Renderable (Path R2) Cairo where
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
   render _ (Text tr str) = C $ do
-    Alignment (xa,ya) <- gets getTextAlignment
+    algn <- gets getTextAlignment
     lift $ do
       C.save
       cairoTransf (tr <> reflectionY)
@@ -246,8 +246,32 @@ instance Renderable Text Cairo where
           h    = C.textExtentsHeight tExt
           refX = -w/2 - C.textExtentsXbearing tExt
           refY = -h/2 - C.textExtentsYbearing tExt
-          newX = -xa*w/2
-          newY =  ya*h/2   -- I don't quite understand why this must be positive.
-      cairoTransf (moveOriginBy (newX - refX, newY - refY) mempty)  -- XXX
+          (TextRect _ t) = useAlignment algn (mkTextRect w h)
+          P (newX, newY) = transform t origin
+      cairoTransf (moveOriginBy (-newX - refX, newY - refY) mempty)
       C.showText str
       C.restore
+
+-- | A @TextRect@ is a utility object which acts like a rectangle for
+--   the purposes of its bounding function and transformations, but
+--   also accumulates any transformations performed on it in a
+--   separate field.  This is useful for learning what transformation
+--   we should do to some text in order to align it as requested,
+--   since for the purposes of alignment we think of the text as
+--   occupying a rectangular region.
+data TextRect = TextRect (Bounds R2) T2
+
+mkTextRect :: Double -> Double -> TextRect
+mkTextRect w h = TextRect (bounds (rect w h :: Diagram Cairo R2)) mempty
+
+type instance V TextRect = R2
+
+instance Boundable TextRect where
+  getBounds (TextRect b _) = b
+
+instance HasOrigin TextRect where
+  moveOriginTo p (TextRect b t) = TextRect (moveOriginTo p b)
+                                           (moveOriginTo p t)
+
+instance Transformable TextRect where
+  transform t1 (TextRect b t2) = TextRect (transform t1 b) (t1 <> t2)
