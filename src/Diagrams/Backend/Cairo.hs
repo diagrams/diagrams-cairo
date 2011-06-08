@@ -79,7 +79,7 @@ save :: RenderM ()
 save = lift C.save
 
 restore :: RenderM ()
-restore = put defaultTextAlignment >> lift C.restore
+restore = put centeredText >> lift C.restore
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
@@ -100,7 +100,7 @@ instance Backend Cairo R2 where
     restore
 
   doRender _ options (C r) = (renderIO, r')
-    where r' = evalStateT r defaultTextAlignment
+    where r' = evalStateT r centeredText
           renderIO = do
             let surfaceF s = C.renderWith s r'
                 file = fileName options
@@ -246,7 +246,7 @@ instance Renderable Text Cairo where
           h    = C.textExtentsHeight tExt
           refX = -w/2 - C.textExtentsXbearing tExt
           refY = -h/2 - C.textExtentsYbearing tExt
-          (TextRect _ t) = useAlignment algn (mkTextRect w h)
+          (TextRect _ t) = runAlignment algn (mkTextRect w h)
           P (newX, newY) = transform t origin
       cairoTransf (moveOriginBy (-newX - refX, newY - refY) mempty)
       C.showText str
