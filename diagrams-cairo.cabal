@@ -1,5 +1,5 @@
 Name:                diagrams-cairo
-Version:             0.2
+Version:             0.3
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         This package provides a modular backend for rendering
                      diagrams created with the diagrams EDSL using the 
@@ -29,8 +29,8 @@ Library
                        process >= 1.0 && < 1.1,
                        directory >= 1.0 && < 1.2,
                        old-time >= 1.0 && < 1.1,
-                       diagrams-core >= 0.2 && < 0.3,
-                       diagrams-lib >= 0.2 && < 0.3,
+                       diagrams-core >= 0.3 && < 0.4.
+                       diagrams-lib >= 0.3 && < 0.4,
                        cairo >= 0.10.1 && < 0.13,
                        cmdargs >= 0.6 && < 0.8,
                        split >= 0.1.2 && < 0.2
