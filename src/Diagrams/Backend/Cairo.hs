@@ -181,7 +181,7 @@ setSource c s = C.setSourceRGBA r g b a'
                       Just d  -> a * d
 
 
-cairoTransf :: Transformation R2 -> C.Render ()
+cairoTransf :: T2 -> C.Render ()
 cairoTransf t = C.transform m
   where m = CM.Matrix a1 a2 b1 b2 c1 c2
         (a1,a2) = apply t (1,0)
