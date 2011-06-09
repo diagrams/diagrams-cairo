@@ -17,7 +17,7 @@ s = fromSegments [seg]
 
 pts = map ((origin .+^) . (seg `atParam`)) [0,0.01..1]
 showPts = position (pts `zip` repeat dot)
-  where dot = circle # lw 0 # fc red # scale 0.01
+  where dot = circle 0.01 # lw 0 # fc red
 
 -- s1 = (strokeT $ s <> (rotateBy (1/3) s) <> (rotateBy (2/3) s))
 --    # centerXY

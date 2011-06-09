@@ -4,11 +4,11 @@ import Diagrams.Backend.Cairo.CmdLine
 
 type D = Diagram Cairo R2
 
-d = square `atop` circle
+d = unitSquare `atop` unitCircle
     # lc red
     # fc blue
     # lw 1
 
-d' = d # withBounds (scale 2 circle :: D)
+d' = d # withBounds (circle 2 :: D)
 
 main = defaultMain d'

@@ -5,10 +5,11 @@ import Diagrams.Backend.Cairo.CmdLine
 type D = Diagram Cairo R2
 
 s :: D
-s = square
+s = unitSquare
 
-s' = square # lw 0.03
-            # lc black
+s' = unitSquare
+     # lw 0.03
+     # lc black
 
 s'' = s' # freeze
 
@@ -18,7 +19,7 @@ d = hcat' with { sep = 2 }
   , s'', s'' # scaleX 5, s'' # scaleY 5, s'' # scale 5 ]
 
 c :: D
-c = circle # scale 20 # lc red
+c = circle 20 # lc red
 
 cs = hcat' with { sep = 10 }
      [ c, c1, c1 # scale 2, c1 # freeze # scale 2

@@ -19,9 +19,9 @@ path = polygonPath with {sides = 8}
 
 -- path = centerXY . scale 5 . close $ fromSegments [seg]
 
-dot c = circle # fc c
-               # lw 0
-               # scale 0.01
+dot c = circle 0.01
+        # fc c
+        # lw 0
 
 points = mconcat [ if getAny (sample oct p) then dot red # moveTo p else mempty
                  | x <- range

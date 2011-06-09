@@ -3,7 +3,7 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
-d = square
+d = unitSquare
     # fc red
     # clipBy clipPath
 

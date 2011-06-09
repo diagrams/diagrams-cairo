@@ -16,6 +16,6 @@ s1 = (strokeT $ s <> (rotateBy (1/3) s) <> (rotateBy (2/3) s))
    # centerXY
 
 dia :: D
-dia = pad 1.1 (s1 ||| square)
+dia = pad 1.1 (s1 ||| unitSquare)
 
 main = defaultMain dia

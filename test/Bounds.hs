@@ -3,4 +3,4 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
-main = defaultMain (circle # withBounds (getBounds (square :: Diagram Cairo R2) # scale 4))
+main = defaultMain (circle 4 # withBounds (getBounds (unitSquare :: Diagram Cairo R2)))

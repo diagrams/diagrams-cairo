@@ -3,6 +3,6 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
-d = (circle # lc green # fc blue) <> (square # fc red)
+d = (unitCircle # lc green # fc blue) <> (unitSquare # fc red)
 
-main = defaultMain (d # fade 0.8 # fade 0.8 # fade 0.8 # fade 0.6)
+main = defaultMain (d # opacity 0.8 # opacity 0.8 # opacity 0.8 # opacity 0.6)

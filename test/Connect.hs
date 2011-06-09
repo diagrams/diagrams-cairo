@@ -7,9 +7,9 @@ import Data.Monoid
 
 type D = Diagram Cairo R2
 
-dot = circle # scale 0.1
-             # lw 0 # fc black
-             # named "dot"
+dot = circle 0.1
+      # lw 0 # fc black
+      # named "dot"
 
 d = decorateTrail (polygonPath with {sides = 8}) (repeat dot)
     # mkConnections
