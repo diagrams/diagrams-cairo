@@ -7,10 +7,8 @@ fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
 thick = 0.15
 
 grid x y = frame <> lattice
-  where s       = square # lw 0.02 # freeze
-        frame   = square
-                # scaleX (fromIntegral x)
-                # scaleY (fromIntegral y)
+  where s       = unitSquare # lw 0.02 # freeze
+        frame   = rect (fromIntegral x) (fromIntegral y)
                 # lw thick # freeze
         lattice = centerXY . vcat . map hcat . replicate y . replicate x $ s
 

@@ -24,9 +24,8 @@ x = (stroke $ fromVertices [P (-1,1), P (1,-1)] <> fromVertices [P (1,1), P (-1,
   # scale 0.4
   # freeze
   # centerXY
-o = circle
+o = circle 0.4
   # lw 0.05
-  # scale 0.4
   # freeze
 
 -- | Render a list of lists of diagrams in a grid.
@@ -45,7 +44,7 @@ renderGrid g
   $ [ (r,c) | r <- [0..2], c <- [0..2] ])
 
     `atop`
-    square # lw 0.02 # scale 3 # freeze
+    square 3 # lw 0.02 # freeze
 
 -- | Given a solved game tree, where the first move is being made by
 --   the player for whom the tree is solved, render a map of optimal play.

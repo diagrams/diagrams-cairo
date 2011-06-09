@@ -31,6 +31,4 @@ pentaflake' n = pentaflake n # fc (colors !! n)
 p = polygon with { sides = 5, orientation = OrientToX }
     # lw 0
 
-showOrigin d = (circle # fc red # scale (0.05)) `atop` d
-
 main = defaultMain (pad 1.1 $ pentaflake' 4)

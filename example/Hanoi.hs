@@ -14,8 +14,7 @@ type Hanoi = [Stack]
 type Move  = (Int,Int)
 
 renderDisk :: Disk -> D
-renderDisk n = square
-               # scaleX (fromIntegral n + 2)
+renderDisk n = rect (fromIntegral n + 2) 1
                # lc black
                # fc (colors !! n)
                # lw 0.1
@@ -24,9 +23,7 @@ renderStack :: Stack -> D
 renderStack s = disks `atop` post
   where disks = (vcat . map renderDisk $ s)
                 # alignB
-        post  = square
-                # scaleY 6
-                # scaleX 0.8
+        post  = rect 0.8 6
                 # lw 0
                 # fc saddlebrown
                 # alignB

@@ -24,17 +24,17 @@ subsetsBySize n = map (map (Subset n))
 
 drawSet :: Subset -> D
 drawSet (Subset n elts) = (    drawElts n elts # centerXY
-                            <> square # scaleX (fromIntegral n + 0.5) # scaleY 1.5
-                                      # dashing [0.2,0.2] 0
-                                      # lw 0.03
-                                      # namePoint (boundary (negateV unitY)) "B"
-                                      # namePoint (boundary unitY) "T"
-                                      # (show elts |>)
+                            <> rect (fromIntegral n + 0.5) 1.5
+                                 # dashing [0.2,0.2] 0
+                                 # lw 0.03
+                                 # namePoint (boundary (negateV unitY)) "B"
+                                 # namePoint (boundary unitY) "T"
+                                 # (show elts |>)
                           )
                           # freeze
 
 drawElts n elts = hcat . map (\i -> if i `elem` elts then drawElt i else strutX 1) $ [1..n]
-drawElt e = square # fc (colors !! e) # lw 0.05 # freeze
+drawElt e = unitSquare # fc (colors !! e) # lw 0.05 # freeze
 
 
 hasseDiagram n = setsD # drawConnections

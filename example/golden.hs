@@ -8,7 +8,7 @@ type D = Diagram Cairo R2
 
 sq :: D
 sq = (lw 1 . stroke $ arc (pi / 2 :: Rad) (pi :: Rad))
-     `atop` (translate (-0.5, 0.5) . lw 0.5 $ square)
+     `atop` (translate (-0.5, 0.5) . lw 0.5 $ unitSquare)
 
 phi :: Double
 phi = (1 + sqrt 5) / 2

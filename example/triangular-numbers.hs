@@ -19,7 +19,7 @@ tri c n = dots `atop` (strokeT edges # lc c # lw 0.2 # fcA (c `withOpacity` 0.5)
         edge = fromOffsets . replicate (n-1) $ unitX # scale 3
         edges = close (edge <> rotateBy (1/3) edge <> rotateBy (2/3) edge)
 
-dot c = circle
+dot c = unitCircle
       # lw 0
       # fc c
 
@@ -73,8 +73,6 @@ law3Dia = exampleRow law3' [1..3]
 
 law4Dia = exampleRow law4' [2..4]
   where law4' k = law4 k 3 purple gold
-
--- showOrigin = ((circle # fc red) `atop`)
 
 main = defaultMain (pad 1.05 $ vcat' with {sep=5} . map centerXY $
                              [law1Dia -- , law2Dia, law3Dia, law4Dia
