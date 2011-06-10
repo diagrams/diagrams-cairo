@@ -67,7 +67,7 @@ instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C r1) `mappend` (C r2) = C (r1 >> r2)
 
-type RenderM a = StateT TextAlignment C.Render a
+type RenderM a = StateT () C.Render a  -- no state for now
 
 -- simple, stupid implementations of save and restore for now, since
 -- it suffices to just reset the text alignment to "centered" on
@@ -79,7 +79,7 @@ save :: RenderM ()
 save = lift C.save
 
 restore :: RenderM ()
-restore = put centeredText >> lift C.restore
+restore = lift C.restore
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
@@ -100,7 +100,7 @@ instance Backend Cairo R2 where
     restore
 
   doRender _ options (C r) = (renderIO, r')
-    where r' = evalStateT r centeredText
+    where r' = evalStateT r ()
           renderIO = do
             let surfaceF s = C.renderWith s r'
                 file = fileName options
@@ -128,7 +128,6 @@ cairoMiscStyle s =
   . catMaybes $ [ handle clip
                 , handle fSize
                 , handleFontFace
-                , handle tAlign
                 , handle fColor
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
@@ -141,7 +140,6 @@ cairoMiscStyle s =
         fWeight  = fromFontWeight . fromMaybe FontWeightNormal
                  $ getFontWeight <$> getAttr s
         handleFontFace = Just . lift $ C.selectFontFace fFace fSlant fWeight
-        tAlign   = put  -- remember the text alignment for later
         fColor c = lift $ setSource (getFillColor c) s
 
 fromFontSlant :: FontSlant -> C.FontSlant
@@ -237,7 +235,6 @@ instance Renderable (Path R2) Cairo where
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
   render _ (Text tr str) = C $ do
-    algn <- gets getTextAlignment
     lift $ do
       C.save
       cairoTransf (tr <> reflectionY)
@@ -246,12 +243,12 @@ instance Renderable Text Cairo where
           h    = C.textExtentsHeight tExt
           refX = -w/2 - C.textExtentsXbearing tExt
           refY = -h/2 - C.textExtentsYbearing tExt
-          (TextRect _ t) = runAlignment algn (mkTextRect w h)
-          P (newX, newY) = transform t origin
+          P (newX, newY) = origin
       cairoTransf (moveOriginBy (-newX - refX, newY - refY) mempty)
       C.showText str
       C.restore
 
+{-
 -- | A @TextRect@ is a utility object which acts like a rectangle for
 --   the purposes of its bounding function and transformations, but
 --   also accumulates any transformations performed on it in a
@@ -275,3 +272,4 @@ instance HasOrigin TextRect where
 
 instance Transformable TextRect where
   transform t1 (TextRect b t2) = TextRect (transform t1 b) (t1 <> t2)
+-}
