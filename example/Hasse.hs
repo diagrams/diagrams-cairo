@@ -22,20 +22,19 @@ subsetsBySize n = map (map (Subset n))
                 . subsequences
                 $ [1..n]
 
+drawElts n elts = hcat . map (\i -> if i `elem` elts then drawElt i else strutX 1) $ [1..n]
+drawElt e = unitSquare # fc (colors !! e) # lw 0.05 # freeze
+
 drawSet :: Subset -> D
 drawSet (Subset n elts) = (    drawElts n elts # centerXY
                             <> rect (fromIntegral n + 0.5) 1.5
                                  # dashing [0.2,0.2] 0
                                  # lw 0.03
-                                 # namePoint (boundary (negateV unitY)) "B"
-                                 # namePoint (boundary unitY) "T"
-                                 # (show elts |>)
+                                 # named elts
                           )
                           # freeze
 
-drawElts n elts = hcat . map (\i -> if i `elem` elts then drawElt i else strutX 1) $ [1..n]
-drawElt e = unitSquare # fc (colors !! e) # lw 0.05 # freeze
-
+hasseRow = centerX . hcat' with {sep = 2} . map drawSet
 
 hasseDiagram n = setsD # drawConnections
   where setsD = vcat' with {sep = fromIntegral n} . map hasseRow . reverse $ subsets
@@ -45,11 +44,11 @@ hasseDiagram n = setsD # drawConnections
                                                   , s2 <- subs2
                                                   , s1 `isSubset` s2 ]
         connect (Subset _ elts1) (Subset _ elts2) =
-          withName (show elts1 ||> "T") $ \p1 ->
-          withName (show elts2 ||> "B") $ \p2 ->
-          (<> stroke (fromVertices [p1,p2]) # lw 0.03)
+          withANameB elts1 $ \p1 b1 ->
+          withANameB elts2 $ \p2 b2 ->
+          (<> stroke (fromVertices [ boundaryFrom p1 unitY b1
+                                   , boundaryFrom p2 unit_Y b2
+                                   ]) # lw 0.03)
         subsets = subsetsBySize n
-
-hasseRow = centerX . hcat' with {sep = 2} . map drawSet
 
 main = defaultMain (pad 1.1 $ hasseDiagram 4)
