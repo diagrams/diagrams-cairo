@@ -31,6 +31,7 @@ import Diagrams.Prelude
 import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Path (Clip(..))
 import Diagrams.TwoD.Text
+import Diagrams.TwoD.Image
 import Diagrams.TwoD.Adjust (adjustDia2D)
 
 import qualified Graphics.Rendering.Cairo as C
@@ -39,6 +40,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import Control.Applicative ((<$>))
 import Control.Monad.State
 import Data.Maybe (catMaybes, fromMaybe)
+import Data.List (isSuffixOf)
 
 import Data.Monoid
 import qualified Data.Foldable as F
@@ -231,6 +233,19 @@ instance Renderable (Path R2) Cairo where
     where renderTrail (P p, tr) = do
             lift $ uncurry C.moveTo p
             renderC tr
+
+-- Can only do PNG files at the moment...
+instance Renderable Image Cairo where
+  render _ (Image file tr) = C . lift . when (".png" `isSuffixOf` file) $ do
+    C.save
+    cairoTransf (tr <> reflectionY)
+    pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
+    w <- C.imageSurfaceGetWidth pngSurf
+    h <- C.imageSurfaceGetHeight pngSurf
+    C.setSourceSurface pngSurf (fromIntegral w/2)
+                               (-fromIntegral h/2)
+    C.paint
+    C.restore
 
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
