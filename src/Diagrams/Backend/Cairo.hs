@@ -32,7 +32,7 @@ import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Path (Clip(..))
 import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
-import Diagrams.TwoD.Adjust (adjustDia2D)
+import Diagrams.TwoD.Adjust (adjustDia2D, adjustSize)
 
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
@@ -236,14 +236,16 @@ instance Renderable (Path R2) Cairo where
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where
-  render _ (Image file tr) = C . lift . when (".png" `isSuffixOf` file) $ do
+  render _ (Image file sz tr) = C . lift . when (".png" `isSuffixOf` file) $ do
     C.save
     cairoTransf (tr <> reflectionY)
     pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
     w <- C.imageSurfaceGetWidth pngSurf
     h <- C.imageSurfaceGetHeight pngSurf
-    C.setSourceSurface pngSurf (fromIntegral w/2)
-                               (-fromIntegral h/2)
+    let s = (adjustSize sz (fromIntegral w, fromIntegral h))
+    cairoTransf s
+    C.setSourceSurface pngSurf (-fromIntegral w / 2)
+                               (-fromIntegral h / 2)
     C.paint
     C.restore
 
@@ -252,6 +254,7 @@ instance Renderable Text Cairo where
   render _ (Text tr str) = C $ do
     lift $ do
       C.save
+      -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
       tExt <- C.textExtents str
       let w    = C.textExtentsWidth tExt
