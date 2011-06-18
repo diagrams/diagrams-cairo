@@ -16,3 +16,11 @@
     (e.g. to use to paint a gtk window) can use the second component.
 
   * add support for opacity attribute and path clipping
+
+0.3: 18 June 2011
+
+  * Some new/improved examples
+
+  * New features:
+    + simple text support
+    + simple support for external PNG images
