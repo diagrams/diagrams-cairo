@@ -5,8 +5,7 @@ import Diagrams.Backend.Cairo.CmdLine
 
 import Data.Colour
 
-d = (roundedRectPath (5,2) 0.3 <> polygonPath with {sides=3})
-    # stroke
+d = (roundedRect (5,2) 0.3 <> polygon with {sides=3})
     # lw 0.05
     # lc blue
     # fcA (green `withOpacity` 0.5)

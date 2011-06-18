@@ -12,10 +12,10 @@ grid x y = frame <> lattice
                 # lw thick # freeze
         lattice = centerXY . vcat . map hcat . replicate y . replicate x $ s
 
-trap s1 s2 = lw 0 . strokeT . close
-           $ fromOffsets [(0,-s2), (s2,0), (0,s1)]
-tri s1 s2  = lw 0 .  strokeT . close
-           $ fromOffsets [(s1,0), (0,s1+s2)]
+trap s1 s2 = fromOffsets [(0,-s2), (s2,0), (0,s1)]
+             # close # stroke # lw 0
+tri s1 s2  = fromOffsets [(s1,0), (0,s1+s2)]
+             # close # stroke # lw 0
 
 paradox n drawDiags = sq ||| strutX s2 ||| rect
   where f1 = fibs !! n
@@ -33,9 +33,9 @@ paradox n drawDiags = sq ||| strutX s2 ||| rect
         sq = (if drawDiags then sqDiags else mempty)
              <> grid (f1+f2) (f1+f2)
              <> sqShapes
-        sqDiags = (fromVertices [P (0,s2), P (s2,s1)] <>
-                   fromVertices [P (s2,0), P (s2,s1+s2)] <>
-                   fromVertices [P (s2,0), P (s1+s2,s1+s2)])
+        sqDiags = (P (0,s2) ~~ P (s2,s1)       <>
+                   P (s2,0) ~~ P (s2,s1+s2)    <>
+                   P (s2,0) ~~ P (s1+s2,s1+s2))
                 # stroke
                 # lw thick
                 # freeze
@@ -58,9 +58,9 @@ paradox n drawDiags = sq ||| strutX s2 ||| rect
         bot = trap1 # alignB ||| rotateBy (-1/4) tri1 # alignB
         top = rotateBy (1/4) tri2 # alignT ||| trap2 # alignT
 
-        rDiags = (fromVertices [P (0,s2), P (2*s2+s1, 0)] <>
-                  fromVertices [P (s2,0), P (s2,s1)] <>
-                  fromVertices [P (s1+s2,s2-s1), P (s1+s2,s2)]
+        rDiags = (P (0,s2)        ~~ P (2*s2+s1, 0)      <>
+                  P (s2,0)        ~~ P (s2,s1)           <>
+                  P (s1+s2,s2-s1) ~~ P (s1+s2,s2)
                   )
                  # stroke
                  # lw thick

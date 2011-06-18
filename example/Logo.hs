@@ -44,7 +44,7 @@ g = grid
     # rotateBy (-1/20)
     # clipBy p
     # withBounds (p :: Path R2)
-  where p = polygonPath with {sides = 4, orientation = OrientToX} # scaleToX 5 # scaleToY 5
+  where p = polygon with {sides = 4, orientation = OrientToX} # scaleToX 5 # scaleToY 5
 
 m = square 5.5 <>
     text "m"

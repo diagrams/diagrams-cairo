@@ -11,7 +11,7 @@ axes n = h <> v
 connect n i = withAName ("x",i) $ \x ->
               withAName ("y", n - i) $ \y ->
                 drawConnect [x,y]
-  where drawConnect = atop . stroke . fromVertices
+  where drawConnect = atop . fromVertices
 
 pic n = applyAll (map (connect n) [0..n]) (axes n) # centerXY # lw 0.05
 

@@ -3,8 +3,8 @@
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
-u = fromOffsets [unitY]
-r = fromOffsets [unitX]
+u = vrule 1 # reflectY
+r = hrule 1
 
 tr = mconcat [u, u, r, u, r, r, r, u]
 

@@ -18,7 +18,7 @@ import Solve
 type D = Diagram Cairo R2
 
 x, o :: D
-x = (stroke $ fromVertices [P (-1,1), P (1,-1)] <> fromVertices [P (1,1), P (-1,-1)])
+x = (P (-1,1) ~~ P (1,-1) <> P (1,1) ~~ P (-1,-1))
   # lw 0.05
   # lineCap LineCapRound
   # scale 0.4
@@ -81,10 +81,10 @@ curMoves = M.fromList . (map . second) renderPlayer . catMaybes . map strength .
 renderResult :: Result -> D
 renderResult (Win _ 0 ls) = winLine # freeze
   where winLine :: D
-        winLine = stroke (fromVertices (map (P . conv) ls))
-                          # lw 0.2
-                          # lc blue
-                          # lineCap LineCapRound
+        winLine = fromVertices (map (P . conv) ls)
+                  # lw 0.2
+                  # lc blue
+                  # lineCap LineCapRound
         conv (r,c) = (fromIntegral $ c - 1, fromIntegral $ 1 - r)
 renderResult _ = mempty
 
