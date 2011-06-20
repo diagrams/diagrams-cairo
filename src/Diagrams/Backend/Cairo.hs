@@ -2,6 +2,7 @@
            , MultiParamTypeClasses
            , FlexibleInstances
            , FlexibleContexts
+           , ExistentialQuantification
            , TypeSynonymInstances
            , DeriveDataTypeable
            , ViewPatterns
@@ -34,6 +35,9 @@ import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
 import Diagrams.TwoD.Adjust (adjustDia2D, adjustSize)
 
+import Graphics.UI.Gtk (DrawableClass)
+import qualified Graphics.UI.Gtk.Cairo as CG
+
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
@@ -55,8 +59,13 @@ data Cairo = Cairo
 -- | Cairo is able to output to several file formats, which each have
 --   their own associated properties that affect the output.
 data OutputFormat =
+    forall dw. (DrawableClass dw) =>
+    GTK { gtkWindow :: dw               -- ^ the window on which to draw
+        , gtkSize   :: Maybe (Int, Int) -- ^ the size of the output is given in pixels. If Nothing, rescaling should not be performed.
+        , gtkBypass :: Bool             -- ^ The adjustDia step should be bypassed during rendering
+        }
     -- | PNG is unique, in that it is not a vector format
-    PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
+  | PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
         }
   | PS  { psSize  :: (Double, Double) -- ^ the size of the output is given in points
         }
@@ -107,6 +116,7 @@ instance Backend Cairo R2 where
             let surfaceF s = C.renderWith s r'
                 file = fileName options
             case outputFormat options of
+              GTK win _ _ -> CG.renderWithDrawable win r'
               PNG (w,h) ->
                 C.withImageSurface C.FormatARGB32 w h $ \surface -> do
                   surfaceF surface
@@ -115,11 +125,17 @@ instance Backend Cairo R2 where
               PDF (w,h) -> C.withPDFSurface file w h surfaceF
               SVG (w,h) -> C.withSVGSurface file w h surfaceF
 
-  adjustDia c opts d = adjustDia2D (getSize . outputFormat) c opts (d # reflectY)
-    where getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
+  adjustDia c opts d = if bypass (outputFormat opts)
+                         then d
+                         else adjustDia2D (getSize . outputFormat) c opts (d # reflectY)
+    where getSize (GTK _ (Just (pw,ph)) _) = (fromIntegral pw, fromIntegral ph)
+          getSize (GTK _ Nothing _)        = size2D d
+          getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
           getSize (PS  sz) = sz
           getSize (PDF sz) = sz
           getSize (SVG sz) = sz
+          bypass  (GTK _ _ x)   = x
+          bypass  _             = False
 
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
@@ -233,6 +249,7 @@ instance Renderable (Path R2) Cairo where
     where renderTrail (P p, tr) = do
             lift $ uncurry C.moveTo p
             renderC tr
+
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where

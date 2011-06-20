@@ -22,6 +22,7 @@ Source-repository head
 Library
   Exposed-modules:     Diagrams.Backend.Cairo
                        Diagrams.Backend.Cairo.CmdLine
+                       Diagrams.Backend.Cairo.Gtk
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.4,
                        mtl >= 2.0 && < 2.1,
@@ -32,6 +33,7 @@ Library
                        diagrams-lib >= 0.3 && < 0.4,
                        cairo >= 0.10.1 && < 0.13,
                        cmdargs >= 0.6 && < 0.8,
+                       gtk >= 0.12.0  && < 0.13.0,
                        split >= 0.1.2 && < 0.2
   if !os(windows)
     cpp-options: -DCMDLINELOOP
