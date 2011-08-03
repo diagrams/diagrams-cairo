@@ -8,8 +8,7 @@ axes n = h <> v
         h = stroke' with {vertexNames = [map ("x",) [0..n]]} (p unitX)
         v = stroke' with {vertexNames = [map ("y",) [0..n]]} (p unitY)
 
-connect n i = withAName ("x",i) $ \x ->
-              withAName ("y", n - i) $ \y ->
+connect n i = withNames [("x",i), ("y", n - i)] $ \[(x,_), (y,_)] ->
                 drawConnect [x,y]
   where drawConnect = atop . fromVertices
 
