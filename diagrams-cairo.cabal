@@ -1,5 +1,5 @@
 Name:                diagrams-cairo
-Version:             0.3
+Version:             0.4
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         This package provides a modular backend for rendering
                      diagrams created with the diagrams EDSL using the 
@@ -24,17 +24,17 @@ Library
                        Diagrams.Backend.Cairo.CmdLine
                        Diagrams.Backend.Cairo.Gtk
   Hs-source-dirs:      src
-  Build-depends:       base >= 4.2 && < 4.4,
+  Build-depends:       base >= 4.2 && < 4.5,
                        mtl >= 2.0 && < 2.1,
-                       process >= 1.0 && < 1.1,
+                       process >= 1.0 && < 1.2,
                        directory >= 1.0 && < 1.2,
                        old-time >= 1.0 && < 1.1,
-                       diagrams-core >= 0.3 && < 0.4,
-                       diagrams-lib >= 0.3 && < 0.4,
+                       diagrams-core >= 0.4 && < 0.5,
+                       diagrams-lib >= 0.4 && < 0.5,
                        cairo >= 0.10.1 && < 0.13,
                        cmdargs >= 0.6 && < 0.8,
                        gtk >= 0.12.0  && < 0.13.0,
                        split >= 0.1.2 && < 0.2
   if !os(windows)
     cpp-options: -DCMDLINELOOP
-    Build-depends:     unix >= 2.4 && < 2.5
+    Build-depends:     unix >= 2.4 && < 2.6
