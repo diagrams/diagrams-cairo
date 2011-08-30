@@ -253,18 +253,25 @@ instance Renderable (Path R2) Cairo where
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where
-  render _ (Image file sz tr) = C . lift . when (".png" `isSuffixOf` file) $ do
-    C.save
-    cairoTransf (tr <> reflectionY)
-    pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
-    w <- C.imageSurfaceGetWidth pngSurf
-    h <- C.imageSurfaceGetHeight pngSurf
-    let s = (adjustSize sz (fromIntegral w, fromIntegral h))
-    cairoTransf s
-    C.setSourceSurface pngSurf (-fromIntegral w / 2)
-                               (-fromIntegral h / 2)
-    C.paint
-    C.restore
+  render _ (Image file sz tr) = C . lift $ do
+    if ".png" `isSuffixOf` file
+      then do
+        C.save
+        cairoTransf (tr <> reflectionY)
+        pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
+        w <- C.imageSurfaceGetWidth pngSurf
+        h <- C.imageSurfaceGetHeight pngSurf
+        let s = (adjustSize sz (fromIntegral w, fromIntegral h))
+        cairoTransf s
+        C.setSourceSurface pngSurf (-fromIntegral w / 2)
+                                   (-fromIntegral h / 2)
+        C.paint
+        C.restore
+      else
+        liftIO . putStr . unlines $
+          [ "Warning: Cairo backend can currently only render embedded"
+          , "  images in .png format.  Ignoring <" ++ file ++ ">."
+          ]
 
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
