@@ -46,7 +46,6 @@ import Control.Monad.State
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.List (isSuffixOf)
 
-import Data.Monoid
 import qualified Data.Foldable as F
 
 import Data.Typeable
