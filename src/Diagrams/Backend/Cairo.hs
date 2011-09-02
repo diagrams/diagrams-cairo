@@ -230,7 +230,7 @@ instance Renderable Ellipse Cairo where
     C.translate xc yc
     C.rotate th
     C.scale xs ys
-    C.arc 0 0 1 0 (2*pi)
+    C.arc 0 0 1 0 tau
     C.closePath
     C.restore
 
