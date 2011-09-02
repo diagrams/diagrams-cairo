@@ -30,7 +30,7 @@ import Graphics.Rendering.Diagrams.Transform
 
 import Diagrams.Prelude
 import Diagrams.TwoD.Ellipse
-import Diagrams.TwoD.Path (Clip(..))
+import Diagrams.TwoD.Path (Clip(..), getFillRule)
 import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
 import Diagrams.TwoD.Adjust (adjustDia2D, adjustSize)
@@ -146,6 +146,7 @@ cairoMiscStyle s =
                 , handle fSize
                 , handleFontFace
                 , handle fColor
+                , handle lFillRule
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
@@ -158,6 +159,7 @@ cairoMiscStyle s =
                  $ getFontWeight <$> getAttr s
         handleFontFace = Just . lift $ C.selectFontFace fFace fSlant fWeight
         fColor c = lift $ setSource (getFillColor c) s
+        lFillRule = lift . C.setFillRule . fromFillRule . getFillRule
 
 fromFontSlant :: FontSlant -> C.FontSlant
 fromFontSlant FontSlantNormal   = C.FontSlantNormal
@@ -182,9 +184,9 @@ cairoStrokeStyle s =
         handle f = f `fmap` getAttr s
         fColor c = setSource (getFillColor c) s >> C.fillPreserve
         lColor c = setSource (getLineColor c) s
-        lWidth = C.setLineWidth . getLineWidth
-        lCap   = C.setLineCap . fromLineCap . getLineCap
-        lJoin  = C.setLineJoin . fromLineJoin . getLineJoin
+        lWidth   = C.setLineWidth . getLineWidth
+        lCap     = C.setLineCap . fromLineCap . getLineCap
+        lJoin    = C.setLineJoin . fromLineJoin . getLineJoin
         lDashing (getDashing -> Dashing ds offs) =
           C.setDash ds offs
 
@@ -219,6 +221,10 @@ fromLineJoin :: LineJoin -> C.LineJoin
 fromLineJoin LineJoinMiter = C.LineJoinMiter
 fromLineJoin LineJoinRound = C.LineJoinRound
 fromLineJoin LineJoinBevel = C.LineJoinBevel
+
+fromFillRule :: FillRule -> C.FillRule
+fromFillRule Winding = C.FillRuleWinding
+fromFillRule EvenOdd = C.FillRuleEvenOdd
 
 instance Renderable Ellipse Cairo where
   render _ ell = C . lift $ do
