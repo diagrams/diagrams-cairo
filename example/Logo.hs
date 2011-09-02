@@ -2,8 +2,49 @@
 
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
+import Diagrams.TwoD.Path
 
 import qualified Data.Colour as C
+
+d = (stroke $
+   circlePath 2 # alignBR # translateX (-0.5)
+   <> (hcat' with { sep = 0.2 } . map (vcat' with {sep = 0.2})
+        $ (replicate 2 (replicate 9 (reversePath $ circlePath 0.3)))) # alignBR)
+    # fc red
+    # lw 0
+
+{-
+dAngle :: Rad
+dAngle = tau / 6
+
+dHeight = 5
+dWidth  = 1
+
+dRad = 1.5
+
+dPath = pathFromTrail . close $
+        arc dAngle (tau - dAngle) # scale dRad
+     <> fromOffsets [ (0, -(1 - cos (tau/4 - getRad dAngle)) * dRad)
+                    , (dWidth, 0)
+                    , (0, dHeight)
+                    , (-dWidth, 0)
+                    ]
+
+dotMatrix d path
+  = mconcat [ if (isInsideWinding p path)
+                 then circle (d / 2 - d/10) # fc red # lw 0 # moveTo p
+                 else mempty
+            | x <- [ xlo, xlo + d .. xhi ]
+            , y <- [ ylo, ylo + d .. yhi ]
+            , let p = P (x,y)
+            ]
+  where (xlo, xhi) = extentX path
+        (ylo, yhi) = extentY path
+
+matrixAng = 1/20
+
+d = dotMatrix 0.09 (dPath # rotateBy matrixAng) # rotateBy (-matrixAng)
+-}
 
 {-
 d = mconcat . map alignBR
@@ -27,30 +68,43 @@ i = (circle 1 === strutY 0.5 === roundedRect (2,4) 0.4)
     # lc blue
     # fc yellow
 
-sierpinski 1 = polygon with { sides = 3, orientation = OrientToX }
+sierpinski 1 = polygon with { polyType = PolyRegular 3 1 }
 sierpinski n = s === (s ||| s)
   where s = sierpinski (n-1)
 
-a = sierpinski 4
-    # fc black
-    # scale (1/2)
+a1 = sierpinski 4
+     # fc black
+     # scale (1/2)
 
 grid = verts # centerXY <> horiz # centerXY
   where verts = hcat' with {sep=0.5} $ replicate 20 (vrule 10)
         horiz = rotateBy (1/4) verts
 
-g = grid
+gbkg = grid
     # lc gray
     # rotateBy (-1/20)
     # clipBy p
     # withBounds (p :: Path R2)
-  where p = polygon with {sides = 4, orientation = OrientToX} # scaleToX 5 # scaleToY 5
+  where p = square 5
+
+g = (text "G" # fontSize 4 # rotateBy (-1/20)) <> gbkg
+
+r = text "r"
+
+a2 = text "a"
 
 m = square 5.5 <>
     text "m"
       # fontSize 6 # italic # font "freeserif" # fc green
 
-logo = (hcat' with {sep = 0.5} . map alignB $ [ i, a, g, m ])
+vs = [(5,5), (3,6), (1,5), (1,4), (3,3), (5,2), (4,0), (0,0.5)]
+s = (mconcat (map (\v -> translate v (dot blue)) vs) <>
+    cubicSpline False (map P vs) # lw 0.20)
+    # scale 0.8
+
+dot c = circle 0.4 # fc c # lw 0
+
+logo = (hcat' with {sep = 0.5} . map alignB $ [ d, i, a1, g, r, a2, m, s ])
        # centerXY
 
 main = defaultMain (pad 1.1 logo)
