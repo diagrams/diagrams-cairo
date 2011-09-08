@@ -29,7 +29,7 @@ import Graphics.UI.Gtk
 -- > widget `on` buttonPressEvent $ tryEvent $ do
 -- >   click <- eventClick
 -- >   (x,y) <- eventCoordinates
--- >   let result = runQuery (query $ toBackendCoords myDiagram) (P (x,y))
+-- >   let result = runQuery (query $ toGtkCoords myDiagram) (P (x,y))
 -- >   do_something_with result
 -- 
 -- `toGtkCoords` does no rescaling of the diagram, however it is centered in

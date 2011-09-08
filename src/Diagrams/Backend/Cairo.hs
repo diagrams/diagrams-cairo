@@ -15,15 +15,21 @@
 -- License     :  BSD-style (see LICENSE)
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
--- A full-featured rendering backend for diagrams using Cairo.
+-- A full-featured rendering backend for diagrams using the
+-- cairo rendering engine.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
 
-  ( Cairo(..)        -- rendering token
+  ( -- * Cairo-supported output formats
+    OutputFormat(..)
 
-  , Options(..)      -- for CairoOptions, rendering options specific to Cairo
-  , OutputFormat(..) -- output format options
+    -- * Cairo-specific options
+    -- $CairoOptions
+  , Options(..)
+
+    -- * Backend token
+  , Cairo(..)
   ) where
 
 import Graphics.Rendering.Diagrams.Transform
@@ -58,18 +64,28 @@ data Cairo = Cairo
 -- | Cairo is able to output to several file formats, which each have
 --   their own associated properties that affect the output.
 data OutputFormat =
+    -- | Output directly to a Gtk window.  See "Diagrams.Backends.Cairo.Gtk".
     forall dw. (DrawableClass dw) =>
-    GTK { gtkWindow :: dw               -- ^ the window on which to draw
-        , gtkSize   :: Maybe (Int, Int) -- ^ the size of the output is given in pixels. If Nothing, rescaling should not be performed.
-        , gtkBypass :: Bool             -- ^ The adjustDia step should be bypassed during rendering
+    GTK { gtkWindow :: dw
+          -- ^ The window on which to draw.
+
+        , gtkSize   :: Maybe (Int, Int)
+          -- ^ The size of the output is given in pixels. If @Nothing@,
+          --   rescaling should not be performed.
+
+        , gtkBypass :: Bool
+          -- ^ Should the 'adjustDia' step be bypassed during rendering?
         }
-    -- | PNG is unique, in that it is not a vector format
+    -- | PNG is unique, in that it is not a vector format.
   | PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
         }
+    -- | PostScript output.
   | PS  { psSize  :: (Double, Double) -- ^ the size of the output is given in points
         }
+    -- | Portable Document Format (PDF) output.
   | PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
         }
+    -- | Scalable Vector Graphics (SVG) output.
   | SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
         }
 
@@ -90,6 +106,22 @@ save = lift C.save
 
 restore :: RenderM ()
 restore = lift C.restore
+
+-- $CairoOptions
+--
+-- Unfortunately, Haddock does not yet support documentation for
+-- associated data families, so we must just provide it manually.
+-- This module defines
+--
+-- > data family Options Cairo R2 = CairoOptions
+-- >               { fileName     :: String       -- ^ the name of the file you want generated
+-- >               , outputFormat :: OutputFormat -- ^ the output format and associated options
+-- >               }
+--
+-- So, for example, you could call the 'renderDia' function (from
+-- "Graphics.Rendering.Diagrams.Core") like this:
+--
+-- > renderDia Cairo (CairoOptions "foo.png" (PNG (100,100))) myDiagram
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())

@@ -1,9 +1,9 @@
 Name:                diagrams-cairo
 Version:             0.4
 Synopsis:            Cairo backend for diagrams drawing EDSL
-Description:         This package provides a modular backend for rendering
-                     diagrams created with the diagrams EDSL using the 
-                     Cairo library.
+Description:         A full-featured backend for rendering
+                     diagrams using the cairo rendering engine.
+                     To get started, see "Diagrams.Backend.Cairo.CmdLine".
 Homepage:            http://projects.haskell.org/diagrams
 License:             BSD3
 License-file:        LICENSE
