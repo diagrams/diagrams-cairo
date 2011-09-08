@@ -298,8 +298,7 @@ instance Renderable Image Cairo where
         pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
         w <- C.imageSurfaceGetWidth pngSurf
         h <- C.imageSurfaceGetHeight pngSurf
-        let s = (adjustSize sz (fromIntegral w, fromIntegral h))
-        cairoTransf s
+        cairoTransf $ adjustSize sz (fromIntegral w, fromIntegral h)
         C.setSourceSurface pngSurf (-fromIntegral w / 2)
                                    (-fromIntegral h / 2)
         C.paint
