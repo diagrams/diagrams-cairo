@@ -89,9 +89,11 @@ gbkg = grid
 
 g = (text "G" # fontSize 4 # rotateBy (-1/20)) <> gbkg
 
-r = text "r"
+r = text "r" # fontSize 5
+  <> square 1 # lw 0 # scale 5
 
-a2 = text "a"
+a2 = text "a" # fontSize 5
+  <> square 1 # lw 0 # scale 5
 
 m = square 5.5 <>
     text "m"

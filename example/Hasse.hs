@@ -48,4 +48,7 @@ hasseDiagram n = setsD # drawConnections
             (<> (boundaryFrom p1 unitY b1 ~~ boundaryFrom p2 unit_Y b2) # lw 0.03)
         subsets = subsetsBySize n
 
-main = defaultMain (pad 1.1 $ hasseDiagram 4)
+d1 =|= d2 = d1 === strutY 3 === d2
+
+-- main = defaultMain (pad 1.1 $ foldr1 (=|=) (map hasseDiagram [1..4]))
+main = defaultMain (pad 1.1 $ hasseDiagram 5)
