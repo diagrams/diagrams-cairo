@@ -24,3 +24,16 @@
   * New features:
     + simple text support
     + simple support for external PNG images
+
+0.4: 22 October 2011
+
+  * New features:
+    + Support for drawing directly to Gtk widgets
+    + Support for path fill rule attribute
+
+  * New/improved examples
+
+  * Improved documentation
+
+  * Bug fixes:
+    + Warning for unsupported image types (#41)
