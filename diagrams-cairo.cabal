@@ -13,7 +13,7 @@ Category:            Graphics
 Build-type:          Simple
 Cabal-version:       >=1.6
 Extra-source-files:  CHANGES
-Tested-with:         GHC == 6.12.3, GHC >= 7.0.2 && <= 7.0.4
+Tested-with:         GHC == 6.12.3, GHC >= 7.0.2 && <= 7.0.4, GHC == 7.2.1
 Extra-source-files:  example/*.hs, example/tic-tac-toe/*.hs
 Source-repository head
   type:     darcs
@@ -38,3 +38,7 @@ Library
   if !os(windows)
     cpp-options: -DCMDLINELOOP
     Build-depends:     unix >= 2.4 && < 2.6
+
+  if impl(ghc >= 7.2.1)
+    Build-depends:     cairo >= 0.12.1,
+                       gtk   >= 0.12.1
