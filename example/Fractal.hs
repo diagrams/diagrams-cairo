@@ -12,7 +12,7 @@ sierpinski n =     s
                (s ||| s)
   where s = sierpinski (n-1)
 
-t = polygon with { sides = 3, orientation = OrientToX }
+t = regPoly 3 1
     # lw 0
     # fc black
 
@@ -28,7 +28,6 @@ pentaflake n = appends (p' # fc (colors !! (n-1)))
 
 pentaflake' n = pentaflake n # fc (colors !! n)
 
-p = polygon with { sides = 5, orientation = OrientToX }
-    # lw 0
+p = regPoly 5 1 # lw 0
 
 main = defaultMain (pad 1.1 $ pentaflake' 4)
