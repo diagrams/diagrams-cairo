@@ -22,34 +22,37 @@ import Diagrams.Backend.Cairo
 import Graphics.UI.Gtk
 
 -- | Convert a Diagram to the backend coordinates.
--- 
+--
 -- Provided to Query the diagram with coordinates from a mouse click
 -- event.
--- 
+--
 -- > widget `on` buttonPressEvent $ tryEvent $ do
 -- >   click <- eventClick
 -- >   (x,y) <- eventCoordinates
 -- >   let result = runQuery (query $ toGtkCoords myDiagram) (P (x,y))
 -- >   do_something_with result
--- 
+--
 -- `toGtkCoords` does no rescaling of the diagram, however it is centered in
 -- the window.
 toGtkCoords :: Monoid m => AnnDiagram Cairo R2 m -> AnnDiagram Cairo R2 m
-toGtkCoords d =
+toGtkCoords d = snd $
   adjustDia Cairo
-            (CairoOptions "" (GTK (undefined :: DrawWindow) Nothing False))
+            (CairoOptions "" Absolute (GTK (undefined :: DrawWindow) False))
             d
 
 -- | Render a diagram to a DrawingArea, rescaling to fit the full area.
 defaultRender :: Monoid m => DrawingArea -> AnnDiagram Cairo R2 m -> IO ()
 defaultRender da d = do
-  sz <- widgetGetSize da
+  (w,h) <- widgetGetSize da
   dw <- widgetGetDrawWindow da
-  fst $ renderDia Cairo (CairoOptions "" (GTK dw (Just sz) False)) d
+  fst $ renderDia Cairo (CairoOptions "" (Dims (fromIntegral w) (fromIntegral h))
+                                         (GTK dw False)
+                        )
+        d
 
 -- | Render a diagram to a DrawableClass.  No rescaling or transformations
 -- will be performed.
--- 
+--
 -- Typically the diagram will already have been transformed by `toGtkCoords`.
 renderToGtk ::
   (DrawableClass dc, Monoid m)
@@ -57,4 +60,4 @@ renderToGtk ::
   -> AnnDiagram Cairo R2 m  -- ^ Diagram
   -> IO ()
 renderToGtk dc d =
-  fst $ renderDia Cairo (CairoOptions "" (GTK dc Nothing True)) d
+  fst $ renderDia Cairo (CairoOptions "" Absolute (GTK dc True)) d

@@ -22,7 +22,7 @@
 module Diagrams.Backend.Cairo
 
   ( -- * Cairo-supported output formats
-    OutputFormat(..)
+    OutputType(..)
 
     -- * Cairo-specific options
     -- $CairoOptions
@@ -61,33 +61,22 @@ import Data.Typeable
 data Cairo = Cairo
   deriving (Eq,Ord,Read,Show,Typeable)
 
--- | Cairo is able to output to several file formats, which each have
---   their own associated properties that affect the output.
-data OutputFormat =
+-- | Output types supported by cairo, including four different file
+--   types (PNG, PS, PDF, SVG) as well as Gtk windows.
+data OutputType =
     -- | Output directly to a Gtk window.  See "Diagrams.Backends.Cairo.Gtk".
     forall dw. (DrawableClass dw) =>
     GTK { gtkWindow :: dw
           -- ^ The window on which to draw.
 
-        , gtkSize   :: Maybe (Int, Int)
-          -- ^ The size of the output is given in pixels. If @Nothing@,
-          --   rescaling should not be performed.
-
         , gtkBypass :: Bool
           -- ^ Should the 'adjustDia' step be bypassed during rendering?
         }
-    -- | PNG is unique, in that it is not a vector format.
-  | PNG { pngSize :: (Int, Int)       -- ^ the size of the output is given in pixels
-        }
-    -- | PostScript output.
-  | PS  { psSize  :: (Double, Double) -- ^ the size of the output is given in points
-        }
-    -- | Portable Document Format (PDF) output.
-  | PDF { pdfSize :: (Double, Double) -- ^ the size of the output is given in points
-        }
-    -- | Scalable Vector Graphics (SVG) output.
-  | SVG { svgSize :: (Double, Double) -- ^ the size of the output is given in points
-        }
+
+  | PNG      -- ^ Portable Network Graphics output.
+  | PS       -- ^ PostScript output
+  | PDF      -- ^ Portable Document Format output.
+  | SVG      -- ^ Scalable Vector Graphics output.
 
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
@@ -114,21 +103,23 @@ restore = lift C.restore
 -- This module defines
 --
 -- > data family Options Cairo R2 = CairoOptions
--- >               { fileName     :: String       -- ^ the name of the file you want generated
--- >               , outputFormat :: OutputFormat -- ^ the output format and associated options
--- >               }
+-- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
+-- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+-- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
+-- >           }
 --
 -- So, for example, you could call the 'renderDia' function (from
 -- "Graphics.Rendering.Diagrams.Core") like this:
 --
--- > renderDia Cairo (CairoOptions "foo.png" (PNG (100,100))) myDiagram
+-- > renderDia Cairo (CairoOptions "foo.png" (Width 250) PNG) myDiagram
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
   type Result  Cairo R2 = (IO (), C.Render ())
   data Options Cairo R2 = CairoOptions
-          { fileName     :: String       -- ^ the name of the file you want generated
-          , outputFormat :: OutputFormat -- ^ the output format and associated options
+          { cairoFileName   :: String     -- ^ The name of the file you want generated
+          , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+          , cairoOutputType :: OutputType -- ^ the output format and associated options
           }
 
   withStyle _ s t (C r) = C $ do
@@ -141,32 +132,39 @@ instance Backend Cairo R2 where
       C.stroke
     restore
 
-  doRender _ options (C r) = (renderIO, r')
+  doRender _ (CairoOptions file size out) (C r) = (renderIO, r')
     where r' = evalStateT r ()
           renderIO = do
             let surfaceF s = C.renderWith s r'
-                file = fileName options
-            case outputFormat options of
-              GTK win _ _ -> CG.renderWithDrawable win r'
-              PNG (w,h) ->
-                C.withImageSurface C.FormatARGB32 w h $ \surface -> do
+
+                -- Everything except Dims is arbitrary. The backend
+                -- should have first run 'adjustDia' to update the
+                -- final size of the diagram with explicit dimensions,
+                -- so normally we would only expect to get Dims anyway.
+                (w,h) = case size of
+                          Width w'   -> (w',w')
+                          Height h'  -> (h',h')
+                          Dims w' h' -> (w',h')
+                          Absolute   -> (100,100)
+
+            case out of
+              GTK win _ -> CG.renderWithDrawable win r'
+              PNG ->
+                C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
                   surfaceF surface
                   C.surfaceWriteToPNG surface file
-              PS  (w,h) -> C.withPSSurface  file w h surfaceF
-              PDF (w,h) -> C.withPDFSurface file w h surfaceF
-              SVG (w,h) -> C.withSVGSurface file w h surfaceF
+              PS  -> C.withPSSurface  file w h surfaceF
+              PDF -> C.withPDFSurface file w h surfaceF
+              SVG -> C.withSVGSurface file w h surfaceF
 
-  adjustDia c opts d = if bypass (outputFormat opts)
-                         then d
-                         else adjustDia2D (getSize . outputFormat) c opts (d # reflectY)
-    where getSize (GTK _ (Just (pw,ph)) _) = (fromIntegral pw, fromIntegral ph)
-          getSize (GTK _ Nothing _)        = size2D d
-          getSize (PNG (pw,ph)) = (fromIntegral pw, fromIntegral ph)
-          getSize (PS  sz) = sz
-          getSize (PDF sz) = sz
-          getSize (SVG sz) = sz
-          bypass  (GTK _ _ x)   = x
-          bypass  _             = False
+  adjustDia c opts d = if bypass (cairoOutputType opts)
+                         then (opts,d)
+                         else adjustDia2D cairoSizeSpec
+                                          setCairoSizeSpec
+                                          c opts (d # reflectY)
+    where setCairoSizeSpec sz o = o { cairoSizeSpec = sz }
+          bypass  (GTK _ x) = x
+          bypass  _         = False
 
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
