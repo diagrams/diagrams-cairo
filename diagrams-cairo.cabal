@@ -1,5 +1,5 @@
 Name:                diagrams-cairo
-Version:             0.4
+Version:             0.5
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         A full-featured backend for rendering
                      diagrams using the cairo rendering engine.
@@ -29,8 +29,8 @@ Library
                        process >= 1.0 && < 1.2,
                        directory >= 1.0 && < 1.2,
                        old-time >= 1.0 && < 1.1,
-                       diagrams-core >= 0.4 && < 0.5,
-                       diagrams-lib >= 0.4 && < 0.5,
+                       diagrams-core >= 0.5 && < 0.6,
+                       diagrams-lib >= 0.5 && < 0.6,
                        cairo >= 0.10.1 && < 0.13,
                        cmdargs >= 0.6 && < 0.9,
                        gtk >= 0.12.0  && < 0.13.0,
