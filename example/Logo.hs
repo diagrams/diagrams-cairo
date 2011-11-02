@@ -69,7 +69,7 @@ i = (circle 1 === strutY 0.5 === roundedRect (2,4) 0.4)
     # fc yellow
 
 sierpinski 1 = polygon with { polyType = PolyRegular 3 1 }
-sierpinski n = s === (s ||| s)
+sierpinski n = s === (s ||| s) # centerX
   where s = sierpinski (n-1)
 
 a1 = sierpinski 4
