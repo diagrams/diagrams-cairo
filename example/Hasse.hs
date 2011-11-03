@@ -44,8 +44,8 @@ hasseDiagram n = setsD # drawConnections # centerXY
                                                   , s2 <- subs2
                                                   , s1 `isSubset` s2 ]
         connect (Subset _ elts1) (Subset _ elts2) =
-          withNames [elts1, elts2] $ \[(p1,b1), (p2,b2)] ->
-            (<> (boundaryFrom p1 unitY b1 ~~ boundaryFrom p2 unit_Y b2) # lw 0.03)
+          withNames [elts1, elts2] $ \[b1, b2] ->
+            (<> (boundaryFrom b1 unitY ~~ boundaryFrom b2 unit_Y) # lw 0.03)
         subsets = subsetsBySize n
 
 d1 =|= d2 = d1 === strutY 3 === d2
