@@ -68,6 +68,6 @@ paradox n drawDiags = sq ||| strutX s2 ||| rect
                  # freeze
                  # centerXY
 
-dia = paradox 4 True
+dia = paradox 4 True # centerXY
 
 main = defaultMain (pad 1.1 dia)

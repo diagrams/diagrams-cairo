@@ -36,7 +36,7 @@ drawSet (Subset n elts) = (    drawElts n elts # centerXY
 
 hasseRow = centerX . hcat' with {sep = 2} . map drawSet
 
-hasseDiagram n = setsD # drawConnections
+hasseDiagram n = setsD # drawConnections # centerXY
   where setsD = vcat' with {sep = fromIntegral n} . map hasseRow . reverse $ subsets
         drawConnections = applyAll connections
         connections = concat $ zipWith connectSome subsets (tail subsets)

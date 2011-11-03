@@ -52,4 +52,4 @@ hanoiSequence n = scanl (flip ($)) [[0..n-1], [], []] (map doMove (solveHanoi n)
 renderHanoiSeq :: [Hanoi] -> D
 renderHanoiSeq = vcat' with { sep = 2 } . map renderHanoi
 
-main = defaultMain (pad 1.1 $ renderHanoiSeq (hanoiSequence 4) # centerY)
+main = defaultMain (pad 1.1 $ renderHanoiSeq (hanoiSequence 4) # centerXY)
