@@ -51,6 +51,7 @@ import Control.Applicative ((<$>))
 import Control.Monad.State
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.List (isSuffixOf)
+import System.IO.Error
 
 import qualified Data.Foldable as F
 
@@ -293,12 +294,17 @@ instance Renderable Image Cairo where
       then do
         C.save
         cairoTransf (tr <> reflectionY)
-        pngSurf <- liftIO $ C.imageSurfaceCreateFromPNG file
-        w <- C.imageSurfaceGetWidth pngSurf
-        h <- C.imageSurfaceGetHeight pngSurf
-        cairoTransf $ adjustSize sz (fromIntegral w, fromIntegral h)
-        C.setSourceSurface pngSurf (-fromIntegral w / 2)
-                                   (-fromIntegral h / 2)
+        pngSurfChk <- liftIO (try $ C.imageSurfaceCreateFromPNG file)
+        case pngSurfChk of
+          Right pngSurf -> do
+            w <- C.imageSurfaceGetWidth pngSurf
+            h <- C.imageSurfaceGetHeight pngSurf
+            cairoTransf $ adjustSize sz (fromIntegral w, fromIntegral h)
+            C.setSourceSurface pngSurf (-fromIntegral w / 2)
+                                       (-fromIntegral h / 2)
+          Left e ->
+            liftIO . putStrLn $
+              "Warning: can't read image file <" ++ file ++ ">"
         C.paint
         C.restore
       else
