@@ -287,7 +287,7 @@ instance Renderable Image Cairo where
             cairoTransf $ adjustSize sz (fromIntegral w, fromIntegral h)
             C.setSourceSurface pngSurf (-fromIntegral w / 2)
                                        (-fromIntegral h / 2)
-          Left e ->
+          Left _ ->
             liftIO . putStrLn $
               "Warning: can't read image file <" ++ file ++ ">"
         C.paint
