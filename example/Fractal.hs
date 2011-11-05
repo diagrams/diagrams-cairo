@@ -3,9 +3,9 @@ import Diagrams.Prelude
 import qualified Data.Colour as C
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo R2
+type DC = Diagram Cairo R2
 
-sierpinski :: Int -> D
+sierpinski :: Int -> DC
 sierpinski 1 = t
 sierpinski n =     s
                   ===
@@ -18,7 +18,7 @@ t = regPoly 3 1
 
 colors = iterate (C.blend 0.1 white) blue
 
-pentaflake :: Int -> D
+pentaflake :: Int -> DC
 pentaflake 0 = p
 pentaflake n = appends (p' # fc (colors !! (n-1)))
                        (zip vs (repeat (rotateBy (1/2) p')))

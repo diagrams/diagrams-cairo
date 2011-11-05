@@ -7,7 +7,7 @@ import Data.List
 import Data.Ord (comparing)
 import Data.Function (on)
 
-type D = Diagram Cairo R2
+type DC = Diagram Cairo R2
 
 colors = [black, blue, red, yellow, green, orange, purple, brown]
 
@@ -25,7 +25,7 @@ subsetsBySize n = map (map (Subset n))
 drawElts n elts = hcat . map (\i -> if i `elem` elts then drawElt i else strutX 1) $ [1..n]
 drawElt e = unitSquare # fc (colors !! e) # lw 0.05 # freeze
 
-drawSet :: Subset -> D
+drawSet :: Subset -> DC
 drawSet (Subset n elts) = (    drawElts n elts # centerXY
                             <> rect (fromIntegral n + 0.5) 1.5
                                  # dashing [0.2,0.2] 0

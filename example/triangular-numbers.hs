@@ -8,8 +8,6 @@ import Diagrams.Backend.Cairo.CmdLine
 
 import Data.Colour hiding (atop)
 
-type D = Diagram Cairo R2
-
 tri c n = dots `atop` (strokeT edges # lc c # lw 0.2 # fcA (c `withOpacity` 0.5))
   where rows = map (hcat' with { sep = 1 })
              . zipWith replicate [n,n-1..1]
@@ -23,7 +21,7 @@ dot c = unitCircle
       # lw 0
       # fc c
 
-rowSpc = height (rotateBy (1/6) $ strutY 1 :: D)
+rowSpc = height (rotateBy (1/6) $ strutY 1 :: D R2)
 
 -- @row k n s c@ draws a row of k size-n triangles with color c,
 -- separated by enough space for @s@ dots.
