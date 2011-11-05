@@ -35,7 +35,6 @@ module Diagrams.Backend.Cairo
 import Graphics.Rendering.Diagrams.Transform
 
 import Diagrams.Prelude
-import Diagrams.TwoD.Ellipse
 import Diagrams.TwoD.Path (Clip(..), getFillRule)
 import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
@@ -256,20 +255,6 @@ fromLineJoin LineJoinBevel = C.LineJoinBevel
 fromFillRule :: FillRule -> C.FillRule
 fromFillRule Winding = C.FillRuleWinding
 fromFillRule EvenOdd = C.FillRuleEvenOdd
-
-instance Renderable Ellipse Cairo where
-  render _ ell = C . lift $ do
-    let P (xc,yc) = ellipseCenter ell
-        (xs,ys)   = ellipseScale ell
-        Rad th    = ellipseAngle ell
-    C.newPath
-    C.save
-    C.translate xc yc
-    C.rotate th
-    C.scale xs ys
-    C.arc 0 0 1 0 tau
-    C.closePath
-    C.restore
 
 instance Renderable (Segment R2) Cairo where
   render _ (Linear v) = C . lift $ uncurry C.relLineTo v
