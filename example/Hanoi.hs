@@ -4,7 +4,7 @@ import Diagrams.Backend.Cairo.CmdLine
 
 import Data.List
 
-type D = Diagram Cairo R2
+type DC = Diagram Cairo R2
 
 colors = [blue, green, red, yellow, purple]
 
@@ -13,13 +13,13 @@ type Stack = [Disk]
 type Hanoi = [Stack]
 type Move  = (Int,Int)
 
-renderDisk :: Disk -> D
+renderDisk :: Disk -> DC
 renderDisk n = rect (fromIntegral n + 2) 1
                # lc black
                # fc (colors !! n)
                # lw 0.1
 
-renderStack :: Stack -> D
+renderStack :: Stack -> DC
 renderStack s = disks `atop` post
   where disks = (vcat . map renderDisk $ s)
                 # alignB
@@ -28,7 +28,7 @@ renderStack s = disks `atop` post
                 # fc saddlebrown
                 # alignB
 
-renderHanoi :: Hanoi -> D
+renderHanoi :: Hanoi -> DC
 renderHanoi = hcat' with {catMethod = Distrib, sep = 7} . map renderStack
 
 solveHanoi :: Int -> [Move]
@@ -49,7 +49,7 @@ modList i f l  = let (xs,(y:ys)) = splitAt i l in xs ++ (f y : ys)
 hanoiSequence :: Int -> [Hanoi]
 hanoiSequence n = scanl (flip ($)) [[0..n-1], [], []] (map doMove (solveHanoi n))
 
-renderHanoiSeq :: [Hanoi] -> D
+renderHanoiSeq :: [Hanoi] -> DC
 renderHanoiSeq = vcat' with { sep = 2 } . map renderHanoi
 
 main = defaultMain (pad 1.1 $ renderHanoiSeq (hanoiSequence 4) # centerXY)
