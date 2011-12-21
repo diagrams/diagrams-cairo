@@ -46,7 +46,6 @@ import qualified Graphics.UI.Gtk.Cairo as CG
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
-import Control.Applicative ((<$>))
 import Control.Monad.State
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.List (isSuffixOf)

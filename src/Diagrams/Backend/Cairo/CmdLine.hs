@@ -14,6 +14,7 @@
 module Diagrams.Backend.Cairo.CmdLine
        ( defaultMain
        , multiMain
+       , animMain
 
        , Cairo
        ) where
@@ -26,12 +27,14 @@ import System.Console.CmdArgs.Implicit hiding (args)
 import Prelude hiding      (catch)
 
 import Data.Maybe          (fromMaybe)
-import Control.Applicative ((<$>))
-import Control.Monad       (when)
+import Control.Monad       (when, forM_)
 import Data.List.Split
+
+import Text.Printf
 
 import System.Environment  (getArgs, getProgName)
 import System.Directory    (getModificationTime)
+import System.FilePath     (addExtension, splitExtension)
 import System.Process      (runProcess, waitForProcess)
 import System.IO           (openFile, hClose, IOMode(..),
                             hSetBuffering, BufferMode(..), stdout)
@@ -49,6 +52,7 @@ data DiagramOpts = DiagramOpts
                    , height    :: Maybe Int
                    , output    :: FilePath
                    , selection :: Maybe String
+                   , fpu       :: Double
 #ifdef CMDLINELOOP
                    , loop      :: Bool
                    , src       :: Maybe String
@@ -74,6 +78,10 @@ diagramOpts prog sel = DiagramOpts
   , selection = def
               &= help "Name of the diagram to render"
               &= (if sel then typ "NAME" else ignore)
+
+  , fpu = 30
+          &= typ "FLOAT"
+          &= help "Frames per unit time (for animations)"
 #ifdef CMDLINELOOP
   , loop = False
             &= help "Run in a self-recompiling loop"
@@ -156,6 +164,18 @@ multiMain ds = do
     Just sel -> case lookup sel ds of
       Nothing -> putStrLn $ "Unknown diagram: " ++ sel
       Just d  -> chooseRender opts d
+
+-- | XXX
+animMain :: Animation Cairo R2 -> IO ()
+animMain anim = do
+  prog <- getProgName
+  opts <- cmdArgs (diagramOpts prog False)
+  forM_ (zip [1..] (simulate (toRational $ fpu opts) anim)) $ \(i,d) ->
+    chooseRender (indexize i opts) d
+
+indexize i opts = opts { output = output' }
+  where output' = addExtension (base ++ printf "%03d" (i::Integer)) ext
+        (base, ext) = splitExtension (output opts)
 
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ClockTime -> DiagramOpts -> String -> [String] -> IO ()
