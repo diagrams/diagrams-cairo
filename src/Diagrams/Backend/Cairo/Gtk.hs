@@ -34,14 +34,14 @@ import Graphics.UI.Gtk
 --
 -- `toGtkCoords` does no rescaling of the diagram, however it is centered in
 -- the window.
-toGtkCoords :: Monoid m => QDiagram Cairo R2 m -> QDiagram Cairo R2 m
+toGtkCoords :: Monoid' m => QDiagram Cairo R2 m -> QDiagram Cairo R2 m
 toGtkCoords d = snd $
   adjustDia Cairo
             (CairoOptions "" Absolute (GTK (undefined :: DrawWindow) False))
             d
 
 -- | Render a diagram to a DrawingArea, rescaling to fit the full area.
-defaultRender :: Monoid m => DrawingArea -> QDiagram Cairo R2 m -> IO ()
+defaultRender :: Monoid' m => DrawingArea -> QDiagram Cairo R2 m -> IO ()
 defaultRender da d = do
   (w,h) <- widgetGetSize da
   dw <- widgetGetDrawWindow da
@@ -55,7 +55,7 @@ defaultRender da d = do
 --
 -- Typically the diagram will already have been transformed by `toGtkCoords`.
 renderToGtk ::
-  (DrawableClass dc, Monoid m)
+  (DrawableClass dc, Monoid' m)
   => dc                     -- ^ widget to render onto
   -> QDiagram Cairo R2 m  -- ^ Diagram
   -> IO ()
