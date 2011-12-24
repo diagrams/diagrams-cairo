@@ -299,18 +299,23 @@ instance Renderable Image Cairo where
 
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
-  render _ (Text tr str) = C $ do
+  render _ (Text tr al str) = C $ do
     lift $ do
       C.save
       -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
-      tExt <- C.textExtents str
-      let w    = C.textExtentsWidth tExt
-          h    = C.textExtentsHeight tExt
-          refX = -w/2 - C.textExtentsXbearing tExt
-          refY = -h/2 - C.textExtentsYbearing tExt
-          P (newX, newY) = origin
-      cairoTransf (moveOriginBy (-newX - refX, newY - refY) mempty)
+      (refX, refY) <- case al of
+        BoxAlignedText (xt, yt) -> do
+          tExt <- C.textExtents str
+          fExt <- C.fontExtents
+          let l = C.textExtentsXbearing tExt
+              r = C.textExtentsXadvance tExt
+              b = C.fontExtentsDescent  fExt
+              t = C.fontExtentsAscent   fExt
+          return (lerp l r xt, lerp (-b) t yt)
+        BaselineText -> return (0, 0)
+      let P (newX, newY) = origin
+      cairoTransf (moveOriginBy (refX - newX, newY - refY) mempty)
       C.showText str
       C.restore
 
