@@ -19,7 +19,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , Cairo
        ) where
 
-import Diagrams.Prelude hiding (width, height)
+import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
 
 import System.Console.CmdArgs.Implicit hiding (args)
@@ -170,11 +170,18 @@ animMain :: Animation Cairo R2 -> IO ()
 animMain anim = do
   prog <- getProgName
   opts <- cmdArgs (diagramOpts prog False)
-  forM_ (zip [1..] (simulate (toRational $ fpu opts) anim)) $ \(i,d) ->
-    chooseRender (indexize i opts) d
+  let frames  = simulate (toRational $ fpu opts) anim
+      nDigits = length . show . length $ frames
+  forM_ (zip [1..] frames) $ \(i,d) ->
+    chooseRender (indexize nDigits i opts) d
 
-indexize i opts = opts { output = output' }
-  where output' = addExtension (base ++ printf "%03d" (i::Integer)) ext
+-- | @indexize d n@ adds the integer index @n@ to the end of the
+--   output file name, padding with zeros if necessary so that it uses
+--   at least @d@ digits.
+indexize :: Int -> Integer -> DiagramOpts -> DiagramOpts
+indexize nDigits i opts = opts { output = output' }
+  where fmt         = "%0" ++ show nDigits ++ "d"
+        output'     = addExtension (base ++ printf fmt (i::Integer)) ext
         (base, ext) = splitExtension (output opts)
 
 #ifdef CMDLINELOOP
