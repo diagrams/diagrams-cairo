@@ -7,8 +7,8 @@
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
 -- This module provides convenience functions for querying information from
--- Cairo.  In particular, this utilities for information about fonts, and
--- creating text primitives with bounds based on the font being used.
+-- Cairo.  In particular, this provides utilities for information about fonts,
+-- and creating text primitives with bounds based on the font being used.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Text
@@ -24,7 +24,7 @@ module Diagrams.Backend.Cairo.Text
   , TextExtents, FontExtents
 
     -- ** Queries
-    
+
   , getTextExtents, getFontExtents, getExtents
   , kerningCorrectionIO
 
@@ -62,13 +62,14 @@ queryCairo c = C.withImageSurface C.FormatA1 0 0 (`C.renderWith` c)
 unsafeCairo :: C.Render a -> a
 unsafeCairo = unsafePerformIO . queryCairo
 
--- | Existential type for mutations on objects that "have style". This is used
---   as a parameter to @getTextExtents@ and @getFontExtents@ in order to set
---   font-size and font-face.
+-- | Existential type for mutations on objects that \"have style\". This is
+--   used as a parameter to @getTextExtents@ and @getFontExtents@ in order to
+--   set font-size and font-face.
 type StyleParam = forall a. HasStyle a => a -> a
 
--- | Executes the given cairo action, with all of the styling handled by
---   \"cairoMiscStyle\", which does clip / fill color / fill rule / and,
+-- | Executes the given cairo action, with styling applied.
+--   This does not do all styling - just attributes that are processed by
+--   \"cairoMiscStyle\", which does clip, fill color, fill rule, and,
 --   importantly for this module, font face, style, and weight.
 cairoWithStyle :: C.Render a -> StyleParam -> C.Render a
 cairoWithStyle f style = do
@@ -102,7 +103,7 @@ getFontExtents :: StyleParam -> C.Render FontExtents
 getFontExtents style
   = cairoWithStyle (processFontExtents <$> C.fontExtents) style
 
--- | Gets both the @FontExtents@ and @TextExtents@ of the string with the a
+-- | Gets both the "FontExtents" and "TextExtents" of the string with the a
 --   particular style applied.  This is more efficient than calling both
 --   @getFontExtents@ and @getTextExtents@.
 getExtents :: StyleParam -> String -> C.Render (FontExtents, TextExtents)
@@ -112,8 +113,7 @@ getExtents style str = cairoWithStyle (do
     return (fe, te)
   ) style
 
---TODO: fix?
---   Queries the amount of horizontal offset that needs to be applied in order to
+-- | Queries the amount of horizontal offset that needs to be applied in order to
 --   position the second character properly, in the event that it is @hcat@-ed
 --   @baselineText@.
 kerningCorrectionIO :: StyleParam -> Char -> Char -> IO Double
@@ -124,7 +124,7 @@ kerningCorrectionIO style a b = do
   lb <- ax [b]
   return $ l - la - lb
 
--- | Creates a diagram that renders as text, with bounds set such that using
+-- | Creates a text diagram, with bounds set such that using 
 --   @vcat . map (textLineBounded style)@ stacks them in the way that the font
 --   designer intended.
 textLineBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
@@ -134,8 +134,8 @@ textLineBoundedIO style str = do
                         (P (fst $ advance te, ascent fe))
   return . setBounds (getBounds box) $ style (baselineText str)
 
--- | Creates a diagram that renders as text, with bounds set to enclose the
---   glyphs of the text, including leading (though not trailing) whitespace.
+-- | Creates a text diagram, with bounds set to enclose the glyphs of the text,
+--   including leading (though not trailing) whitespace.
 textVisualBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str

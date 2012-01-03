@@ -15,7 +15,8 @@
 -- License     :  BSD-style (see LICENSE)
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
--- Implementation of the diagrams Cairo backend.
+-- Implementation of the diagrams Cairo backend.  This module exports the
+-- internal helper functions, for usage elsewhere.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
