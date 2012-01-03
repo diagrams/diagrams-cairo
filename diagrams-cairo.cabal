@@ -24,6 +24,7 @@ Library
                        Diagrams.Backend.Cairo.CmdLine
                        Diagrams.Backend.Cairo.Gtk
                        Diagrams.Backend.Cairo.Internal
+                       Diagrams.Backend.Cairo.Text
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.6,
                        mtl >= 2.0 && < 2.1,
