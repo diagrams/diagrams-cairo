@@ -36,3 +36,20 @@ module Diagrams.Backend.Cairo
   ) where
 
 import Diagrams.Backend.Cairo.Internal
+
+-- $CairoOptions
+--
+-- Unfortunately, Haddock does not yet support documentation for
+-- associated data families, so we must just provide it manually.
+-- This module defines
+--
+-- > data family Options Cairo R2 = CairoOptions
+-- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
+-- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+-- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
+-- >           }
+--
+-- So, for example, you could call the 'renderDia' function (from
+-- "Graphics.Rendering.Diagrams.Core") like this:
+--
+-- > renderDia Cairo (CairoOptions "foo.png" (Width 250) PNG) myDiagram
