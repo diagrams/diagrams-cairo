@@ -22,6 +22,12 @@ module Diagrams.Backend.Cairo.CmdLine
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
 
+-- Below hack is needed because GHC 7.0.x has a bug regarding export
+-- of data family constructors; see comments in Diagrams.Backend.Cairo
+#if __GLASGOW_HASKELL__ < 702
+import Diagrams.Backend.Cairo.Internal
+#endif
+
 import System.Console.CmdArgs.Implicit hiding (args)
 
 import Prelude hiding      (catch)

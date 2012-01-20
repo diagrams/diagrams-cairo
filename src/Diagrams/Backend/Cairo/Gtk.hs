@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.Gtk
@@ -18,6 +19,12 @@ module Diagrams.Backend.Cairo.Gtk
 
 import Diagrams.Prelude hiding (width, height)
 import Diagrams.Backend.Cairo
+
+-- Below hack is needed because GHC 7.0.x has a bug regarding export
+-- of data family constructors; see comments in Diagrams.Backend.Cairo
+#if __GLASGOW_HASKELL__ < 702
+import Diagrams.Backend.Cairo.Internal
+#endif
 
 import Graphics.UI.Gtk
 
