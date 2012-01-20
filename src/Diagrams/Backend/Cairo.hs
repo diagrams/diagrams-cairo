@@ -53,3 +53,7 @@ import Diagrams.Backend.Cairo.Internal
 -- "Graphics.Rendering.Diagrams.Core") like this:
 --
 -- > renderDia Cairo (CairoOptions "foo.png" (Width 250) PNG) myDiagram
+--
+-- /Important note/: a bug in GHC 7.0.x prevents re-exporting this
+-- data family.  To bring CairoOptions into scope when using GHC 7.0.x
+-- you must import "Diagrams.Backend.Cairo.Internal".
