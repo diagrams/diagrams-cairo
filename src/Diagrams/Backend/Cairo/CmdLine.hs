@@ -19,7 +19,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , Cairo
        ) where
 
-import Diagrams.Prelude hiding (width, height)
+import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
 
 import System.Console.CmdArgs.Implicit hiding (args)
