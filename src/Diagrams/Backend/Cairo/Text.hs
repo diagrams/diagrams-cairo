@@ -21,7 +21,7 @@ module Diagrams.Backend.Cairo.Text
 
     -- ** Data Structures
 
-  , TextExtents, FontExtents
+  , TextExtents(..), FontExtents(..)
 
     -- ** Queries
 
@@ -45,9 +45,7 @@ module Diagrams.Backend.Cairo.Text
 
 import Diagrams.Backend.Cairo.Internal
 import Diagrams.Prelude
-import Diagrams.TwoD.Text
 
-import Control.Applicative ((<$>))
 import Control.Monad.State
 import System.IO.Unsafe
 
@@ -82,12 +80,14 @@ cairoWithStyle f style = do
 -- | A more convenient data structure for the results of a text-extents query.
 data TextExtents = TextExtents
   { bearing, textSize, advance :: R2 }
+
+processTextExtents :: C.TextExtents -> TextExtents
 processTextExtents (C.TextExtents  xb yb  w h  xa ya)
                     = TextExtents (xb,yb)(w,h)(xa,ya)
 
 -- | Get the extents of a string of text, given a style to render it with.
 getTextExtents :: StyleParam -> String -> C.Render TextExtents
-getTextExtents style txt 
+getTextExtents style txt
   = cairoWithStyle (processTextExtents <$> C.textExtents txt) style
 
 -- | A more convenient data structure for the results of a font-extents query.
@@ -95,6 +95,8 @@ data FontExtents = FontExtents
   { ascent, descent, height :: Double
   , maxAdvance :: R2
   }
+
+processFontExtents :: C.FontExtents -> FontExtents
 processFontExtents (C.FontExtents a d h  mx my)
                     = FontExtents a d h (mx,my)
 
@@ -117,14 +119,14 @@ getExtents style str = cairoWithStyle (do
 --   position the second character properly, in the event that it is @hcat@-ed
 --   @baselineText@.
 kerningCorrectionIO :: StyleParam -> Char -> Char -> IO Double
-kerningCorrectionIO style a b = do 
+kerningCorrectionIO style a b = do
   let ax t = fst . advance <$> queryCairo (getTextExtents style t)
   l  <- ax [a, b]
   la <- ax [a]
   lb <- ax [b]
   return $ l - la - lb
 
--- | Creates a text diagram, with bounds set such that using 
+-- | Creates a text diagram, with bounds set such that using
 --   @vcat . map (textLineBounded style)@ stacks them in the way that the font
 --   designer intended.
 textLineBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
