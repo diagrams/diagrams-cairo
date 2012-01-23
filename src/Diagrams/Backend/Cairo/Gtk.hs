@@ -22,7 +22,7 @@ import Diagrams.Backend.Cairo
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
-#if __GLASGOW_HASKELL__ < 702
+#if __GLASGOW_HASKELL__ < 702 || __GLASGOW_HASKELL__ >= 704
 import Diagrams.Backend.Cairo.Internal
 #endif
 

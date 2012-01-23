@@ -27,8 +27,8 @@ module Diagrams.Backend.Cairo
 -- seems to indicate it should be supported.  When using 7.0.x one
 -- must import Diagrams.Backend.Cairo.Internal in order to bring
 -- CairoOptions into scope.
-#if __GLASGOW_HASKELL__ >= 702
-  , Options(..)
+#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 704
+  , Options
 #endif
 
     -- * Backend token
