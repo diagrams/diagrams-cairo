@@ -38,7 +38,8 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import Control.Monad.State
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.List (isSuffixOf)
-import System.IO.Error
+
+import Control.Exception (try)
 
 import qualified Data.Foldable as F
 
@@ -250,7 +251,8 @@ instance Renderable Image Cairo where
       then do
         C.save
         cairoTransf (tr <> reflectionY)
-        pngSurfChk <- liftIO (try $ C.imageSurfaceCreateFromPNG file)
+        pngSurfChk <- liftIO (try $ C.imageSurfaceCreateFromPNG file
+                              :: IO (Either IOError C.Surface))
         case pngSurfChk of
           Right pngSurf -> do
             w <- C.imageSurfaceGetWidth pngSurf
