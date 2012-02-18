@@ -30,7 +30,7 @@ module Diagrams.Backend.Cairo.Text
 
     -- * Primitives
 
-    -- | These create diagrams instantiated with extents-based bounds
+    -- | These create diagrams instantiated with extents-based envelopes
   , textLineBoundedIO, textVisualBoundedIO
 
     -- * Unsafe
@@ -126,23 +126,23 @@ kerningCorrectionIO style a b = do
   lb <- ax [b]
   return $ l - la - lb
 
--- | Creates a text diagram, with bounds set such that using
---   @vcat . map (textLineBounded style)@ stacks them in the way that the font
---   designer intended.
+-- | Creates text diagrams with their envelopes set such that using
+--   @vcat . map (textLineBounded style)@ stacks them in the way that
+--   the font designer intended.
 textLineBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
 textLineBoundedIO style str = do
   (fe, te) <- queryCairo $ getExtents style str
   let box = fromCorners (P (0,      negate $ descent fe))
                         (P (fst $ advance te, ascent fe))
-  return . setBounds (getBounds box) $ style (baselineText str)
+  return . setEnvelope (getEnvelope box) $ style (baselineText str)
 
--- | Creates a text diagram, with bounds set to enclose the glyphs of the text,
+-- | Creates a text diagram with its envelope set to enclose the glyphs of the text,
 --   including leading (though not trailing) whitespace.
 textVisualBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
   let box = fromCorners (P $ bearing te) (P $ bearing te ^+^ (textSize te))
-  return . setBounds (getBounds box) $ style (baselineText str)
+  return . setEnvelope (getEnvelope box) $ style (baselineText str)
 
 kerningCorrection :: StyleParam -> Char -> Char -> Double
 kerningCorrection style a = unsafePerformIO . kerningCorrectionIO style a
