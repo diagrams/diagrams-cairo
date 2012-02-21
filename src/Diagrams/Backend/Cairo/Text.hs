@@ -83,7 +83,7 @@ data TextExtents = TextExtents
 
 processTextExtents :: C.TextExtents -> TextExtents
 processTextExtents (C.TextExtents  xb yb  w h  xa ya)
-                    = TextExtents (xb,yb)(w,h)(xa,ya)
+                    = TextExtents (r2 (xb,yb)) (r2 (w,h)) (r2 (xa,ya))
 
 -- | Get the extents of a string of text, given a style to render it with.
 getTextExtents :: StyleParam -> String -> C.Render TextExtents
@@ -98,7 +98,7 @@ data FontExtents = FontExtents
 
 processFontExtents :: C.FontExtents -> FontExtents
 processFontExtents (C.FontExtents a d h  mx my)
-                    = FontExtents a d h (mx,my)
+                    = FontExtents a d h (r2 (mx,my))
 
 -- | Gets the intrinsic extents of a font.
 getFontExtents :: StyleParam -> C.Render FontExtents
@@ -120,7 +120,7 @@ getExtents style str = cairoWithStyle (do
 --   @baselineText@.
 kerningCorrectionIO :: StyleParam -> Char -> Char -> IO Double
 kerningCorrectionIO style a b = do
-  let ax t = fst . advance <$> queryCairo (getTextExtents style t)
+  let ax t = fst . unr2 . advance <$> queryCairo (getTextExtents style t)
   l  <- ax [a, b]
   la <- ax [a]
   lb <- ax [b]
@@ -132,8 +132,8 @@ kerningCorrectionIO style a b = do
 textLineBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
 textLineBoundedIO style str = do
   (fe, te) <- queryCairo $ getExtents style str
-  let box = fromCorners (P (0,      negate $ descent fe))
-                        (P (fst $ advance te, ascent fe))
+  let box = fromCorners (p2 (0,      negate $ descent fe))
+                        (p2 (fst . unr2 $ advance te, ascent fe))
   return . setEnvelope (getEnvelope box) $ style (baselineText str)
 
 -- | Creates a text diagram with its envelope set to enclose the glyphs of the text,
@@ -141,7 +141,8 @@ textLineBoundedIO style str = do
 textVisualBoundedIO :: StyleParam -> String -> IO (Diagram Cairo R2)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
-  let box = fromCorners (P $ bearing te) (P $ bearing te ^+^ (textSize te))
+  let box = fromCorners (origin .+^ bearing te)
+                        (origin .+^ bearing te ^+^ (textSize te))
   return . setEnvelope (getEnvelope box) $ style (baselineText str)
 
 kerningCorrection :: StyleParam -> Char -> Char -> Double

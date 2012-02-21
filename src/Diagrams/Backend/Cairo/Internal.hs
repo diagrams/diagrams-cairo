@@ -69,7 +69,7 @@ data OutputType =
 
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
-  (C r1) `mappend` (C r2) = C (r1 >> r2)
+  (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
 type RenderM a = StateT () C.Render a  -- no state for now
 
@@ -203,9 +203,9 @@ setSource c s = C.setSourceRGBA r g b a'
 cairoTransf :: T2 -> C.Render ()
 cairoTransf t = C.transform m
   where m = CM.Matrix a1 a2 b1 b2 c1 c2
-        (a1,a2) = apply t (1,0)
-        (b1,b2) = apply t (0,1)
-        (c1,c2) = transl t
+        (unr2 -> (a1,a2)) = apply t unitX
+        (unr2 -> (b1,b2)) = apply t unitY
+        (unr2 -> (c1,c2)) = transl t
 
 {- ~~~~ Note [color order]
 
@@ -229,8 +229,11 @@ fromFillRule Winding = C.FillRuleWinding
 fromFillRule EvenOdd = C.FillRuleEvenOdd
 
 instance Renderable (Segment R2) Cairo where
-  render _ (Linear v) = C . lift $ uncurry C.relLineTo v
-  render _ (Cubic (x1,y1) (x2,y2) (x3,y3)) = C . lift $ C.relCurveTo x1 y1 x2 y2 x3 y3
+  render _ (Linear v) = C . lift $ uncurry C.relLineTo (unr2 v)
+  render _ (Cubic (unr2 -> (x1,y1))
+                  (unr2 -> (x2,y2))
+                  (unr2 -> (x3,y3)))
+    = C . lift $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
   render _ (Trail segs c) = C $ do
@@ -239,7 +242,7 @@ instance Renderable (Trail R2) Cairo where
 
 instance Renderable (Path R2) Cairo where
   render _ (Path trs) = C $ lift C.newPath >> F.mapM_ renderTrail trs
-    where renderTrail (P p, tr) = do
+    where renderTrail (unp2 -> p, tr) = do
             lift $ uncurry C.moveTo p
             renderC tr
 
@@ -279,7 +282,7 @@ instance Renderable Text Cairo where
       -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
       (refX, refY) <- case al of
-        BoxAlignedText (xt, yt) -> do
+        BoxAlignedText xt yt -> do
           tExt <- C.textExtents str
           fExt <- C.fontExtents
           let l = C.textExtentsXbearing tExt
@@ -288,7 +291,6 @@ instance Renderable Text Cairo where
               t = C.fontExtentsAscent   fExt
           return (lerp l r xt, lerp (-b) t yt)
         BaselineText -> return (0, 0)
-      let P (newX, newY) = origin
-      cairoTransf (moveOriginBy (refX - newX, newY - refY) mempty)
+      cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
       C.showText str
       C.restore
