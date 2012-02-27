@@ -1,3 +1,37 @@
+0.5: XXX
+
+  * New features
+
+    - New Diagrams.Backend.Cairo.Text module by Michael Sloan, with
+      functions for creating appropriately sized text objects by
+      querying cairo for the size, and related supporting functions.
+
+    - Basic support for animation, by generating frames sampled at
+      regular intervals.
+
+    - Proper vertical alignment of default text based on font
+      parameters (Michael Sloan).
+
+    - Requesting just a width or height now causes the other to be
+      computed appropriately.
+
+  * API changes
+
+    - Move "Diagrams.Backend.Cairo" to
+      "Diagrams.Backend.Cairo.Internal" and export everything.
+      "Diagrams.Backend.Cairo" now just re-exports selected functions
+      from Internal.  This allows anyone who wants access to the
+      helper/utility functions to import Internal.
+
+  * Dependency/version changes
+
+    - relax cmdargs upper bound
+    - GHC 7.4.1 compatibility: update base, filepath, old-time upper bounds
+
+  * Bug fixes
+
+    - #54: Generate warning for missing image files (Ian Ross).
+
 0.4: 22 October 2011
 
   * New features:
