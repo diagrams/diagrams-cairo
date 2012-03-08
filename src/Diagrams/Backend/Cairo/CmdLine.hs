@@ -171,7 +171,18 @@ multiMain ds = do
       Nothing -> putStrLn $ "Unknown diagram: " ++ sel
       Just d  -> chooseRender opts d
 
--- | XXX
+-- | @animMain@ takes an animation and produces a command-line program
+--   which will crudely \"render\" the animation by rendering one image
+--   for each frame, named by extending the given output file name by
+--   consecutive integers.  For example if the given output file name
+--   is @foo\/blah.png@, the frames will be saved in @foo\/blah001.png@,
+--   @foo\/blah002.png@, and so on (the number of padding digits used
+--   depends on the total number of frames).  It is up to the user to
+--   take these images and stitch them together into an actual
+--   animation format (using, /e.g./ @ffmpeg@).
+--
+--   Of course, this is a rather crude method of rendering animations;
+--   more sophisticated methods will likely be added in the future.
 animMain :: Animation Cairo R2 -> IO ()
 animMain anim = do
   prog <- getProgName
