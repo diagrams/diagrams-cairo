@@ -1,3 +1,9 @@
+0.5.0.1 : 9 March 2012
+
+  * Remove statement in package description that a development version
+    of gtk2hs must be used with GHC 7.4; this is no longer true as of
+    the 0.12.3 release of gtk2hs.
+
 0.5: 9 March 2012
 
   * New features

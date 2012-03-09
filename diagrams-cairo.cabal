@@ -1,15 +1,9 @@
 Name:                diagrams-cairo
-Version:             0.5
+Version:             0.5.0.1
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         A full-featured backend for rendering
                      diagrams using the cairo rendering engine.
                      To get started, see "Diagrams.Backend.Cairo.CmdLine".
-                     .
-                     NOTE: the most recent release of gtk2hs does
-                     not build under GHC 7.4.1. To get diagrams-cairo
-                     to work under GHC 7.4.1 you'll have to install
-                     the latest development version of gtk2hs
-                     (<http://projects.haskell.org/gtk2hs/development/#development>).
 Homepage:            http://projects.haskell.org/diagrams
 License:             BSD3
 License-file:        LICENSE
