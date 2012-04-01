@@ -10,18 +10,21 @@
 -- Cairo.  In particular, this provides utilities for information about fonts,
 -- and creating text primitives with bounds based on the font being used.
 --
+-- Many of these functions take a 'Style' 'R2' parameter, determining the
+-- style to apply to the text before rendering / querying information about
+-- the text.  These 'Style' 'R2' parameters can be created a variety of ways,
+-- but the most direct will likely be by applying style-transforming functions
+-- such as 'font', 'fontSize', 'fontSlant', and 'fontWeight' to 'mempty'.
+-- This works because there are instances of 'HasStyle' and 'Monoid' for
+-- 'Style v'.
+--
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Text
   (
-    -- * Cairo Utilities
-    queryCairo, unsafeCairo
-  , cairoWithStyle
-
     -- * Extents
 
     -- ** Data Structures
-
-  , TextExtents(..), FontExtents(..)
+    TextExtents(..), FontExtents(..)
 
     -- ** Queries
 
@@ -33,7 +36,7 @@ module Diagrams.Backend.Cairo.Text
     -- | These create diagrams instantiated with extents-based envelopes
   , textLineBoundedIO, textVisualBoundedIO
 
-    -- * Unsafe
+    -- ** Unsafe
 
     -- | These are convenient unsafe variants of the above operations
     --   postfixed with \"IO\". They should be pretty well-behaved as the
@@ -41,6 +44,10 @@ module Diagrams.Backend.Cairo.Text
     --   (which ought to stay the same during a given execution).
 
   , kerningCorrection, textLineBounded, textVisualBounded
+
+    -- * Utilities
+  , queryCairo, unsafeCairo
+  , cairoWithStyle
   ) where
 
 import Diagrams.Backend.Cairo.Internal
