@@ -6,6 +6,12 @@ Trunk
     functions in that module to accept 'Style R2'.  Usage can be fixed
     by applying these style functions to 'mempty'.
 
+  * Bug fixes
+
+  - Fixed looped compile mode, which was repeatedly trying to compile
+    when the code contained errors, instead of trying once and then
+    waiting for a change.
+
 0.5.0.1 : 9 March 2012
 
   * Remove statement in package description that a development version
