@@ -33,7 +33,7 @@ import System.Console.CmdArgs.Implicit hiding (args)
 import Prelude hiding      (catch)
 
 import Data.Maybe          (fromMaybe)
-import Control.Monad       (when, forM_)
+import Control.Monad       (when, forM_, mplus)
 import Data.List.Split
 
 import Text.Printf
@@ -212,7 +212,7 @@ waitForChange lastAttempt opts prog args = do
           (newBin, newAttempt) <- recompile lastAtt prog (src opts)
           if newBin
             then executeFile prog False args Nothing
-            else go $ getFirst (First newAttempt <> First lastAtt)
+            else go $ newAttempt `mplus` lastAtt
 
 -- | @recompile t prog@ attempts to recompile @prog@, assuming the
 --   last attempt was made at time @t@.  If @t@ is @Nothing@ assume
