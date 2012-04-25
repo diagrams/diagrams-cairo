@@ -140,18 +140,17 @@ chooseRender opts d =
                  "pdf" -> PDF
                  "svg" -> SVG
                  _     -> PDF
-               sizeSpec = case (width opts, height opts) of
-                            (Nothing, Nothing) -> Absolute
-                            (Just w, Nothing)  -> Width (fromIntegral w)
-                            (Nothing, Just h)  -> Height (fromIntegral h)
-                            (Just w, Just h)   -> Dims (fromIntegral w)
-                                                       (fromIntegral h)
-           fst $ renderDia Cairo (CairoOptions
-                                    (output opts)
-                                    sizeSpec
-                                    outTy
-                                 )
-                           d
+           fst $ renderDia
+                   Cairo
+                   ( CairoOptions
+                     (output opts)
+                     (mkSizeSpec
+                       (fromIntegral <$> width opts)
+                       (fromIntegral <$> height opts)
+                     )
+                     outTy
+                   )
+                   d
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
 -- | @multiMain@ is like 'defaultMain', except instead of a single
