@@ -19,6 +19,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , Cairo
        ) where
 
+import Data.List (intercalate)
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
 
@@ -57,6 +58,7 @@ data DiagramOpts = DiagramOpts
                    { width     :: Maybe Int
                    , height    :: Maybe Int
                    , output    :: FilePath
+                   , list      :: Bool
                    , selection :: Maybe String
                    , fpu       :: Double
 #ifdef CMDLINELOOP
@@ -84,6 +86,9 @@ diagramOpts prog sel = DiagramOpts
   , selection = def
               &= help "Name of the diagram to render"
               &= (if sel then typ "NAME" else ignore)
+
+  , list = def
+         &= (if sel then help "List all available diagrams" else ignore)
 
   , fpu = 30
           &= typ "FLOAT"
@@ -164,11 +169,20 @@ multiMain :: [(String, Diagram Cairo R2)] -> IO ()
 multiMain ds = do
   prog <- getProgName
   opts <- cmdArgs (diagramOpts prog True)
-  case selection opts of
-    Nothing  -> putStrLn "No diagram selected."
-    Just sel -> case lookup sel ds of
-      Nothing -> putStrLn $ "Unknown diagram: " ++ sel
-      Just d  -> chooseRender opts d
+  if list opts
+    then showDiaList (map fst ds)
+    else
+      case selection opts of
+        Nothing  -> putStrLn "No diagram selected." >> showDiaList (map fst ds)
+        Just sel -> case lookup sel ds of
+          Nothing -> putStrLn $ "Unknown diagram: " ++ sel
+          Just d  -> chooseRender opts d
+
+-- | Display the list of diagrams available for rendering.
+showDiaList :: [String] -> IO ()
+showDiaList ds = do
+  putStrLn "Available diagrams:"
+  putStrLn $ "  " ++ intercalate " " ds
 
 -- | @animMain@ takes an animation and produces a command-line program
 --   which will crudely \"render\" the animation by rendering one image
