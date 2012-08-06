@@ -27,7 +27,7 @@ import Diagrams.Prelude
 import Diagrams.TwoD.Path (Clip(..), getFillRule)
 import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
-import Diagrams.TwoD.Adjust (adjustDia2D, adjustSize)
+import Diagrams.TwoD.Adjust (adjustDia2D, setDefault2DAttributes, adjustSize)
 
 import Graphics.UI.Gtk (DrawableClass)
 import qualified Graphics.UI.Gtk.Cairo as CG
@@ -130,7 +130,7 @@ instance Backend Cairo R2 where
               SVG -> C.withSVGSurface file w h surfaceF
 
   adjustDia c opts d = if bypass (cairoOutputType opts)
-                         then (opts,d)
+                         then (opts, d # setDefault2DAttributes)
                          else adjustDia2D cairoSizeSpec
                                           setCairoSizeSpec
                                           c opts (d # reflectY)
