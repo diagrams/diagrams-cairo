@@ -26,7 +26,7 @@ Library
                        Diagrams.Backend.Cairo.Internal
                        Diagrams.Backend.Cairo.Text
   Hs-source-dirs:      src
-  Build-depends:       base >= 4.2 && < 4.6,
+  Build-depends:       base >= 4.2 && < 4.7,
                        mtl >= 2.0 && < 2.2,
                        process,
                        directory,
@@ -40,7 +40,7 @@ Library
                        split >= 0.1.2 && < 0.3
   if !os(windows)
     cpp-options: -DCMDLINELOOP
-    Build-depends:     unix >= 2.4 && < 2.6
+    Build-depends:     unix >= 2.4 && < 2.7
 
   if impl(ghc >= 7.2.1 && < 7.4)
     Build-depends:     cairo >= 0.12.1,
