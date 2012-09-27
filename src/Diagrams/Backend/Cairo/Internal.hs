@@ -21,7 +21,7 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import Graphics.Rendering.Diagrams.Transform
+import Diagrams.Core.Transform
 
 import Diagrams.Prelude
 import Diagrams.TwoD.Path (Clip(..), getFillRule)
