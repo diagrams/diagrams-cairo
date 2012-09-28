@@ -1,9 +1,6 @@
-A rendering backend for diagrams, a Haskell embedded domain-specific
-language for compositional, declarative drawing.  See
+[![Build Status](https://secure.travis-ci.org/diagrams/diagrams-cairo.png)](http://travis-ci.org/diagrams/diagrams-cairo)
 
-  http://projects.haskell.org/diagrams/
-
-for more information about the project, including installation
-instructions, tutorials, a user manual, a gallery of example images,
-and links to the mailing list, IRC channel, developer wiki and bug
-tracker.
+A rendering backend for
+[diagrams](http://projects.haskell.org/diagrams), using the cairo
+graphics library.  Currently, a GTK backend (for drawing directly to
+GTK windows) is also provided.
