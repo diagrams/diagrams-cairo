@@ -27,7 +27,8 @@ import Diagrams.Prelude
 import Diagrams.TwoD.Path (Clip(..), getFillRule)
 import Diagrams.TwoD.Text
 import Diagrams.TwoD.Image
-import Diagrams.TwoD.Adjust (adjustDia2D, setDefault2DAttributes, adjustSize)
+import Diagrams.TwoD.Adjust (adjustDia2D, setDefault2DAttributes)
+import Diagrams.TwoD.Size (requiredScaleT)
 
 import Graphics.UI.Gtk (DrawableClass)
 import qualified Graphics.UI.Gtk.Cairo as CG
@@ -260,7 +261,7 @@ instance Renderable Image Cairo where
           Right pngSurf -> do
             w <- C.imageSurfaceGetWidth pngSurf
             h <- C.imageSurfaceGetHeight pngSurf
-            cairoTransf $ adjustSize sz (fromIntegral w, fromIntegral h)
+            cairoTransf $ requiredScaleT sz (fromIntegral w, fromIntegral h)
             C.setSourceSurface pngSurf (-fromIntegral w / 2)
                                        (-fromIntegral h / 2)
           Left _ ->
