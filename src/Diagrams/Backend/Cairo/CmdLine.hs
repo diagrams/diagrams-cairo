@@ -9,6 +9,26 @@
 -- Convenient creation of command-line-driven executables for
 -- rendering diagrams using the cairo backend.
 --
+-- * 'defaultMain' creates an executable which can render a single
+--   diagram at various options.
+--
+-- * 'multiMain' is like 'defaultMain' but allows for a list of
+--   diagrams from which the user can choose one to render.
+--
+-- * 'animMain' is like 'defaultMain' but for animations instead of
+--   diagrams.
+--
+-- If you want to generate diagrams programmatically---/i.e./ if you
+-- want to do anything more complex than what the below functions
+-- provide---you have several options.
+--
+-- * A simple but somewhat inflexible approach is to wrap up
+--   'defaultMain' (or 'multiMain', or 'animMain') in a call to
+--   'System.Environment.withArgs'.
+--
+-- * A more flexible approach is to directly call 'renderDia'; see
+--   "Diagrams.Backend.Cairo" for more information.
+--
 -----------------------------------------------------------------------------
 
 module Diagrams.Backend.Cairo.CmdLine
@@ -109,20 +129,52 @@ diagramOpts prog sel = DiagramOpts
 -- | This is the simplest way to render diagrams, and is intended to
 --   be used like so:
 --
--- > ... definitions ...
+-- > ... other definitions ...
+-- > myDiagram = ...
 -- >
 -- > main = defaultMain myDiagram
 --
---   Compiling this file will result in an executable which takes
---   various command-line options for setting the size, output file,
---   and so on, and renders @myDiagram@ with the specified options.
+--   Compiling a source file like the above example will result in an
+--   executable which takes command-line options for setting the size,
+--   output file, and so on, and renders @myDiagram@ with the
+--   specified options.
 --
 --   On Unix systems, the generated executable also supports a
 --   rudimentary \"looped\" mode, which watches the source file for
 --   changes and recompiles itself on the fly.
 --
 --   Pass @--help@ to the generated executable to see all available
---   options.
+--   options.  Currently it looks something like
+--
+-- @
+-- Command-line diagram generation.
+--
+-- Foo [OPTIONS]
+--
+-- Common flags:
+--   -w --width=INT         Desired width of the output image
+--   -h --height=INT        Desired height of the output image
+--   -o --output=FILE       Output file
+--   -f --fpu=FLOAT         Frames per unit time (for animations)
+--   -l --loop              Run in a self-recompiling loop
+--   -s --src=FILE          Source file to watch
+--   -i --interval=SECONDS  When running in a loop, check for changes every n
+--                          seconds.
+--   -? --help              Display help message
+--   -V --version           Print version information
+-- @
+--
+--   For example, a couple common scenarios include
+--
+-- @
+-- $ ghc --make MyDiagram
+--
+--   # output image.png with a width of 400px (and auto-determined height)
+-- $ ./MyDiagram -o image.png -w 400
+--
+--   # output 200x200 dia.pdf, then watch for changes every 10 seconds
+-- $ ./MyDiagram -o dia.pdf -h 200 -w 200 -l -i 10
+-- @
 
 defaultMain :: Diagram Cairo R2 -> IO ()
 defaultMain d = do
@@ -160,11 +212,23 @@ chooseRender opts d =
 
 -- | @multiMain@ is like 'defaultMain', except instead of a single
 --   diagram it takes a list of diagrams paired with names as input.
---   The generated executable then takes an argument specifying the
---   name of the diagram that should be rendered.  This is a
---   convenient way to create an executable that can render many
---   different diagrams without modifying the source code in between
---   each one.
+--   The generated executable then takes a @--selection@ option
+--   specifying the name of the diagram that should be rendered.  The
+--   list of available diagrams may also be printed by passing the
+--   option @--list@.
+--
+--   Example usage:
+--
+-- @
+-- $ ghc --make MultiTest
+-- [1 of 1] Compiling Main             ( MultiTest.hs, MultiTest.o )
+-- Linking MultiTest ...
+-- $ ./MultiTest --list
+-- Available diagrams:
+--   foo bar
+-- $ ./MultiTest --selection bar -o Bar.png -w 200
+-- @
+
 multiMain :: [(String, Diagram Cairo R2)] -> IO ()
 multiMain ds = do
   prog <- getProgName
@@ -184,18 +248,22 @@ showDiaList ds = do
   putStrLn "Available diagrams:"
   putStrLn $ "  " ++ intercalate " " ds
 
--- | @animMain@ takes an animation and produces a command-line program
---   which will crudely \"render\" the animation by rendering one image
---   for each frame, named by extending the given output file name by
---   consecutive integers.  For example if the given output file name
---   is @foo\/blah.png@, the frames will be saved in @foo\/blah001.png@,
---   @foo\/blah002.png@, and so on (the number of padding digits used
---   depends on the total number of frames).  It is up to the user to
---   take these images and stitch them together into an actual
---   animation format (using, /e.g./ @ffmpeg@).
+-- | @animMain@ is like 'defaultMain', but renders an animation
+-- instead of a diagram.  It takes as input an animation and produces
+-- a command-line program which will crudely \"render\" the animation
+-- by rendering one image for each frame, named by extending the given
+-- output file name by consecutive integers.  For example if the given
+-- output file name is @foo\/blah.png@, the frames will be saved in
+-- @foo\/blah001.png@, @foo\/blah002.png@, and so on (the number of
+-- padding digits used depends on the total number of frames).  It is
+-- up to the user to take these images and stitch them together into
+-- an actual animation format (using, /e.g./ @ffmpeg@).
 --
 --   Of course, this is a rather crude method of rendering animations;
 --   more sophisticated methods will likely be added in the future.
+--
+-- The @--fpu@ option can be used to control how many frames will be
+-- output for each second (unit time) of animation.
 animMain :: Animation Cairo R2 -> IO ()
 animMain anim = do
   prog <- getProgName

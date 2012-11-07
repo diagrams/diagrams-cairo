@@ -6,9 +6,12 @@
 -- License     :  BSD-style (see LICENSE)
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
--- This module provides convenience functions for querying information from
--- Cairo.  In particular, this provides utilities for information about fonts,
--- and creating text primitives with bounds based on the font being used.
+-- This module provides convenience functions for querying information
+-- from cairo.  In particular, this provides utilities for information
+-- about fonts, and creating text primitives with bounds based on the
+-- font being used. To render text with automatically determined
+-- envelopes, use 'textLineBounded', 'textLineBoundedIO',
+-- 'textVisualBounded', or 'textVisualBoundedIO'.
 --
 -- Many of these functions take a 'Style' 'R2' parameter, determining the
 -- style to apply to the text before rendering / querying information about
@@ -16,25 +19,15 @@
 -- but the most direct will likely be by applying style-transforming functions
 -- such as 'font', 'fontSize', 'fontSlant', and 'fontWeight' to 'mempty'.
 -- This works because there are instances of 'HasStyle' and 'Monoid' for
--- 'Style v'.
+-- @'Style' v@.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Text
   (
-    -- * Extents
-
-    -- ** Data Structures
-    TextExtents(..), FontExtents(..)
-
-    -- ** Queries
-
-  , getTextExtents, getFontExtents, getExtents
-  , kerningCorrectionIO
-
     -- * Primitives
 
     -- | These create diagrams instantiated with extents-based envelopes
-  , textLineBoundedIO, textVisualBoundedIO
+    textLineBoundedIO, textVisualBoundedIO
 
     -- ** Unsafe
 
@@ -44,6 +37,16 @@ module Diagrams.Backend.Cairo.Text
     --   (which ought to stay the same during a given execution).
 
   , kerningCorrection, textLineBounded, textVisualBounded
+
+    -- * Extents
+
+    -- ** Data Structures
+  , TextExtents(..), FontExtents(..)
+
+    -- ** Queries
+
+  , getTextExtents, getFontExtents, getExtents
+  , kerningCorrectionIO
 
     -- * Utilities
   , queryCairo, unsafeCairo

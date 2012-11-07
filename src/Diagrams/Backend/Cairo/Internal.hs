@@ -15,8 +15,19 @@
 -- License     :  BSD-style (see LICENSE)
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
--- Implementation of the diagrams Cairo backend.  This module exports the
--- internal helper functions, for usage elsewhere.
+-- This module contains the internal implementation guts of the
+-- diagrams cairo backend.  If you want to see how the cairo backend
+-- works under the hood, you are in the right place (try clicking on
+-- the \"Source\" links).  (Guts under the hood, what an awful mixed
+-- metaphor.)  If you know what you are doing and really want access
+-- to the internals of the implementation, you are also in the right
+-- place.  Otherwise, you should have no need of this module; import
+-- "Diagrams.Backend.Cairo.CmdLine" or "Diagrams.Backend.Cairo"
+-- instead.
+--
+-- The one exception is that this module may have to be imported
+-- sometimes to work around an apparent bug in certain versions of
+-- GHC, which results in a \"not in scope\" error for 'CairoOptions'.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
@@ -47,7 +58,10 @@ import qualified Data.Foldable as F
 import Data.Typeable
 
 -- | This data declaration is simply used as a token to distinguish
---   this rendering engine.
+--   the cairo backend: (1) when calling functions where the type
+--   inference engine would otherwise have know way to know which
+--   backend you wanted to use, and (2) as an argument to the
+--   'Backend' and 'Renderable' type classes.
 data Cairo = Cairo
   deriving (Eq,Ord,Read,Show,Typeable)
 
@@ -72,6 +86,12 @@ instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
+-- | The custom monad in which intermediate drawing options take
+--   place; 'Graphics.Rendering.Cairo.Render' is cairo's own rendering
+--   monad.  At one point @RenderM@ really did use @StateT@, but then
+--   the state got taken out... but the @StateT@ remains, now with a
+--   zen-like state of type unit, \"just in case\".  Think of it as a
+--   good luck charm.
 type RenderM a = StateT () C.Render a  -- no state for now
 
 -- simple, stupid implementations of save and restore for now, since
@@ -80,9 +100,11 @@ type RenderM a = StateT () C.Render a  -- no state for now
 -- implementation using an "undoable state" monad which lets you save
 -- (push state onto a stack) and restore (pop from the stack).
 
+-- | Push the current context onto a stack.
 save :: RenderM ()
 save = lift C.save
 
+-- | Restore the context from a stack.
 restore :: RenderM ()
 restore = lift C.restore
 
@@ -142,6 +164,8 @@ instance Backend Cairo R2 where
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
 
+-- | Handle \"miscellaneous\" style attributes (clip, font stuff, fill
+--   color and fill rule).
 cairoMiscStyle :: Style v -> RenderM ()
 cairoMiscStyle s =
   sequence_
@@ -173,6 +197,7 @@ fromFontWeight :: FontWeight -> C.FontWeight
 fromFontWeight FontWeightNormal = C.FontWeightNormal
 fromFontWeight FontWeightBold   = C.FontWeightBold
 
+-- | Handle style attributes having to do with stroke.
 cairoStrokeStyle :: Style v -> C.Render ()
 cairoStrokeStyle s =
   sequence_
@@ -201,6 +226,8 @@ setSource c s = C.setSourceRGBA r g b a'
                       Just d  -> a * d
 
 
+-- | Multiply the current transformation matrix by the given 2D
+--   transformation.
 cairoTransf :: T2 -> C.Render ()
 cairoTransf t = C.transform m
   where m = CM.Matrix a1 a2 b1 b2 c1 c2

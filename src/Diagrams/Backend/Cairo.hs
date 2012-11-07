@@ -10,6 +10,45 @@
 -- A full-featured rendering backend for diagrams using the
 -- cairo rendering engine.
 --
+-- To invoke the cairo backend, use methods from the
+-- 'Diagrams.Core.Types.Backend' instance for @Cairo@.  In particular,
+-- 'Diagrams.Core.Types.renderDia' has the generic type
+--
+-- > renderDia :: b -> Options b v -> QDiagram b v m -> Result b v
+--
+-- (omitting a few type class constraints).  @b@ represents the
+-- backend type, @v@ the vector space, and @m@ the type of monoidal
+-- query annotations on the diagram.  'Options' and 'Result' are
+-- associated data and type families, respectively, which yield the
+-- type of option records and rendering results specific to any
+-- particular backend.  For @b ~ Cairo@ and @v ~ R2@, we have
+--
+-- > data family Options Cairo R2 = CairoOptions
+-- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
+-- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+-- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
+-- >           }
+--
+-- @
+-- data family Render Cairo R2 = C ('RenderM' ())
+-- @
+--
+-- @
+-- type family Result Cairo R2 = (IO (), 'Graphics.Rendering.Cairo.Render' ())
+-- @
+--
+-- So the type of 'renderDia' resolves to
+--
+-- @
+-- renderDia :: Cairo -> Options Cairo R2 -> QDiagram Cairo R2 m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
+-- @
+--
+-- which you could call like @renderDia Cairo (CairoOptions "foo.png"
+-- (Width 250) PNG) myDiagram@.  This would return a pair; the first
+-- element is an @IO ()@ action which will write out @foo.png@ to
+-- disk, and the second is a cairo rendering action which can be used,
+-- for example, to directly draw to a Gtk window.
+--
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
 

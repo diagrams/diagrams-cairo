@@ -3,7 +3,21 @@ Version:             0.6
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         A full-featured backend for rendering
                      diagrams using the cairo rendering engine.
-                     To get started, see "Diagrams.Backend.Cairo.CmdLine".
+                     .
+                     * "Diagrams.Backend.Cairo.CmdLine" - if you're
+                       just getting started with diagrams, begin here.
+                     .
+                     * "Diagrams.Backend.Cairo" - look at this next.
+                       The general API for the cairo backend.
+                     .
+                     * "Diagrams.Backend.Cairo.Internal" - the
+                       implementation guts of the cairo backend.
+                       Users should normally not need to import this
+                       module.
+                     .
+                     * "Diagrams.Backend.Cairo.Text" - cairo-specific
+                       text support, including automatic bounding
+                       boxes.
 Homepage:            http://projects.haskell.org/diagrams
 License:             BSD3
 License-file:        LICENSE
