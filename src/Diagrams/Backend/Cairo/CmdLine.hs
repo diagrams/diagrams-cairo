@@ -206,6 +206,7 @@ chooseRender opts d =
                        (fromIntegral <$> height opts)
                      )
                      outTy
+                     False
                    )
                    d
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
