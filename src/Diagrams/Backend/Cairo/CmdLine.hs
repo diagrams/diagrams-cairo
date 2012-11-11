@@ -66,12 +66,22 @@ import System.Process      (runProcess, waitForProcess)
 import System.IO           (openFile, hClose, IOMode(..),
                             hSetBuffering, BufferMode(..), stdout)
 import System.Exit         (ExitCode(..))
-import System.Time         (ClockTime, getClockTime)
 import Control.Concurrent  (threadDelay)
 import Control.Exception   (catch, SomeException(..), bracket)
 
 #ifdef CMDLINELOOP
 import System.Posix.Process (executeFile)
+#if MIN_VERSION_directory(1,2,0)
+import Data.Time.Clock (UTCTime,getCurrentTime)
+type ModuleTime = UTCTime
+getModuleTime :: IO  ModuleTime
+getModuleTime = getCurrentTime
+#else
+import System.Time         (ClockTime, getClockTime)
+type ModuleTime = ClockTime
+getModuleTime :: IO  ModuleTime
+getModuleTime = getClockTime
+#endif
 #endif
 
 data DiagramOpts = DiagramOpts
@@ -284,7 +294,7 @@ indexize nDigits i opts = opts { output = output' }
         (base, ext) = splitExtension (output opts)
 
 #ifdef CMDLINELOOP
-waitForChange :: Maybe ClockTime -> DiagramOpts -> String -> [String] -> IO ()
+waitForChange :: Maybe ModuleTime -> DiagramOpts -> String -> [String] -> IO ()
 waitForChange lastAttempt opts prog args = do
     hSetBuffering stdout NoBuffering
     go lastAttempt
@@ -304,7 +314,7 @@ waitForChange lastAttempt opts prog args = do
 --   of this attempt.  Otherwise (if nothing has changed since the
 --   last attempt), return @Nothing@.  Also return a Bool saying
 --   whether a successful recompilation happened.
-recompile :: Maybe ClockTime -> String -> Maybe String -> IO (Bool, Maybe ClockTime)
+recompile :: Maybe ModuleTime -> String -> Maybe String -> IO (Bool, Maybe ModuleTime)
 recompile lastAttempt prog mSrc = do
   let errFile = prog ++ ".errors"
       srcFile = fromMaybe (prog ++ ".hs") mSrc
@@ -321,7 +331,7 @@ recompile lastAttempt prog mSrc = do
         then putStrLn "" >> putStrLn (replicate 75 '-') >> readFile errFile >>= putStr
         else putStrLn "done."
 
-      curTime <- getClockTime
+      curTime <- getModuleTime
       return (status == ExitSuccess, Just curTime)
 
     else return (False, Nothing)
