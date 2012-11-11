@@ -41,9 +41,6 @@ import Diagrams.TwoD.Image
 import Diagrams.TwoD.Adjust (adjustDia2D, setDefault2DAttributes)
 import Diagrams.TwoD.Size (requiredScaleT)
 
-import Graphics.UI.Gtk (DrawableClass)
-import qualified Graphics.UI.Gtk.Cairo as CG
-
 import qualified Graphics.Rendering.Cairo as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
@@ -66,21 +63,16 @@ data Cairo = Cairo
   deriving (Eq,Ord,Read,Show,Typeable)
 
 -- | Output types supported by cairo, including four different file
---   types (PNG, PS, PDF, SVG) as well as Gtk windows.
+--   types (PNG, PS, PDF, SVG).  If you want to output directly to GTK
+--   windows, see the diagrams-gtk package.
 data OutputType =
-    -- | Output directly to a Gtk window.  See "Diagrams.Backends.Cairo.Gtk".
-    forall dw. (DrawableClass dw) =>
-    GTK { gtkWindow :: dw
-          -- ^ The window on which to draw.
-
-        , gtkBypass :: Bool
-          -- ^ Should the 'adjustDia' step be bypassed during rendering?
-        }
-
-  | PNG      -- ^ Portable Network Graphics output.
+    PNG      -- ^ Portable Network Graphics output.
   | PS       -- ^ PostScript output
   | PDF      -- ^ Portable Document Format output.
   | SVG      -- ^ Scalable Vector Graphics output.
+  | RenderOnly  -- ^ Don't output any file; the returned @IO ()@
+                -- action will do nothing, but the @Render ()@ action
+                -- can be used (e.g. to draw to a Gtk window)
 
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
@@ -115,6 +107,7 @@ instance Backend Cairo R2 where
           { cairoFileName   :: String     -- ^ The name of the file you want generated
           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
           , cairoOutputType :: OutputType -- ^ the output format and associated options
+          , cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
 
   withStyle _ s t (C r) = C $ do
@@ -127,7 +120,7 @@ instance Backend Cairo R2 where
       C.stroke
     restore
 
-  doRender _ (CairoOptions file size out) (C r) = (renderIO, r')
+  doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
     where r' = evalStateT r ()
           renderIO = do
             let surfaceF s = C.renderWith s r'
@@ -143,7 +136,6 @@ instance Backend Cairo R2 where
                           Absolute   -> (100,100)
 
             case out of
-              GTK win _ -> CG.renderWithDrawable win r'
               PNG ->
                 C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
                   surfaceF surface
@@ -151,15 +143,14 @@ instance Backend Cairo R2 where
               PS  -> C.withPSSurface  file w h surfaceF
               PDF -> C.withPDFSurface file w h surfaceF
               SVG -> C.withSVGSurface file w h surfaceF
+              RenderOnly -> return ()
 
-  adjustDia c opts d = if bypass (cairoOutputType opts)
+  adjustDia c opts d = if cairoBypassAdjust opts
                          then (opts, d # setDefault2DAttributes)
                          else adjustDia2D cairoSizeSpec
                                           setCairoSizeSpec
                                           c opts (d # reflectY)
     where setCairoSizeSpec sz o = o { cairoSizeSpec = sz }
-          bypass  (GTK _ x) = x
-          bypass  _         = False
 
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
