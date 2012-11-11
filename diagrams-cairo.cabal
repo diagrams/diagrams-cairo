@@ -45,6 +45,7 @@ Library
                        directory,
                        filepath,
                        old-time,
+                       time,
                        diagrams-core >= 0.6 && < 0.7,
                        diagrams-lib >= 0.6 && < 0.7,
                        cairo >= 0.10.1 && < 0.13,
