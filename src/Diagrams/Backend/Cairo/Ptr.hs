@@ -8,7 +8,7 @@ import Diagrams.Backend.Cairo.Internal
 
 import Foreign.ForeignPtr.Safe (ForeignPtr, newForeignPtr)
 import Foreign.Marshal.Alloc   (finalizerFree)
-import Foreign.Marshal.Array   (mallocArray)
+import Foreign.Marshal.Array   (mallocArray, pokeArray)
 import Foreign.Ptr             (Ptr, castPtr)
 
 import Graphics.Rendering.Cairo ( Format (..)
@@ -32,7 +32,9 @@ renderPtr w h d = do
       (_, r) = renderDia Cairo opt d
 
   b <- mallocArray size
+  pokeArray b (replicate size 0)
   withImageSurfaceForData b FormatARGB32 w h stride (`renderWith` r)
+
   return (castPtr b)
 
 -- | Like 'renderPtr' but automatically garbage collected by Haskell.
