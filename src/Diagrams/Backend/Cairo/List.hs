@@ -17,11 +17,7 @@ import Foreign.Marshal.Array (peekArray)
 
 renderToList :: (Ord a, Floating a) =>
                   Int -> Int -> Diagram Cairo R2 -> IO [[Colour a]]
-renderToList w h d = do
-  b <- renderPtr w h d
-  l <- peekArray (w*h*4) b
-  free b
-  return l
+renderToList w h d =
   f 0 <$> bracket (renderPtr w h d) free (peekArray $ w*h*4)
  where
   f :: (Ord a, Floating a) => Int -> [Word8] -> [[Colour a]]
