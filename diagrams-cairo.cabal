@@ -50,7 +50,7 @@ Library
                        time,
                        diagrams-core >= 0.6 && < 0.7,
                        diagrams-lib >= 0.6 && < 0.7,
-                       cairo >= 0.10.1 && < 0.13,
+                       cairo >= 0.12.4 && < 0.13,
                        cmdargs >= 0.6 && < 0.11,
                        colour,
                        split >= 0.1.2 && < 0.3
@@ -59,9 +59,3 @@ Library
   if !os(windows)
     cpp-options: -DCMDLINELOOP
     Build-depends:     unix >= 2.4 && < 2.7
-
-  if impl(ghc >= 7.2.1 && < 7.4)
-    Build-depends:     cairo >= 0.12.1
-
-  if impl(ghc >= 7.4.1)
-    Build-depends:     cairo >= 0.12.3
