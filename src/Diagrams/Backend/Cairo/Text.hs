@@ -147,7 +147,7 @@ textVisualBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
   let box = fromCorners (origin .+^ bearing te)
-                        (origin .+^ bearing te ^+^ (textSize te))
+                        ((origin .+^ bearing te) .+^ textSize te)
   return . setEnvelope (getEnvelope box) . applyStyle style $ baselineText str
 
 kerningCorrection :: Style R2 -> Char -> Char -> Double
