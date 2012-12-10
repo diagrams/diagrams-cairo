@@ -1,3 +1,16 @@
+
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Diagrams.Backend.Cairo.List
+-- Copyright   :  (c) 2012 Diagrams-cairo team (see LICENSE)
+-- License     :  BSD-style (see LICENSE)
+-- Maintainer  :  diagrams-discuss@googlegroups.com
+--
+-- Render a diagram directly to a list of lists of Colour values
+-- (/i.e./ pixels).
+--
+-----------------------------------------------------------------------------
+
 module Diagrams.Backend.Cairo.List where
 
 import Control.Applicative ((<$>))

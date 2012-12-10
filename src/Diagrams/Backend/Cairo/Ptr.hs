@@ -1,3 +1,15 @@
+
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Diagrams.Backend.Cairo.Ptr
+-- Copyright   :  (c) 2012 Diagrams-cairo team (see LICENSE)
+-- License     :  BSD-style (see LICENSE)
+-- Maintainer  :  diagrams-discuss@googlegroups.com
+--
+-- Render diagrams to buffers in memory.
+--
+-----------------------------------------------------------------------------
+
 module Diagrams.Backend.Cairo.Ptr where
 
 import Data.Word (Word8)
