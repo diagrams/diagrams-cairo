@@ -5,17 +5,48 @@
 
     - New `--list` option for `multiMain` to list all available diagrams
 
+    - Major documentation improvements
+
+    - New modules:
+
+        + `Diagrams.Backend.Cairo.Ptr`, for rendering directly to buffers
+          in memory
+
+        + `Diagrams.Backend.Cairo.List`, for rendering to a list of lists
+          of pixels.
+
 * **API changes**
 
     - Removal of `StyleParam` from `Diagrams.Backend.Cairo.Text`, change
       functions in that module to accept `Style R2`.  Usage can be fixed
       by applying these style functions to `mempty`.
 
+    - GTK rendering has been split out into a new package, diagrams-gtk.
+
+	+ The `Diagrams.Backend.Cairo.Gtk` module is now
+	  `Diagrams.Backend.Gtk` in the `diagrams-gtk` package.
+
+	+ The `CairoOptions` record has a new boolean `cairoBypassAdjust`
+	  option; when set, the backend should bypass calling `adjustDia2D`.
+
+	+ The GTK output type is gone.
+
+	+ There is a new `RenderOnly` output type, for when you don't
+	  care about the `IO` action but only want the cairo `Render` action.
+
 * **Dependency/version changes**
 
-    - Allow new versions of dependencies:
+    - Upper bounds relaxed to allow
       `base`-4.6, `unix`-2.6, `cmdargs`-0.10, `split`-0.2.*, `mtl`-2.1
 
+    - Add a dependency on `time`, and conditional compilation to use
+      either ClockTime or UTCTime depending on the version of the
+      `directory` package
+
+    - Add dependency on `colour`
+
+    - Lower bound on `cairo` raised to 0.12.4
+    
 * **Bug fixes**
 
     - Fixed looped compile mode, which was repeatedly trying to compile
