@@ -24,10 +24,11 @@
 -- particular backend.  For @b ~ Cairo@ and @v ~ R2@, we have
 --
 -- > data family Options Cairo R2 = CairoOptions
--- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
--- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
--- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
--- >           }
+-- >          { cairoFileName     :: String     -- ^ The name of the file you want generated
+-- >          , cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
+-- >          , cairoOutputType   :: OutputType -- ^ the output format and associated options
+-- >          , cairoBypassAdjust :: Bool       -- ^ Should the 'adjustDia' step be bypassed during rendering?
+-- >          }
 --
 -- @
 -- data family Render Cairo R2 = C ('RenderM' ())
