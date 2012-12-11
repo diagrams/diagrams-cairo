@@ -18,6 +18,13 @@ Description:         A full-featured backend for rendering
                      * "Diagrams.Backend.Cairo.Text" - cairo-specific
                        text support, including automatic bounding
                        boxes.
+                     .
+                     * "Diagrams.Backend.Cairo.List" - render diagrams
+                       to two-dimensional lists of colors (/i.e./
+                       pixels).
+                     .
+                     * "Diagrams.Backend.Cairo.Ptr" - render diagrams
+                       to buffers in memory.
 Homepage:            http://projects.haskell.org/diagrams
 License:             BSD3
 License-file:        LICENSE
