@@ -211,7 +211,7 @@ cairoStrokeStyle s =
 
 setSource :: Color c => c -> Style v -> C.Render ()
 setSource c s = C.setSourceRGBA r g b a'
-  where (r,g,b,a) = colorToRGBA c
+  where (r,g,b,a) = colorToSRGBA c
         a'        = case getOpacity <$> getAttr s of
                       Nothing -> a
                       Just d  -> a * d
