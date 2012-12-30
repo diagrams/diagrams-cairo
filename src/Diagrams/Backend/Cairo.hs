@@ -45,10 +45,10 @@
 -- @
 --
 -- which you could call like @renderDia Cairo (CairoOptions "foo.png"
--- (Width 250) PNG) myDiagram@.  This would return a pair; the first
--- element is an @IO ()@ action which will write out @foo.png@ to
--- disk, and the second is a cairo rendering action which can be used,
--- for example, to directly draw to a Gtk window.
+-- (Width 250) PNG False) myDiagram@.  This would return a pair; the
+-- first element is an @IO ()@ action which will write out @foo.png@
+-- to disk, and the second is a cairo rendering action which can be
+-- used, for example, to directly draw to a Gtk window.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
