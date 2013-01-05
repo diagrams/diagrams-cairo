@@ -26,15 +26,16 @@ module Diagrams.Backend.Cairo.Text
   (
     -- * Primitives
 
-    -- | These create diagrams instantiated with extents-based envelopes
+    -- | These create diagrams instantiated with extent-based envelopes.
     textLineBoundedIO, textVisualBoundedIO
 
     -- ** Unsafe
 
     -- | These are convenient unsafe variants of the above operations
-    --   postfixed with \"IO\". They should be pretty well-behaved as the
-    --   results just depend on the parameters and the font information
-    --   (which ought to stay the same during a given execution).
+    --   using 'unsafePerformIO'. In practice, they should be fairly
+    --   safe as the results depend only on the parameters and the
+    --   font information (which ought to stay the same during a given
+    --   execution).
 
   , kerningCorrection, textLineBounded, textVisualBounded
 
@@ -66,13 +67,13 @@ import qualified Graphics.Rendering.Cairo as C
 queryCairo :: C.Render a -> IO a
 queryCairo c = C.withImageSurface C.FormatA1 0 0 (`C.renderWith` c)
 
--- | Unsafely invokes @queryCairo@.
+-- | Unsafely invokes 'queryCairo' using 'unsafePerformIO'.
 unsafeCairo :: C.Render a -> a
 unsafeCairo = unsafePerformIO . queryCairo
 
--- | Executes the given cairo action, with styling applied.
---   This does not do all styling - just attributes that are processed by
---   \"cairoMiscStyle\", which does clip, fill color, fill rule, and,
+-- | Executes the given cairo action, with styling applied.  This does
+--   not do all styling, only attributes that are processed by
+--   'cairoMiscStyle', which does clip, fill color, fill rule, and,
 --   importantly for this module, font face, style, and weight.
 cairoWithStyle :: C.Render a -> Style R2 -> C.Render a
 cairoWithStyle f style = do
@@ -110,9 +111,9 @@ getFontExtents :: Style R2 -> C.Render FontExtents
 getFontExtents style
   = cairoWithStyle (processFontExtents <$> C.fontExtents) style
 
--- | Gets both the "FontExtents" and "TextExtents" of the string with the a
+-- | Gets both the 'FontExtents' and 'TextExtents' of the string with the a
 --   particular style applied.  This is more efficient than calling both
---   @getFontExtents@ and @getTextExtents@.
+--   'getFontExtents' and 'getTextExtents'.
 getExtents :: Style R2 -> String -> C.Render (FontExtents, TextExtents)
 getExtents style str = cairoWithStyle (do
     fe <- processFontExtents <$> C.fontExtents
@@ -121,8 +122,8 @@ getExtents style str = cairoWithStyle (do
   ) style
 
 -- | Queries the amount of horizontal offset that needs to be applied in order to
---   position the second character properly, in the event that it is @hcat@-ed
---   @baselineText@.
+--   position the second character properly, in the event that it is 'hcat'-ed
+--   'baselineText'.
 kerningCorrectionIO :: Style R2 -> Char -> Char -> IO Double
 kerningCorrectionIO style a b = do
   let ax t = fst . unr2 . advance <$> queryCairo (getTextExtents style t)
@@ -132,7 +133,7 @@ kerningCorrectionIO style a b = do
   return $ l - la - lb
 
 -- | Creates text diagrams with their envelopes set such that using
---   @vcat . map (textLineBounded style)@ stacks them in the way that
+--   @'vcat' . map ('textLineBounded' style)@ stacks them in the way that
 --   the font designer intended.
 textLineBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
 textLineBoundedIO style str = do
@@ -150,9 +151,25 @@ textVisualBoundedIO style str = do
                         ((origin .+^ bearing te) .+^ textSize te)
   return . setEnvelope (getEnvelope box) . applyStyle style $ baselineText str
 
+-- | Queries the amount of horizontal offset that needs to be applied
+--   in order to position the second character properly, in the event
+--   that it is 'hcat'-ed 'baselineText'.  See 'kerningCorrectionIO';
+--   this variant uses 'unsafePerformIO' but should be fairly safe in
+--   practice.
 kerningCorrection :: Style R2 -> Char -> Char -> Double
 kerningCorrection style a = unsafePerformIO . kerningCorrectionIO style a
 
-textLineBounded, textVisualBounded :: Style R2 -> String -> Diagram Cairo R2
+-- | Creates text diagrams with their envelopes set such that using
+--   @'vcat' . map ('textLineBounded' style)@ stacks them in the way
+--   that the font designer intended. See 'textLineBoundedIO'; this
+--   variant uses 'unsafePerformIO' but should be fairly safe in
+--   practice.
+textLineBounded :: Style R2 -> String -> Diagram Cairo R2
 textLineBounded   style = unsafePerformIO . textLineBoundedIO   style
+
+-- | Creates a text diagram with its envelope set to enclose the
+--   glyphs of the text, including leading (though not trailing)
+--   whitespace. See 'textVisualBoundedIO'; this variant uses
+--   'unsafePerformIO' but should be fairly safe in practice.
+textVisualBounded :: Style R2 -> String -> Diagram Cairo R2
 textVisualBounded style = unsafePerformIO . textVisualBoundedIO style

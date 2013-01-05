@@ -10,9 +10,21 @@
 -- A full-featured rendering backend for diagrams using the
 -- cairo rendering engine.
 --
--- To invoke the cairo backend, use methods from the
--- 'Diagrams.Core.Types.Backend' instance for @Cairo@.  In particular,
--- 'Diagrams.Core.Types.renderDia' has the generic type
+-- To invoke the cairo backend, you have three options.
+--
+-- * You can use the "Diagrams.Backend.Cairo.CmdLine" module to create
+--   standalone executables which output images when invoked.
+--
+-- * You can use the 'renderCairo' function provided by this module,
+--   which gives you more flexible programmatic control over when and
+--   how images are output (making it easy to, for example, write a
+--   single program that outputs multiple images, or one that outputs
+--   images dynamically based on user input, and so on).
+--
+-- * Finally, for the most flexibility, you can directly
+--   use methods from the
+--   'Diagrams.Core.Types.Backend' instance for @Cairo@.  In particular,
+--   'Diagrams.Core.Types.renderDia' has the generic type
 --
 -- > renderDia :: b -> Options b v -> QDiagram b v m -> Result b v
 --
@@ -31,10 +43,6 @@
 -- >          }
 --
 -- @
--- data family Render Cairo R2 = C ('RenderM' ())
--- @
---
--- @
 -- type family Result Cairo R2 = (IO (), 'Graphics.Rendering.Cairo.Render' ())
 -- @
 --
@@ -44,11 +52,18 @@
 -- renderDia :: Cairo -> Options Cairo R2 -> QDiagram Cairo R2 m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
 -- @
 --
--- which you could call like @renderDia Cairo (CairoOptions "foo.png"
--- (Width 250) PNG False) myDiagram@.  This would return a pair; the
--- first element is an @IO ()@ action which will write out @foo.png@
--- to disk, and the second is a cairo rendering action which can be
--- used, for example, to directly draw to a Gtk window.
+-- which you could call like so:
+--
+-- @
+-- renderDia Cairo (CairoOptions \"foo.png\" (Width 250) PNG False) (myDiagram :: Diagram Cairo R2)
+-- @
+--
+-- This would return a pair; the first element is an @IO ()@ action
+-- which will write out @foo.png@ to disk, and the second is a cairo
+-- rendering action which can be used, for example, to directly draw
+-- to a Gtk window.  Note the type annotation on @myDiagram@ which may
+-- be necessary to fix the type variable @m@; this example uses the
+-- type synonym @Diagram b v = QDiagram b v Any@ to fix @m = Any@.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
@@ -96,10 +111,8 @@ import Diagrams.Prelude
 -- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
 -- >           }
 --
--- So, for example, you could call the 'renderDia' function (from
--- "Graphics.Rendering.Diagrams.Core") like this:
---
--- > renderDia Cairo (CairoOptions "foo.png" (Width 250) PNG) myDiagram
+-- See the documentation at the top of "Diagrams.Backend.Cairo" for
+-- information on how to make use of this.
 --
 -- /Important note/: a bug in GHC 7.0.x and 7.4.1 prevents
 -- re-exporting this data family.  (Strangely, this bug seems to be

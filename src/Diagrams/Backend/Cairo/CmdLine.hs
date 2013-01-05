@@ -26,8 +26,12 @@
 --   'defaultMain' (or 'multiMain', or 'animMain') in a call to
 --   'System.Environment.withArgs'.
 --
--- * A more flexible approach is to directly call 'renderDia'; see
---   "Diagrams.Backend.Cairo" for more information.
+-- * A more flexible approach is to use the 'renderCairo' function
+--   provided in the "Diagrams.Backend.Cairo" module.
+--
+-- * For the most flexibility, you can call the generic 'renderDia'
+--   function directly; see "Diagrams.Backend.Cairo" for more
+--   information.
 --
 -----------------------------------------------------------------------------
 

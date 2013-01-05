@@ -29,6 +29,10 @@
 -- sometimes to work around an apparent bug in certain versions of
 -- GHC, which results in a \"not in scope\" error for 'CairoOptions'.
 --
+-- The types of all the @fromX@ functions look funny in the Haddock
+-- output, which displays them like @Type -> Type@.  In fact they are
+-- all of the form @Type -> Graphics.Rendering.Cairo.Type@, /i.e./
+-- they convert from a diagrams type to a cairo type of the same name.
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
@@ -56,7 +60,7 @@ import Data.Typeable
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
---   inference engine would otherwise have know way to know which
+--   inference engine would otherwise have no way to know which
 --   backend you wanted to use, and (2) as an argument to the
 --   'Backend' and 'Renderable' type classes.
 data Cairo = Cairo
@@ -64,15 +68,16 @@ data Cairo = Cairo
 
 -- | Output types supported by cairo, including four different file
 --   types (PNG, PS, PDF, SVG).  If you want to output directly to GTK
---   windows, see the diagrams-gtk package.
+--   windows, see the @diagrams-gtk@ package.
 data OutputType =
-    PNG      -- ^ Portable Network Graphics output.
-  | PS       -- ^ PostScript output
-  | PDF      -- ^ Portable Document Format output.
-  | SVG      -- ^ Scalable Vector Graphics output.
+    PNG         -- ^ Portable Network Graphics output.
+  | PS          -- ^ PostScript output
+  | PDF         -- ^ Portable Document Format output.
+  | SVG         -- ^ Scalable Vector Graphics output.
   | RenderOnly  -- ^ Don't output any file; the returned @IO ()@
-                -- action will do nothing, but the @Render ()@ action
-                -- can be used (e.g. to draw to a Gtk window)
+                --   action will do nothing, but the @Render ()@
+                --   action can be used (/e.g./ to draw to a Gtk
+                --   window; see the @diagrams-gtk@ package).
 
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
@@ -152,6 +157,7 @@ instance Backend Cairo R2 where
                                           c opts (d # reflectY)
     where setCairoSizeSpec sz o = o { cairoSizeSpec = sz }
 
+-- | Render an object that the cairo backend knows how to render.
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
 
@@ -209,6 +215,7 @@ cairoStrokeStyle s =
         lDashing (getDashing -> Dashing ds offs) =
           C.setDash ds offs
 
+-- | Set the source color.
 setSource :: Color c => c -> Style v -> C.Render ()
 setSource c s = C.setSourceRGBA r g b a'
   where (r,g,b,a) = colorToSRGBA c
