@@ -53,8 +53,11 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
 
-  ( -- * Cairo-supported output formats
-    OutputType(..)
+  ( -- * Rendering
+    renderCairo
+
+    -- * Cairo-supported output formats
+  , OutputType(..)
 
     -- * Cairo-specific options
     -- $CairoOptions
@@ -76,7 +79,10 @@ module Diagrams.Backend.Cairo
   , Cairo(..)
   ) where
 
+import System.FilePath (takeExtension)
+
 import Diagrams.Backend.Cairo.Internal
+import Diagrams.Prelude
 
 -- $CairoOptions
 --
@@ -100,3 +106,22 @@ import Diagrams.Backend.Cairo.Internal
 -- present in 7.0 and 7.4 but not 7.2.) To bring CairoOptions into
 -- scope when using GHC 7.0.x or 7.4 you must import
 -- "Diagrams.Backend.Cairo.Internal".
+
+-- | Render a diagram using the cairo backend, writing to the given
+--   output file and using the requested size.  The output type (PNG,
+--   PS, PDF, or SVG) is determined automatically from the output file
+--   extension.
+--
+--   This function is provided as a convenience; if you need more
+--   flexibility than it provides, you can call 'renderDia' directly,
+--   as described above.
+renderCairo :: FilePath -> SizeSpec2D -> Diagram Cairo R2 -> IO ()
+renderCairo outFile sizeSpec d
+  = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
+  where
+    outTy =
+      case takeExtension outFile of
+        "png" -> PNG
+        "ps"  -> PS
+        "pdf" -> PDF
+        "svg" -> SVG
