@@ -138,3 +138,4 @@ renderCairo outFile sizeSpec d
         "ps"  -> PS
         "pdf" -> PDF
         "svg" -> SVG
+        _     -> PNG
