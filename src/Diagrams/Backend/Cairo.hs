@@ -134,8 +134,8 @@ renderCairo outFile sizeSpec d
   where
     outTy =
       case takeExtension outFile of
-        "png" -> PNG
-        "ps"  -> PS
-        "pdf" -> PDF
-        "svg" -> SVG
-        _     -> PNG
+        ".png" -> PNG
+        ".ps"  -> PS
+        ".pdf" -> PDF
+        ".svg" -> SVG
+        _      -> PNG
