@@ -78,6 +78,7 @@ data OutputType =
                 --   action will do nothing, but the @Render ()@
                 --   action can be used (/e.g./ to draw to a Gtk
                 --   window; see the @diagrams-gtk@ package).
+  deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable)
 
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
@@ -114,6 +115,7 @@ instance Backend Cairo R2 where
           , cairoOutputType :: OutputType -- ^ the output format and associated options
           , cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
+    deriving Show
 
   withStyle _ s t (C r) = C $ do
     save
