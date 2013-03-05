@@ -1,12 +1,11 @@
-{-# LANGUAGE TypeFamilies
-           , MultiParamTypeClasses
-           , FlexibleInstances
-           , FlexibleContexts
-           , ExistentialQuantification
-           , TypeSynonymInstances
-           , DeriveDataTypeable
-           , ViewPatterns
-  #-}
+{-# LANGUAGE DeriveDataTypeable        #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE TypeSynonymInstances      #-}
+{-# LANGUAGE ViewPatterns              #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -36,27 +35,28 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import Diagrams.Core.Transform
+import           Diagrams.Core.Transform
 
-import Diagrams.Prelude
-import Diagrams.TwoD.Path (Clip(..), getFillRule)
-import Diagrams.TwoD.Text
-import Diagrams.TwoD.Image
-import Diagrams.TwoD.Adjust (adjustDia2D, setDefault2DAttributes)
-import Diagrams.TwoD.Size (requiredScaleT)
+import           Diagrams.Prelude
+import           Diagrams.TwoD.Adjust            (adjustDia2D,
+                                                  setDefault2DAttributes)
+import           Diagrams.TwoD.Image
+import           Diagrams.TwoD.Path              (Clip (..), getFillRule)
+import           Diagrams.TwoD.Size              (requiredScaleT)
+import           Diagrams.TwoD.Text
 
-import qualified Graphics.Rendering.Cairo as C
+import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
-import Control.Monad.State
-import Data.Maybe (catMaybes, fromMaybe)
-import Data.List (isSuffixOf)
+import           Control.Monad.State
+import           Data.List                       (isSuffixOf)
+import           Data.Maybe                      (catMaybes, fromMaybe)
 
-import Control.Exception (try)
+import           Control.Exception               (try)
 
-import qualified Data.Foldable as F
+import qualified Data.Foldable                   as F
 
-import Data.Typeable
+import           Data.Typeable
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
