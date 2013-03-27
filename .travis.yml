@@ -2,12 +2,10 @@ language: haskell
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libcairo2-dev 
-  - git clone --quiet git://github.com/diagrams/monoid-extras.git diagrams/monoid-extras
-  - git clone --quiet git://github.com/diagrams/dual-tree.git diagrams/dual-tree
   - git clone --quiet git://github.com/diagrams/diagrams-core.git diagrams/diagrams-core
   - git clone --quiet git://github.com/diagrams/diagrams-lib.git diagrams/diagrams-lib
   - cd diagrams
-  - cabal install monoid-extras/ dual-tree/ diagrams-core/ diagrams-lib/ gtk2hs-buildtools
+  - cabal install diagrams-core/ diagrams-lib/ gtk2hs-buildtools
   - cd ..
 notifications:
   irc:
