@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies, CPP #-}
+{-# LANGUAGE CPP          #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -37,7 +38,7 @@
 --
 -- > data family Options Cairo R2 = CairoOptions
 -- >          { cairoFileName     :: String     -- ^ The name of the file you want generated
--- >          , cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
+-- >          , cairoSizeSpec     :: SizeSpec2D Double -- ^ The requested size of the output
 -- >          , cairoOutputType   :: OutputType -- ^ the output format and associated options
 -- >          , cairoBypassAdjust :: Bool       -- ^ Should the 'adjustDia' step be bypassed during rendering?
 -- >          }
@@ -94,10 +95,10 @@ module Diagrams.Backend.Cairo
   , Cairo(..)
   ) where
 
-import System.FilePath (takeExtension)
+import           System.FilePath                 (takeExtension)
 
-import Diagrams.Backend.Cairo.Internal
-import Diagrams.Prelude
+import           Diagrams.Backend.Cairo.Internal
+import           Diagrams.Prelude
 
 -- $CairoOptions
 --
@@ -107,7 +108,7 @@ import Diagrams.Prelude
 --
 -- > data family Options Cairo R2 = CairoOptions
 -- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
--- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+-- >           , cairoSizeSpec   :: SizeSpec2D Double -- ^ The requested size of the output
 -- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
 -- >           }
 --
@@ -128,7 +129,7 @@ import Diagrams.Prelude
 --   This function is provided as a convenience; if you need more
 --   flexibility than it provides, you can call 'renderDia' directly,
 --   as described above.
-renderCairo :: FilePath -> SizeSpec2D -> Diagram Cairo R2 -> IO ()
+renderCairo :: FilePath -> SizeSpec2D Double -> Diagram Cairo R2 -> IO ()
 renderCairo outFile sizeSpec d
   = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
   where

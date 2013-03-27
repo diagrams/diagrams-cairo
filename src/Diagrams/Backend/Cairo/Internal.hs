@@ -111,9 +111,9 @@ instance Backend Cairo R2 where
   type Result  Cairo R2 = (IO (), C.Render ())
   data Options Cairo R2 = CairoOptions
           { cairoFileName   :: String     -- ^ The name of the file you want generated
-          , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+          , cairoSizeSpec   :: SizeSpec2D Double -- ^ The requested size of the output
           , cairoOutputType :: OutputType -- ^ the output format and associated options
-          , cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
+          , cairoBypassAdjust :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
     deriving Show
 
@@ -228,7 +228,7 @@ setSource c s = C.setSourceRGBA r g b a'
 
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
-cairoTransf :: T2 -> C.Render ()
+cairoTransf :: T2D -> C.Render ()
 cairoTransf t = C.transform m
   where m = CM.Matrix a1 a2 b1 b2 c1 c2
         (unr2 -> (a1,a2)) = apply t unitX
@@ -276,7 +276,7 @@ instance Renderable (Path R2) Cairo where
 
 
 -- Can only do PNG files at the moment...
-instance Renderable Image Cairo where
+instance Renderable (Image Double) Cairo where
   render _ (Image file sz tr) = C . lift $ do
     if ".png" `isSuffixOf` file
       then do
@@ -303,7 +303,7 @@ instance Renderable Image Cairo where
           ]
 
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
-instance Renderable Text Cairo where
+instance Renderable (Text Double) Cairo where
   render _ (Text tr al str) = C $ do
     lift $ do
       C.save
