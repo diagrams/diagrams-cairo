@@ -2,6 +2,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
@@ -37,7 +38,9 @@ module Diagrams.Backend.Cairo.Internal where
 
 import           Diagrams.Core.Transform
 
+import           Diagrams.Located                (viewLoc)
 import           Diagrams.Prelude
+import           Diagrams.Trail
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
@@ -256,21 +259,24 @@ fromFillRule :: FillRule -> C.FillRule
 fromFillRule Winding = C.FillRuleWinding
 fromFillRule EvenOdd = C.FillRuleEvenOdd
 
-instance Renderable (Segment R2) Cairo where
-  render _ (Linear v) = C . lift $ uncurry C.relLineTo (unr2 v)
+instance Renderable (Segment Closed R2) Cairo where
+  render _ (Linear (OffsetClosed v)) = C . lift $ uncurry C.relLineTo (unr2 v)
   render _ (Cubic (unr2 -> (x1,y1))
                   (unr2 -> (x2,y2))
-                  (unr2 -> (x3,y3)))
+                  (OffsetClosed (unr2 -> (x3,y3))))
     = C . lift $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
-  render _ (Trail segs c) = C $ do
-    mapM_ renderC segs
-    lift $ when c C.closePath
+  render _ t = flip withLine t $ renderT . lineSegments
+    where
+      renderT segs =
+        C $ do
+          mapM_ renderC segs
+          lift $ when (isLoop t) C.closePath
 
 instance Renderable (Path R2) Cairo where
   render _ (Path trs) = C $ lift C.newPath >> F.mapM_ renderTrail trs
-    where renderTrail (unp2 -> p, tr) = do
+    where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
             lift $ uncurry C.moveTo p
             renderC tr
 
