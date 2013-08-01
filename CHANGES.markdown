@@ -1,3 +1,16 @@
+0.7: XXX
+--------
+
+* **New features**
+
+    - New `renderCairo` function for more convenient use of the cairo
+      backend.
+    - Lots of Haddock documentation improvements.
+
+* **New instances**
+
+    - `Show` instance for `Options Cairo R2`.
+
 0.6: 11 December 2012
 ---------------------
 
