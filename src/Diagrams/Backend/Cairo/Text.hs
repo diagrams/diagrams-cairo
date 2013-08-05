@@ -54,13 +54,13 @@ module Diagrams.Backend.Cairo.Text
   , cairoWithStyle
   ) where
 
-import Diagrams.Backend.Cairo.Internal
-import Diagrams.Prelude
+import           Diagrams.Backend.Cairo.Internal
+import           Diagrams.Prelude
 
-import Control.Monad.State
-import System.IO.Unsafe
+import           Control.Monad.State
+import           System.IO.Unsafe
 
-import qualified Graphics.Rendering.Cairo as C
+import qualified Graphics.Rendering.Cairo        as C
 
 -- | Executes a cairo action on a dummy, zero-size image surface, in order to
 --   query things like font information.
@@ -78,7 +78,7 @@ unsafeCairo = unsafePerformIO . queryCairo
 cairoWithStyle :: C.Render a -> Style R2 -> C.Render a
 cairoWithStyle f style = do
   C.save
-  evalStateT (cairoMiscStyle style) ()
+  evalStateT (cairoMiscStyle style) False
   result <- f
   C.restore
   return result
@@ -99,7 +99,7 @@ getTextExtents style txt
 -- | A more convenient data structure for the results of a font-extents query.
 data FontExtents = FontExtents
   { ascent, descent, height :: Double
-  , maxAdvance :: R2
+  , maxAdvance              :: R2
   }
 
 processFontExtents :: C.FontExtents -> FontExtents

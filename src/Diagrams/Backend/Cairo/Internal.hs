@@ -89,17 +89,18 @@ instance Monoid (Render Cairo R2) where
 
 -- | The custom monad in which intermediate drawing options take
 --   place; 'Graphics.Rendering.Cairo.Render' is cairo's own rendering
---   monad.  At one point @RenderM@ really did use @StateT@, but then
---   the state got taken out... but the @StateT@ remains, now with a
---   zen-like state of type unit, \"just in case\".  Think of it as a
---   good luck charm.
-type RenderM a = StateT () C.Render a  -- no state for now
+--   monad.  Right now we simply maintain a Bool state to track
+--   whether or not we saw any lines in the most recent path (as
+--   opposed to loops).  If we did, we should ignore any fill
+--   attribute.  diagrams-lib separates lines and loops into separate
+--   path primitives so we don't have to worry about seeing them
+--   together in the same path.
+type RenderM a = StateT Bool C.Render a  -- no state for now
 
--- simple, stupid implementations of save and restore for now, since
--- it suffices to just reset the text alignment to "centered" on
--- restore.  But if need be we can switch to a more sophisticated
--- implementation using an "undoable state" monad which lets you save
--- (push state onto a stack) and restore (pop from the stack).
+-- Simple, stupid implementations of save and restore for now.  If
+-- need be we could switch to a more sophisticated implementation
+-- using an "undoable state" monad which lets you save (push state
+-- onto a stack) and restore (pop from the stack).
 
 -- | Push the current context onto a stack.
 save :: RenderM ()
@@ -123,15 +124,17 @@ instance Backend Cairo R2 where
   withStyle _ s t (C r) = C $ do
     save
     cairoMiscStyle s
+    put False
     r
+    ignoreFill <- get
     lift $ do
       cairoTransf t
-      cairoStrokeStyle s
+      cairoStrokeStyle ignoreFill s
       C.stroke
     restore
 
   doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
-    where r' = evalStateT r ()
+    where r' = evalStateT r False
           renderIO = do
             let surfaceF s = C.renderWith s r'
 
@@ -200,10 +203,10 @@ fromFontWeight FontWeightNormal = C.FontWeightNormal
 fromFontWeight FontWeightBold   = C.FontWeightBold
 
 -- | Handle style attributes having to do with stroke.
-cairoStrokeStyle :: Style v -> C.Render ()
-cairoStrokeStyle s =
+cairoStrokeStyle :: Bool -> Style v -> C.Render ()
+cairoStrokeStyle ignoreFill s =
   sequence_
-  . catMaybes $ [ handle fColor
+  . catMaybes $ [ if ignoreFill then Nothing else handle fColor
                 , handle lColor  -- see Note [color order]
                 , handle lWidth
                 , handle lCap
@@ -273,6 +276,9 @@ instance Renderable (Trail R2) Cairo where
         C $ do
           mapM_ renderC segs
           lift $ when (isLoop t) C.closePath
+
+          when (isLine t) (put True)
+            -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
   render _ (Path trs) = C $ lift C.newPath >> F.mapM_ renderTrail trs
