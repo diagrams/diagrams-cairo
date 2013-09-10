@@ -39,7 +39,7 @@ module Diagrams.Backend.Cairo.Internal where
 import           Diagrams.Core.Transform
 
 import           Diagrams.Located                (viewLoc)
-import           Diagrams.Prelude
+import           Diagrams.Prelude                hiding (C)
 import           Diagrams.Trail
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
