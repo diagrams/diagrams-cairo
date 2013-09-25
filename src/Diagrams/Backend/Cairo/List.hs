@@ -13,19 +13,19 @@
 
 module Diagrams.Backend.Cairo.List where
 
-import Control.Applicative ((<$>))
-import Control.Exception (bracket)
+import           Control.Applicative        ((<$>))
+import           Control.Exception          (bracket)
 
-import Data.Colour
-import Data.Colour.SRGB (sRGB)
-import Data.Word (Word8)
+import           Data.Colour
+import           Data.Colour.SRGB           (sRGB)
+import           Data.Word                  (Word8)
 
-import Diagrams.Prelude (Diagram, R2)
-import Diagrams.Backend.Cairo (Cairo)
-import Diagrams.Backend.Cairo.Ptr (renderPtr)
+import           Diagrams.Backend.Cairo     (Cairo)
+import           Diagrams.Backend.Cairo.Ptr (renderPtr)
+import           Diagrams.Prelude           (Diagram, R2)
 
-import Foreign.Marshal.Alloc (free)
-import Foreign.Marshal.Array (peekArray)
+import           Foreign.Marshal.Alloc      (free)
+import           Foreign.Marshal.Array      (peekArray)
 
 -- | Render to a regular list of Colour values.
 
@@ -38,7 +38,7 @@ renderToList w h d =
   f _ [] = []
   f n xs | n >= w = [] : f 0 xs
   f n (g:b:r:a:xs) =
-    let l n = fromIntegral n / fromIntegral a
+    let l x = fromIntegral x / fromIntegral a
         c   = sRGB (l r) (l g) (l b) `withOpacity` (fromIntegral a / 255)
 
     in case f (n+1) xs of
