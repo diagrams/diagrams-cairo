@@ -8,6 +8,7 @@ before_install:
   - cabal install diagrams-core/ diagrams-lib/ gtk2hs-buildtools
   - cd ..
 notifications:
+  email: false
   irc:
     channels:
       - irc.freenode.org#diagrams
