@@ -54,6 +54,7 @@ import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe)
 
 import           Control.Exception               (try)
+import           Control.Lens                    hiding ((#))
 
 import qualified Data.Foldable                   as F
 
@@ -279,7 +280,7 @@ instance Renderable (Trail R2) Cairo where
             -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C $ lift C.newPath >> F.mapM_ renderTrail trs
+  render _ trs = C $ lift C.newPath >> F.mapM_ renderTrail (trs^.pathTrails)
     where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
             lift $ uncurry C.moveTo p
             renderC tr
