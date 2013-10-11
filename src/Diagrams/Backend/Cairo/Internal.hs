@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
 {-# LANGUAGE ViewPatterns              #-}
@@ -38,11 +39,11 @@ module Diagrams.Backend.Cairo.Internal where
 
 import           Diagrams.Core.Transform
 
-import           Diagrams.Prelude
+import           Diagrams.Prelude                hiding (view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
-import           Diagrams.TwoD.Path              (Clip (..), getFillRule)
+import           Diagrams.TwoD.Path              (getClip, getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT)
 import           Diagrams.TwoD.Text
 
@@ -52,6 +53,8 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import           Control.Monad.State
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe)
+
+import           Control.Lens                    hiding ((#), transform)
 
 import           Control.Exception               (try)
 
@@ -112,10 +115,10 @@ instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
   type Result  Cairo R2 = (IO (), C.Render ())
   data Options Cairo R2 = CairoOptions
-          { cairoFileName   :: String     -- ^ The name of the file you want generated
-          , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
-          , cairoOutputType :: OutputType -- ^ the output format and associated options
-          , cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
+          { _cairoFileName   :: String     -- ^ The name of the file you want generated
+          , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+          , _cairoOutputType :: OutputType -- ^ the output format and associated options
+          , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
     deriving Show
 
@@ -156,12 +159,28 @@ instance Backend Cairo R2 where
               SVG -> C.withSVGSurface file w h surfaceF
               RenderOnly -> return ()
 
-  adjustDia c opts d = if cairoBypassAdjust opts
+  adjustDia c opts d = if _cairoBypassAdjust opts
                          then (opts, d # setDefault2DAttributes)
-                         else adjustDia2D cairoSizeSpec
+                         else adjustDia2D _cairoSizeSpec
                                           setCairoSizeSpec
                                           c opts (d # reflectY)
-    where setCairoSizeSpec sz o = o { cairoSizeSpec = sz }
+    where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
+
+cairoFileName :: Lens' (Options Cairo R2) String
+cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
+                     (\o f -> o {_cairoFileName = f})
+
+cairoSizeSpec :: Lens' (Options Cairo R2) SizeSpec2D
+cairoSizeSpec = lens (\(CairoOptions {_cairoSizeSpec = s}) -> s)
+                     (\o s -> o {_cairoSizeSpec = s})
+
+cairoOutputType :: Lens' (Options Cairo R2) OutputType
+cairoOutputType = lens (\(CairoOptions {_cairoOutputType = t}) -> t)
+                     (\o t -> o {_cairoOutputType = t})
+
+cairoBypassAdjust :: Lens' (Options Cairo R2) Bool
+cairoBypassAdjust = lens (\(CairoOptions {_cairoBypassAdjust = b}) -> b)
+                     (\o b -> o {_cairoBypassAdjust = b})
 
 -- | Render an object that the cairo backend knows how to render.
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
@@ -180,7 +199,7 @@ cairoMiscStyle s =
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
-        clip     = mapM_ (\p -> renderC p >> lift C.clip) . getClip
+        clip     = mapM_ (\p -> renderC p >> lift C.clip) . view getClip
         fSize    = lift . C.setFontSize . getFontSize
         fFace    = fromMaybe "" $ getFont <$> getAttr s
         fSlant   = fromFontSlant  . fromMaybe FontSlantNormal
