@@ -43,7 +43,7 @@ import           Diagrams.Prelude                hiding (view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
-import           Diagrams.TwoD.Path              (getClip, getFillRule)
+import           Diagrams.TwoD.Path              (Clip(Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT)
 import           Diagrams.TwoD.Text
 
@@ -199,7 +199,7 @@ cairoMiscStyle s =
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
-        clip     = mapM_ (\p -> renderC p >> lift C.clip) . view getClip
+        clip = mapM_ (\p -> renderC p >> lift C.clip) . op Clip
         fSize    = lift . C.setFontSize . getFontSize
         fFace    = fromMaybe "" $ getFont <$> getAttr s
         fSlant   = fromFontSlant  . fromMaybe FontSlantNormal
