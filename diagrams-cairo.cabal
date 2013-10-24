@@ -60,7 +60,8 @@ Library
                        cairo >= 0.12.4 && < 0.13,
                        cmdargs >= 0.6 && < 0.11,
                        colour,
-                       split >= 0.1.2 && < 0.3
+                       split >= 0.1.2 && < 0.3,
+                       lens >= 3.8 && < 4
   default-language:    Haskell2010
 
   if !os(windows)

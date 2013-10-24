@@ -1,4 +1,5 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RankNTypes      #-}
+{-# LANGUAGE TemplateHaskell #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.Text
@@ -42,7 +43,8 @@ module Diagrams.Backend.Cairo.Text
     -- * Extents
 
     -- ** Data Structures
-  , TextExtents(..), FontExtents(..)
+  , TextExtents(TextExtents), bearing, textSize, advance
+  , FontExtents(FontExtents), ascent, descent, height, maxAdvance
 
     -- ** Queries
 
@@ -55,9 +57,10 @@ module Diagrams.Backend.Cairo.Text
   ) where
 
 import           Diagrams.Backend.Cairo.Internal
-import           Diagrams.Prelude
+import           Diagrams.Prelude hiding (view, height)
 
 import           Control.Monad.State
+import           Control.Lens (makeLenses, view)
 import           System.IO.Unsafe
 
 import qualified Graphics.Rendering.Cairo        as C
@@ -85,7 +88,9 @@ cairoWithStyle f style = do
 
 -- | A more convenient data structure for the results of a text-extents query.
 data TextExtents = TextExtents
-  { bearing, textSize, advance :: R2 }
+  { _bearing, _textSize, _advance :: R2 }
+
+makeLenses ''TextExtents
 
 processTextExtents :: C.TextExtents -> TextExtents
 processTextExtents (C.TextExtents  xb yb  w h  xa ya)
@@ -98,9 +103,11 @@ getTextExtents style txt
 
 -- | A more convenient data structure for the results of a font-extents query.
 data FontExtents = FontExtents
-  { ascent, descent, height :: Double
-  , maxAdvance              :: R2
+  { _ascent, _descent, _height :: Double
+  , _maxAdvance                :: R2
   }
+
+makeLenses ''FontExtents
 
 processFontExtents :: C.FontExtents -> FontExtents
 processFontExtents (C.FontExtents a d h  mx my)
@@ -126,7 +133,7 @@ getExtents style str = cairoWithStyle (do
 --   'baselineText'.
 kerningCorrectionIO :: Style R2 -> Char -> Char -> IO Double
 kerningCorrectionIO style a b = do
-  let ax t = fst . unr2 . advance <$> queryCairo (getTextExtents style t)
+  let ax t = fst . unr2 . view advance <$> queryCairo (getTextExtents style t)
   l  <- ax [a, b]
   la <- ax [a]
   lb <- ax [b]
@@ -138,8 +145,8 @@ kerningCorrectionIO style a b = do
 textLineBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
 textLineBoundedIO style str = do
   (fe, te) <- queryCairo $ getExtents style str
-  let box = fromCorners (p2 (0,      negate $ descent fe))
-                        (p2 (fst . unr2 $ advance te, ascent fe))
+  let box = fromCorners (p2 (0,      negate $ view descent fe))
+                        (p2 (fst . unr2 $ view advance te, view ascent fe))
   return . setEnvelope (getEnvelope box) . applyStyle style $ baselineText str
 
 -- | Creates a text diagram with its envelope set to enclose the glyphs of the text,
@@ -147,8 +154,8 @@ textLineBoundedIO style str = do
 textVisualBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
-  let box = fromCorners (origin .+^ bearing te)
-                        ((origin .+^ bearing te) .+^ textSize te)
+  let box = fromCorners (origin .+^ view bearing te)
+                        ((origin .+^ view bearing te) .+^ view textSize te)
   return . setEnvelope (getEnvelope box) . applyStyle style $ baselineText str
 
 -- | Queries the amount of horizontal offset that needs to be applied

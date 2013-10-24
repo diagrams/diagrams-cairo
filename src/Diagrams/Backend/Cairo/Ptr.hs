@@ -36,10 +36,10 @@ renderPtr w h d = do
   let stride = formatStrideForWidth FormatARGB32 w
       size   = stride * h
       opt    = CairoOptions
-        { cairoSizeSpec     = Dims (fromIntegral w) (fromIntegral h)
-        , cairoOutputType   = RenderOnly
-        , cairoBypassAdjust = False
-        , cairoFileName     = ""
+        { _cairoSizeSpec     = Dims (fromIntegral w) (fromIntegral h)
+        , _cairoOutputType   = RenderOnly
+        , _cairoBypassAdjust = False
+        , _cairoFileName     = ""
         }
       (_, r) = renderDia Cairo opt d
 
