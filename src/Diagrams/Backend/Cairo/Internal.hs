@@ -70,6 +70,8 @@ import           Data.Typeable
 data Cairo = Cairo
   deriving (Eq,Ord,Read,Show,Typeable)
 
+type B = Cairo
+
 -- | Output types supported by cairo, including four different file
 --   types (PNG, PS, PDF, SVG).  If you want to output directly to GTK
 --   windows, see the @diagrams-gtk@ package.

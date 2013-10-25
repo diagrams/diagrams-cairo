@@ -92,6 +92,7 @@ module Diagrams.Backend.Cairo
 
     -- * Backend token
   , Cairo(..)
+  , B
   ) where
 
 import System.FilePath (takeExtension)
