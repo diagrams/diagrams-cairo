@@ -52,9 +52,11 @@ import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
 import           Control.Monad.State
+import           Control.Monad.Reader
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe)
 import           Data.Tree
+import           Data.Default.Class
 
 import           Control.Lens                    hiding ((#), transform)
 
@@ -92,15 +94,32 @@ instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
+-- | Custom state tracked in the 'RenderM' monad.
+data CairoState
+  = CairoState { _cairoFillColor   :: Maybe (Colour Double)
+               , _cairoStrokeColor :: Maybe (Colour Double)
+               }
+
+instance Default CairoState where
+  def = CairoState Nothing Nothing
+
 -- | The custom monad in which intermediate drawing options take
 --   place; 'Graphics.Rendering.Cairo.Render' is cairo's own rendering
---   monad.  Right now we simply maintain a Bool state to track
---   whether or not we saw any lines in the most recent path (as
---   opposed to loops).  If we did, we should ignore any fill
---   attribute.  diagrams-lib separates lines and loops into separate
---   path primitives so we don't have to worry about seeing them
---   together in the same path.
-type RenderM a = StateT Bool C.Render a  -- no state for now
+--   monad.  The 'Bool' tells us whether or not we saw any lines in
+--   the most recent path (as opposed to loops).  If we did, we should
+--   ignore any fill attribute.  diagrams-lib separates lines and
+--   loops into separate path primitives so we don't have to worry
+--   about seeing them together in the same path.  The 'CairoState'
+--   tracks the current fill and stroke color (using 'ReaderT' instead
+--   of 'StateT' since we want the values to be hierarchically
+--   scoped).
+type RenderM a = StateT Bool (ReaderT CairoState C.Render) a
+
+liftC :: C.Render a -> RenderM a
+liftC = lift . lift
+
+runRenderM :: RenderM a -> C.Render a
+runRenderM = flip runReaderT def . flip evalStateT False
 
 -- Simple, stupid implementations of save and restore for now.  If
 -- need be we could switch to a more sophisticated implementation
@@ -109,11 +128,11 @@ type RenderM a = StateT Bool C.Render a  -- no state for now
 
 -- | Push the current context onto a stack.
 save :: RenderM ()
-save = lift C.save
+save = liftC C.save
 
 -- | Restore the context from a stack.
 restore :: RenderM ()
-restore = lift C.restore
+restore = liftC C.restore
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
@@ -126,20 +145,8 @@ instance Backend Cairo R2 where
           }
     deriving Show
 
-  withStyle _ s t (C r) = C $ do
-    save
-    cairoMiscStyle s
-    put False
-    r
-    ignoreFill <- get
-    lift $ do
-      cairoTransf t
-      cairoStrokeStyle ignoreFill s
-      C.stroke
-    restore
-
   doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
-    where r' = evalStateT r False
+    where r' = runRenderM r
           renderIO = do
             let surfaceF s = C.renderWith s r'
 
@@ -174,9 +181,19 @@ instance Backend Cairo R2 where
     where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
 
 renderRTree :: RTree Cairo R2 a -> Render Cairo R2
-renderRTree (Node (RPrim accTr p) _) = (render Cairo (transform accTr p))
-renderRTree (Node (RStyle sty) ts)   = withStyle Cairo sty mempty (F.foldMap renderRTree ts)
-renderRTree (Node (RFrozenTr tr) ts) = withStyle Cairo mempty tr (F.foldMap renderRTree ts)
+renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
+renderRTree (Node (RStyle sty) ts)   = C $ do
+  save
+  cairoStyle sty
+  let C r = F.foldMap renderRTree ts
+  r
+  restore
+renderRTree (Node (RFrozenTr tr) ts) = C $ do
+  save
+  liftC $ cairoTransf tr
+  let C r = F.foldMap renderRTree ts
+  r
+  restore
 renderRTree (Node _ ts)              = F.foldMap renderRTree ts
 
 cairoFileName :: Lens' (Options Cairo R2) String
@@ -199,29 +216,40 @@ cairoBypassAdjust = lens (\(CairoOptions {_cairoBypassAdjust = b}) -> b)
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
 
--- | Handle \"miscellaneous\" style attributes (clip, font stuff, fill
---   color and fill rule).
-cairoMiscStyle :: Style v -> RenderM ()
-cairoMiscStyle s =
+-- | Handle all style attributes (clip, font stuff, fill color, fill
+--   rule, stroke color, line width, cap, join, and dashing).
+cairoStyle :: Style v -> RenderM ()
+cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
                 , handle fSize
                 , handleFontFace
                 , handle fColor
                 , handle lFillRule
+                , handle lColor
+                , handle lWidth
+                , handle lCap
+                , handle lJoin
+                , handle lDashing
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
-        clip = mapM_ (\p -> renderC p >> lift C.clip) . op Clip
-        fSize    = lift . C.setFontSize . getFontSize
+        clip = mapM_ (\p -> renderC p >> liftC C.clip) . op Clip
+        fSize    = liftC . C.setFontSize . getFontSize
         fFace    = fromMaybe "" $ getFont <$> getAttr s
         fSlant   = fromFontSlant  . fromMaybe FontSlantNormal
                  $ getFontSlant  <$> getAttr s
         fWeight  = fromFontWeight . fromMaybe FontWeightNormal
                  $ getFontWeight <$> getAttr s
-        handleFontFace = Just . lift $ C.selectFontFace fFace fSlant fWeight
-        fColor c = lift $ setSource (getFillColor c) s
-        lFillRule = lift . C.setFillRule . fromFillRule . getFillRule
+        handleFontFace = Just . liftC $ C.selectFontFace fFace fSlant fWeight
+        fColor c = liftC $ setSource (getFillColor c) s
+        lFillRule = liftC . C.setFillRule . fromFillRule . getFillRule
+        lColor c = liftC $ setSource (getLineColor c) s
+        lWidth   = liftC . C.setLineWidth . getLineWidth
+        lCap     = liftC . C.setLineCap . fromLineCap . getLineCap
+        lJoin    = liftC . C.setLineJoin . fromLineJoin . getLineJoin
+        lDashing (getDashing -> Dashing ds offs) =
+          liftC $ C.setDash ds offs
 
 fromFontSlant :: FontSlant -> C.FontSlant
 fromFontSlant FontSlantNormal   = C.FontSlantNormal
@@ -232,27 +260,6 @@ fromFontWeight :: FontWeight -> C.FontWeight
 fromFontWeight FontWeightNormal = C.FontWeightNormal
 fromFontWeight FontWeightBold   = C.FontWeightBold
 
--- | Handle style attributes having to do with stroke.
-cairoStrokeStyle :: Bool -> Style v -> C.Render ()
-cairoStrokeStyle ignoreFill s =
-  sequence_
-  . catMaybes $ [ if ignoreFill then Nothing else handle fColor
-                , handle lColor  -- see Note [color order]
-                , handle lWidth
-                , handle lCap
-                , handle lJoin
-                , handle lDashing
-                ]
-  where handle :: (AttributeClass a) => (a -> C.Render ()) -> Maybe (C.Render ())
-        handle f = f `fmap` getAttr s
-        fColor c = setSource (getFillColor c) s >> C.fillPreserve
-        lColor c = setSource (getLineColor c) s
-        lWidth   = C.setLineWidth . getLineWidth
-        lCap     = C.setLineCap . fromLineCap . getLineCap
-        lJoin    = C.setLineJoin . fromLineJoin . getLineJoin
-        lDashing (getDashing -> Dashing ds offs) =
-          C.setDash ds offs
-
 -- | Set the source color.
 setSource :: Color c => c -> Style v -> C.Render ()
 setSource c s = C.setSourceRGBA r g b a'
@@ -260,7 +267,6 @@ setSource c s = C.setSourceRGBA r g b a'
         a'        = case getOpacity <$> getAttr s of
                       Nothing -> a
                       Just d  -> a * d
-
 
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
@@ -270,13 +276,6 @@ cairoTransf t = C.transform m
         (unr2 -> (a1,a2)) = apply t unitX
         (unr2 -> (b1,b2)) = apply t unitY
         (unr2 -> (c1,c2)) = transl t
-
-{- ~~~~ Note [color order]
-
-   It's important for the line and fill colors to be handled in the
-   given order (fill color first, then line color) because of the way
-   Cairo handles them (both are taken from the sourceRGBA).
--}
 
 fromLineCap :: LineCap -> C.LineCap
 fromLineCap LineCapButt   = C.LineCapButt
@@ -293,11 +292,11 @@ fromFillRule Winding = C.FillRuleWinding
 fromFillRule EvenOdd = C.FillRuleEvenOdd
 
 instance Renderable (Segment Closed R2) Cairo where
-  render _ (Linear (OffsetClosed v)) = C . lift $ uncurry C.relLineTo (unr2 v)
+  render _ (Linear (OffsetClosed v)) = C . liftC $ uncurry C.relLineTo (unr2 v)
   render _ (Cubic (unr2 -> (x1,y1))
                   (unr2 -> (x2,y2))
                   (OffsetClosed (unr2 -> (x3,y3))))
-    = C . lift $ C.relCurveTo x1 y1 x2 y2 x3 y3
+    = C . liftC $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
   render _ t = flip withLine t $ renderT . lineSegments
@@ -305,21 +304,21 @@ instance Renderable (Trail R2) Cairo where
       renderT segs =
         C $ do
           mapM_ renderC segs
-          lift $ when (isLoop t) C.closePath
+          liftC $ when (isLoop t) C.closePath
 
           when (isLine t) (put True)
             -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C $ lift C.newPath >> F.mapM_ renderTrail trs
+  render _ (Path trs) = C $ liftC C.newPath >> F.mapM_ renderTrail trs >> liftC C.stroke
     where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
-            lift $ uncurry C.moveTo p
+            liftC $ uncurry C.moveTo p
             renderC tr
 
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where
-  render _ (Image file sz tr) = C . lift $ do
+  render _ (Image file sz tr) = C . liftC $ do
     if ".png" `isSuffixOf` file
       then do
         C.save
@@ -347,7 +346,7 @@ instance Renderable Image Cairo where
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
   render _ (Text tr al str) = C $ do
-    lift $ do
+    liftC $ do
       C.save
       -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
