@@ -305,18 +305,21 @@ instance Renderable (Trail R2) Cairo where
             -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C $ do liftC C.newPath
-                               F.mapM_ renderTrail trs
-                               setColors
-                               liftC C.stroke
+  render _ (Path trs) = C $ do
+      liftC C.newPath
+      ignoreFill .= False
+      F.mapM_ renderTrail trs
+      setColors
+      liftC C.stroke
     where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
             liftC $ uncurry C.moveTo p
             renderC tr
           setColors = do
             f <- use cairoFillColor
             s <- use cairoStrokeColor
+            ign <- use ignoreFill
             setSourceColor f
-            when (isJust f) $ liftC C.fillPreserve
+            when (isJust f && not ign) $ liftC C.fillPreserve
             setSourceColor s
 
 setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
