@@ -38,6 +38,7 @@
 module Diagrams.Backend.Cairo.Internal where
 
 import           Diagrams.Core.Transform
+import           Diagrams.Core.Compile           (toRTree)
 
 import           Diagrams.Prelude                hiding (view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
@@ -53,6 +54,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import           Control.Monad.State
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe)
+import           Data.Tree
 
 import           Control.Lens                    hiding ((#), transform)
 
@@ -161,12 +163,21 @@ instance Backend Cairo R2 where
               SVG -> C.withSVGSurface file w h surfaceF
               RenderOnly -> return ()
 
+  -- renderData :: Monoid' m => b -> QDiagram b v m -> Render b v
+  renderData _ = renderRTree . toRTree
+
   adjustDia c opts d = if _cairoBypassAdjust opts
                          then (opts, d # setDefault2DAttributes)
                          else adjustDia2D _cairoSizeSpec
                                           setCairoSizeSpec
                                           c opts (d # reflectY)
     where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
+
+renderRTree :: RTree Cairo R2 a -> Render Cairo R2
+renderRTree (Node (RPrim accTr p) _) = (render Cairo (transform accTr p))
+renderRTree (Node (RStyle sty) ts)   = withStyle Cairo sty mempty (F.foldMap renderRTree ts)
+renderRTree (Node (RFrozenTr tr) ts) = withStyle Cairo mempty tr (F.foldMap renderRTree ts)
+renderRTree (Node _ ts)              = F.foldMap renderRTree ts
 
 cairoFileName :: Lens' (Options Cairo R2) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
