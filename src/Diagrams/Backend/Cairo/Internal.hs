@@ -40,7 +40,7 @@ module Diagrams.Backend.Cairo.Internal where
 import           Diagrams.Core.Transform
 import           Diagrams.Core.Compile           (toRTree)
 
-import           Diagrams.Prelude                hiding (view)
+import           Diagrams.Prelude                hiding (view, opacity)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
@@ -95,6 +95,7 @@ data OutputType =
 data CairoState
   = CairoState { _cairoFillColor   :: Maybe (AlphaColour Double)
                , _cairoStrokeColor :: Maybe (AlphaColour Double)
+               , _cairoOpacity     :: Maybe Double
                , _ignoreFill       :: Bool
                  -- ^ Whether or not we saw any lines in the most
                  --   recent path (as opposed to loops).  If we did,
@@ -108,7 +109,12 @@ data CairoState
 $(makeLenses ''CairoState)
 
 instance Default CairoState where
-  def = CairoState Nothing Nothing False
+  def = CairoState
+        { _cairoFillColor   = Nothing
+        , _cairoStrokeColor = Nothing
+        , _cairoOpacity     = Nothing
+        , _ignoreFill       = False
+        }
 
 -- | The custom monad in which intermediate drawing options take
 --   place; 'Graphics.Rendering.Cairo.Render' is cairo's own rendering
@@ -226,6 +232,7 @@ cairoStyle s =
                 , handle fColor
                 , handle lFillRule
                 , handle lColor
+                , handle opacity
                 , handle lWidth
                 , handle lCap
                 , handle lJoin
@@ -241,9 +248,10 @@ cairoStyle s =
         fWeight  = fromFontWeight . fromMaybe FontWeightNormal
                  $ getFontWeight <$> getAttr s
         handleFontFace = Just . liftC $ C.selectFontFace fFace fSlant fWeight
-        fColor c = cairoFillColor .= Just (applyOpacity (getFillColor c) s)
+        fColor c = cairoFillColor .= Just (toAlphaColour $ getFillColor c)
         lFillRule = liftC . C.setFillRule . fromFillRule . getFillRule
-        lColor c = cairoStrokeColor .= Just (applyOpacity (getLineColor c) s)
+        lColor c = cairoStrokeColor .= Just (toAlphaColour $ getLineColor c)
+        opacity  o = cairoOpacity .= Just (getOpacity o)
         lWidth   = liftC . C.setLineWidth . getLineWidth
         lCap     = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin    = liftC . C.setLineJoin . fromLineJoin . getLineJoin
@@ -322,9 +330,14 @@ instance Renderable (Path R2) Cairo where
             when (isJust f && not ign) $ liftC C.fillPreserve
             setSourceColor s
 
+-- XXX should handle opacity in a more straightforward way, using
+-- cairo's built-in support for transparency?  See also
+-- https://github.com/diagrams/diagrams-cairo/issues/15 .
 setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
 setSourceColor Nothing  = return ()
-setSourceColor (Just c) = liftC (C.setSourceRGBA r g b a)
+setSourceColor (Just c) = do
+    o <- fromMaybe 1 <$> use cairoOpacity
+    liftC (C.setSourceRGBA r g b (o*a))
   where (r,g,b,a) = colorToSRGBA c
 
 -- Can only do PNG files at the moment...
