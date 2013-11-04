@@ -55,7 +55,7 @@ import           Control.Monad                   (when)
 import           Control.Monad.Trans             (lift, liftIO)
 import qualified Control.Monad.StateStack        as SS
 import           Data.List                       (isSuffixOf)
-import           Data.Maybe                      (catMaybes, fromMaybe)
+import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Default.Class
 
@@ -316,7 +316,7 @@ instance Renderable (Path R2) Cairo where
             f <- use cairoFillColor
             s <- use cairoStrokeColor
             setSourceColor f
-            liftC C.fillPreserve
+            when (isJust f) $ liftC C.fillPreserve
             setSourceColor s
 
 setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
