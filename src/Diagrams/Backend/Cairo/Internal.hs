@@ -96,6 +96,9 @@ data CairoState
   = CairoState { _cairoFillColor   :: Maybe (AlphaColour Double)
                , _cairoStrokeColor :: Maybe (AlphaColour Double)
                , _cairoOpacity     :: Maybe Double
+               , _cairoFontFace    :: Maybe String
+               , _cairoFontSlant   :: Maybe C.FontSlant
+               , _cairoFontWeight  :: Maybe C.FontWeight
                , _ignoreFill       :: Bool
                  -- ^ Whether or not we saw any lines in the most
                  --   recent path (as opposed to loops).  If we did,
@@ -113,6 +116,9 @@ instance Default CairoState where
         { _cairoFillColor   = Nothing
         , _cairoStrokeColor = Nothing
         , _cairoOpacity     = Nothing
+        , _cairoFontFace    = Nothing
+        , _cairoFontSlant   = Nothing
+        , _cairoFontWeight  = Nothing
         , _ignoreFill       = False
         }
 
@@ -228,7 +234,9 @@ cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
                 , handle fSize
-                , handleFontFace
+                , handle fFace
+                , handle fSlant
+                , handle fWeight
                 , handle fColor
                 , handle lFillRule
                 , handle lColor
@@ -241,20 +249,17 @@ cairoStyle s =
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
         clip = mapM_ (\p -> renderC p >> liftC C.clip) . op Clip
-        fSize    = liftC . C.setFontSize . getFontSize
-        fFace    = fromMaybe "" $ getFont <$> getAttr s
-        fSlant   = fromFontSlant  . fromMaybe FontSlantNormal
-                 $ getFontSlant  <$> getAttr s
-        fWeight  = fromFontWeight . fromMaybe FontWeightNormal
-                 $ getFontWeight <$> getAttr s
-        handleFontFace = Just . liftC $ C.selectFontFace fFace fSlant fWeight
-        fColor c = cairoFillColor .= Just (toAlphaColour $ getFillColor c)
-        lFillRule = liftC . C.setFillRule . fromFillRule . getFillRule
-        lColor c = cairoStrokeColor .= Just (toAlphaColour $ getLineColor c)
+        fSize      = liftC . C.setFontSize . getFontSize
+        fFace f    = cairoFontFace .= Just (getFont f)
+        fSlant sl  = cairoFontSlant .= (Just . fromFontSlant . getFontSlant $ sl)
+        fWeight wt = cairoFontWeight .= (Just . fromFontWeight . getFontWeight $ wt)
+        fColor c   = cairoFillColor .= Just (toAlphaColour $ getFillColor c)
+        lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
+        lColor c   = cairoStrokeColor .= Just (toAlphaColour $ getLineColor c)
         opacity  o = cairoOpacity .= Just (getOpacity o)
-        lWidth   = liftC . C.setLineWidth . getLineWidth
-        lCap     = liftC . C.setLineCap . fromLineCap . getLineCap
-        lJoin    = liftC . C.setLineJoin . fromLineJoin . getLineJoin
+        lWidth     = liftC . C.setLineWidth . getLineWidth
+        lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
+        lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
         lDashing (getDashing -> Dashing ds offs) =
           liftC $ C.setDash ds offs
 
@@ -370,6 +375,9 @@ instance Renderable Image Cairo where
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
   render _ (Text tr al str) = C $ do
+    ff <- fromMaybe "" <$> use cairoFontFace
+    fs <- fromMaybe C.FontSlantNormal <$> use cairoFontSlant
+    fw <- fromMaybe C.FontWeightNormal <$> use cairoFontWeight
     liftC $ do
       C.save
       -- XXX should use reflection font matrix here instead?
@@ -385,5 +393,6 @@ instance Renderable Text Cairo where
           return (lerp l r xt, lerp (-b) t yt)
         BaselineText -> return (0, 0)
       cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
+      C.selectFontFace ff fs fw
       C.showText str
       C.restore
