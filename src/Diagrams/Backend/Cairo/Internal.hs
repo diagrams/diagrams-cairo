@@ -51,8 +51,9 @@ import           Diagrams.TwoD.Text
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
-import           Control.Monad.State
-import           Control.Monad.Reader
+import           Control.Monad                   (when)
+import           Control.Monad.Trans             (lift, liftIO)
+import qualified Control.Monad.StateStack        as SS
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe)
 import           Data.Tree
@@ -90,49 +91,43 @@ data OutputType =
                 --   window; see the @diagrams-gtk@ package).
   deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable)
 
-instance Monoid (Render Cairo R2) where
-  mempty  = C $ return ()
-  (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
-
 -- | Custom state tracked in the 'RenderM' monad.
 data CairoState
-  = CairoState { _cairoFillColor   :: Maybe (Colour Double)
-               , _cairoStrokeColor :: Maybe (Colour Double)
+  = CairoState { _cairoFillColor   :: Maybe (AlphaColour Double)
+               , _cairoStrokeColor :: Maybe (AlphaColour Double)
+               , _ignoreFill       :: Bool
+                 -- ^ Whether or not we saw any lines in the most
+                 --   recent path (as opposed to loops).  If we did,
+                 --   we should ignore any fill attribute.
+                 --   diagrams-lib separates lines and loops into
+                 --   separate path primitives so we don't have to
+                 --   worry about seeing them together in the same
+                 --   path.
                }
 
+$(makeLenses ''CairoState)
+
 instance Default CairoState where
-  def = CairoState Nothing Nothing
+  def = CairoState Nothing Nothing False
 
 -- | The custom monad in which intermediate drawing options take
 --   place; 'Graphics.Rendering.Cairo.Render' is cairo's own rendering
---   monad.  The 'Bool' tells us whether or not we saw any lines in
---   the most recent path (as opposed to loops).  If we did, we should
---   ignore any fill attribute.  diagrams-lib separates lines and
---   loops into separate path primitives so we don't have to worry
---   about seeing them together in the same path.  The 'CairoState'
---   tracks the current fill and stroke color (using 'ReaderT' instead
---   of 'StateT' since we want the values to be hierarchically
---   scoped).
-type RenderM a = StateT Bool (ReaderT CairoState C.Render) a
+--   monad.
+type RenderM a = SS.StateStackT CairoState C.Render a
 
 liftC :: C.Render a -> RenderM a
-liftC = lift . lift
+liftC = lift
 
 runRenderM :: RenderM a -> C.Render a
-runRenderM = flip runReaderT def . flip evalStateT False
-
--- Simple, stupid implementations of save and restore for now.  If
--- need be we could switch to a more sophisticated implementation
--- using an "undoable state" monad which lets you save (push state
--- onto a stack) and restore (pop from the stack).
+runRenderM = flip SS.evalStateStackT def
 
 -- | Push the current context onto a stack.
 save :: RenderM ()
-save = liftC C.save
+save =  SS.save >> liftC C.save
 
 -- | Restore the context from a stack.
 restore :: RenderM ()
-restore = liftC C.restore
+restore = liftC C.restore >> SS.restore
 
 instance Backend Cairo R2 where
   data Render  Cairo R2 = C (RenderM ())
@@ -179,6 +174,10 @@ instance Backend Cairo R2 where
                                           setCairoSizeSpec
                                           c opts (d # reflectY)
     where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
+
+instance Monoid (Render Cairo R2) where
+  mempty  = C $ return ()
+  (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
 renderRTree :: RTree Cairo R2 a -> Render Cairo R2
 renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
@@ -242,9 +241,9 @@ cairoStyle s =
         fWeight  = fromFontWeight . fromMaybe FontWeightNormal
                  $ getFontWeight <$> getAttr s
         handleFontFace = Just . liftC $ C.selectFontFace fFace fSlant fWeight
-        fColor c = liftC $ setSource (getFillColor c) s
+        fColor c = cairoFillColor .= Just (applyOpacity (getFillColor c) s)
         lFillRule = liftC . C.setFillRule . fromFillRule . getFillRule
-        lColor c = liftC $ setSource (getLineColor c) s
+        lColor c = cairoStrokeColor .= Just (applyOpacity (getLineColor c) s)
         lWidth   = liftC . C.setLineWidth . getLineWidth
         lCap     = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin    = liftC . C.setLineJoin . fromLineJoin . getLineJoin
@@ -260,13 +259,9 @@ fromFontWeight :: FontWeight -> C.FontWeight
 fromFontWeight FontWeightNormal = C.FontWeightNormal
 fromFontWeight FontWeightBold   = C.FontWeightBold
 
--- | Set the source color.
-setSource :: Color c => c -> Style v -> C.Render ()
-setSource c s = C.setSourceRGBA r g b a'
-  where (r,g,b,a) = colorToSRGBA c
-        a'        = case getOpacity <$> getAttr s of
-                      Nothing -> a
-                      Just d  -> a * d
+-- | Apply the opacity from a style to a given color.
+applyOpacity :: Color c => c -> Style v -> AlphaColour Double
+applyOpacity c s = dissolve (fromMaybe 1 $ getOpacity <$> getAttr s) (toAlphaColour c)
 
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
@@ -306,15 +301,28 @@ instance Renderable (Trail R2) Cairo where
           mapM_ renderC segs
           liftC $ when (isLoop t) C.closePath
 
-          when (isLine t) (put True)
+          when (isLine t) (ignoreFill .= True)
             -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C $ liftC C.newPath >> F.mapM_ renderTrail trs >> liftC C.stroke
+  render _ (Path trs) = C $ do liftC C.newPath
+                               F.mapM_ renderTrail trs
+                               setColors
+                               liftC C.stroke
     where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
             liftC $ uncurry C.moveTo p
             renderC tr
+          setColors = do
+            f <- use cairoFillColor
+            s <- use cairoStrokeColor
+            setSourceColor f
+            liftC C.fillPreserve
+            setSourceColor s
 
+setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
+setSourceColor Nothing  = return ()
+setSourceColor (Just c) = liftC (C.setSourceRGBA r g b a)
+  where (r,g,b,a) = colorToSRGBA c
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where
