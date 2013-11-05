@@ -378,8 +378,8 @@ instance Renderable Text Cairo where
     ff <- fromMaybe "" <$> use cairoFontFace
     fs <- fromMaybe C.FontSlantNormal <$> use cairoFontSlant
     fw <- fromMaybe C.FontWeightNormal <$> use cairoFontWeight
+    save
     liftC $ do
-      C.save
       -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
       (refX, refY) <- case al of
@@ -395,4 +395,5 @@ instance Renderable Text Cairo where
       cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
       C.selectFontFace ff fs fw
       C.showText str
-      C.restore
+      C.newPath
+    restore
