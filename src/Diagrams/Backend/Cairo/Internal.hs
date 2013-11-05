@@ -178,6 +178,9 @@ instance Backend Cairo R2 where
                                           c opts (d # reflectY)
     where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
 
+runC :: Render Cairo R2 -> RenderM ()
+runC (C r) = r
+
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
@@ -188,14 +191,12 @@ renderRTree (Node (RStyle sty) ts)   = C $ do
   save
   cairoStyle sty
   accumStyle %= (<> sty)
-  let C r = F.foldMap renderRTree ts
-  r
+  runC $ F.foldMap renderRTree ts
   restore
 renderRTree (Node (RFrozenTr tr) ts) = C $ do
   save
   liftC $ cairoTransf tr
-  let C r = F.foldMap renderRTree ts
-  r
+  runC $ F.foldMap renderRTree ts
   restore
 renderRTree (Node _ ts)              = F.foldMap renderRTree ts
 
@@ -217,7 +218,7 @@ cairoBypassAdjust = lens (\(CairoOptions {_cairoBypassAdjust = b}) -> b)
 
 -- | Render an object that the cairo backend knows how to render.
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
-renderC a = case (render Cairo a) of C r -> r
+renderC = runC . render Cairo
 
 -- | Get an accumulated style attribute from the render monad state.
 getStyleAttrib :: AttributeClass a => (a -> b) -> RenderM (Maybe b)
