@@ -380,6 +380,7 @@ instance Renderable Text Cairo where
     fw <- fromMaybe C.FontWeightNormal <$> use cairoFontWeight
     save
     liftC $ do
+      C.selectFontFace ff fs fw
       -- XXX should use reflection font matrix here instead?
       cairoTransf (tr <> reflectionY)
       (refX, refY) <- case al of
@@ -393,7 +394,6 @@ instance Renderable Text Cairo where
           return (lerp l r xt, lerp (-b) t yt)
         BaselineText -> return (0, 0)
       cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
-      C.selectFontFace ff fs fw
       C.showText str
       C.newPath
     restore
