@@ -93,13 +93,9 @@ data OutputType =
 
 -- | Custom state tracked in the 'RenderM' monad.
 data CairoState
-  = CairoState { _cairoFillColor   :: Maybe (AlphaColour Double)
-               , _cairoStrokeColor :: Maybe (AlphaColour Double)
-               , _cairoOpacity     :: Maybe Double
-               , _cairoFontFace    :: Maybe String
-               , _cairoFontSlant   :: Maybe C.FontSlant
-               , _cairoFontWeight  :: Maybe C.FontWeight
-               , _ignoreFill       :: Bool
+  = CairoState { _accumStyle :: Style R2
+                 -- ^ The current accumulated style.
+               , _ignoreFill :: Bool
                  -- ^ Whether or not we saw any lines in the most
                  --   recent path (as opposed to loops).  If we did,
                  --   we should ignore any fill attribute.
@@ -113,12 +109,7 @@ $(makeLenses ''CairoState)
 
 instance Default CairoState where
   def = CairoState
-        { _cairoFillColor   = Nothing
-        , _cairoStrokeColor = Nothing
-        , _cairoOpacity     = Nothing
-        , _cairoFontFace    = Nothing
-        , _cairoFontSlant   = Nothing
-        , _cairoFontWeight  = Nothing
+        { _accumStyle       = mempty
         , _ignoreFill       = False
         }
 
@@ -196,6 +187,7 @@ renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
 renderRTree (Node (RStyle sty) ts)   = C $ do
   save
   cairoStyle sty
+  accumStyle %= (<> sty)
   let C r = F.foldMap renderRTree ts
   r
   restore
@@ -227,20 +219,21 @@ cairoBypassAdjust = lens (\(CairoOptions {_cairoBypassAdjust = b}) -> b)
 renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
 renderC a = case (render Cairo a) of C r -> r
 
--- | Handle all style attributes (clip, font stuff, fill color, fill
---   rule, stroke color, line width, cap, join, and dashing).
+-- | Get an accumulated style attribute from the render monad state.
+getStyleAttrib :: AttributeClass a => (a -> b) -> RenderM (Maybe b)
+getStyleAttrib f = (fmap f . getAttr) <$> use accumStyle
+
+-- | Handle those style attributes for which we can immediately emit
+--   cairo instructions as we encounter them in the tree (clip, font
+--   size, fill rule, line width, cap, join, and dashing).  Other
+--   attributes (font face, slant, weight; fill color, stroke color,
+--   opacity) must be accumulated.
 cairoStyle :: Style v -> RenderM ()
 cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
                 , handle fSize
-                , handle fFace
-                , handle fSlant
-                , handle fWeight
-                , handle fColor
                 , handle lFillRule
-                , handle lColor
-                , handle opacity
                 , handle lWidth
                 , handle lCap
                 , handle lJoin
@@ -250,13 +243,7 @@ cairoStyle s =
         handle f = f `fmap` getAttr s
         clip = mapM_ (\p -> renderC p >> liftC C.clip) . op Clip
         fSize      = liftC . C.setFontSize . getFontSize
-        fFace f    = cairoFontFace .= Just (getFont f)
-        fSlant sl  = cairoFontSlant .= (Just . fromFontSlant . getFontSlant $ sl)
-        fWeight wt = cairoFontWeight .= (Just . fromFontWeight . getFontWeight $ wt)
-        fColor c   = cairoFillColor .= Just (toAlphaColour $ getFillColor c)
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
-        lColor c   = cairoStrokeColor .= Just (toAlphaColour $ getLineColor c)
-        opacity  o = cairoOpacity .= Just (getOpacity o)
         lWidth     = liftC . C.setLineWidth . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
@@ -328,8 +315,8 @@ instance Renderable (Path R2) Cairo where
             liftC $ uncurry C.moveTo p
             renderC tr
           setColors = do
-            f <- use cairoFillColor
-            s <- use cairoStrokeColor
+            f <- getStyleAttrib (toAlphaColour . getFillColor)
+            s <- getStyleAttrib (toAlphaColour . getLineColor)
             ign <- use ignoreFill
             setSourceColor f
             when (isJust f && not ign) $ liftC C.fillPreserve
@@ -341,7 +328,7 @@ instance Renderable (Path R2) Cairo where
 setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
 setSourceColor Nothing  = return ()
 setSourceColor (Just c) = do
-    o <- fromMaybe 1 <$> use cairoOpacity
+    o <- fromMaybe 1 <$> getStyleAttrib getOpacity
     liftC (C.setSourceRGBA r g b (o*a))
   where (r,g,b,a) = colorToSRGBA c
 
@@ -375,10 +362,12 @@ instance Renderable Image Cairo where
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
   render _ (Text tr al str) = C $ do
-    ff <- fromMaybe "" <$> use cairoFontFace
-    fs <- fromMaybe C.FontSlantNormal <$> use cairoFontSlant
-    fw <- fromMaybe C.FontWeightNormal <$> use cairoFontWeight
+    ff <- fromMaybe "" <$> getStyleAttrib getFont
+    fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
+    fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
+    f  <- getStyleAttrib (toAlphaColour . getFillColor)
     save
+    setSourceColor f
     liftC $ do
       C.selectFontFace ff fs fw
       -- XXX should use reflection font matrix here instead?
