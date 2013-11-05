@@ -37,14 +37,14 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import           Diagrams.Core.Transform
 import           Diagrams.Core.Compile           (toRTree)
+import           Diagrams.Core.Transform
 
-import           Diagrams.Prelude                hiding (view, opacity)
+import           Diagrams.Prelude                hiding (opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
-import           Diagrams.TwoD.Path              (Clip(Clip), getFillRule)
+import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT)
 import           Diagrams.TwoD.Text
 
@@ -52,14 +52,14 @@ import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
 import           Control.Monad                   (when)
-import           Control.Monad.Trans             (lift, liftIO)
 import qualified Control.Monad.StateStack        as SS
+import           Control.Monad.Trans             (lift, liftIO)
+import           Data.Default.Class
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
-import           Data.Default.Class
 
-import           Control.Lens                    hiding ((#), transform)
+import           Control.Lens                    hiding (transform, ( # ))
 
 import           Control.Exception               (try)
 
