@@ -37,7 +37,7 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import           Diagrams.Core.Compile           (toRTree)
+import           Diagrams.Core.Compile           (RNode (..), RTree, toRTree)
 import           Diagrams.Core.Transform
 
 import           Diagrams.Prelude                hiding (opacity, view)
