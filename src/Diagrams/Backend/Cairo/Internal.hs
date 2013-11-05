@@ -241,7 +241,7 @@ cairoStyle s =
                 ]
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
-        clip = mapM_ (\p -> renderC p >> liftC C.clip) . op Clip
+        clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
         fSize      = liftC . C.setFontSize . getFontSize
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
         lWidth     = liftC . C.setLineWidth . getLineWidth
@@ -305,22 +305,27 @@ instance Renderable (Trail R2) Cairo where
             -- remember that we saw a Line, so we will ignore fill attribute
 
 instance Renderable (Path R2) Cairo where
-  render _ (Path trs) = C $ do
-      liftC C.newPath
-      ignoreFill .= False
-      F.mapM_ renderTrail trs
-      setColors
-      liftC C.stroke
-    where renderTrail (viewLoc -> (unp2 -> p, tr)) = do
-            liftC $ uncurry C.moveTo p
-            renderC tr
-          setColors = do
-            f <- getStyleAttrib (toAlphaColour . getFillColor)
-            s <- getStyleAttrib (toAlphaColour . getLineColor)
-            ign <- use ignoreFill
-            setSourceColor f
-            when (isJust f && not ign) $ liftC C.fillPreserve
-            setSourceColor s
+  render _ p = C $ do
+    cairoPath p
+
+    f <- getStyleAttrib (toAlphaColour . getFillColor)
+    s <- getStyleAttrib (toAlphaColour . getLineColor)
+    ign <- use ignoreFill
+    setSourceColor f
+    when (isJust f && not ign) $ liftC C.fillPreserve
+    setSourceColor s
+    liftC C.stroke
+
+-- Add a path to the Cairo context, without stroking or filling it.
+cairoPath :: Path R2 -> RenderM ()
+cairoPath (Path trs) = do
+    liftC C.newPath
+    ignoreFill .= False
+    F.mapM_ renderTrail trs
+  where
+    renderTrail (viewLoc -> (unp2 -> p, tr)) = do
+      liftC $ uncurry C.moveTo p
+      renderC tr
 
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
