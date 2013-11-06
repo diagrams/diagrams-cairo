@@ -11,6 +11,7 @@ before_install:
   - if git branch -a |grep -x "  remotes/origin/${TRAVIS_BRANCH}" > /dev/null; then git checkout ${TRAVIS_BRANCH}; fi
   - cd ../..
   - cd diagrams
+  - cabal update
   - cabal install diagrams-core/ diagrams-lib/ gtk2hs-buildtools
   - cd ..
 notifications:

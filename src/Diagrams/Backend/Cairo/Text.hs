@@ -59,7 +59,6 @@ module Diagrams.Backend.Cairo.Text
 import           Diagrams.Backend.Cairo.Internal
 import           Diagrams.Prelude hiding (view, height)
 
-import           Control.Monad.State
 import           Control.Lens (makeLenses, view)
 import           System.IO.Unsafe
 
@@ -74,14 +73,11 @@ queryCairo c = C.withImageSurface C.FormatA1 0 0 (`C.renderWith` c)
 unsafeCairo :: C.Render a -> a
 unsafeCairo = unsafePerformIO . queryCairo
 
--- | Executes the given cairo action, with styling applied.  This does
---   not do all styling, only attributes that are processed by
---   'cairoMiscStyle', which does clip, fill color, fill rule, and,
---   importantly for this module, font face, style, and weight.
+-- | Executes the given cairo action, with styling applied.
 cairoWithStyle :: C.Render a -> Style R2 -> C.Render a
 cairoWithStyle f style = do
   C.save
-  evalStateT (cairoMiscStyle style) False
+  runRenderM (cairoStyle style)
   result <- f
   C.restore
   return result
