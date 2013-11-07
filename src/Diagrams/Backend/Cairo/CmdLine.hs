@@ -55,7 +55,11 @@ import Diagrams.Backend.Cairo.Internal
 
 import System.Console.CmdArgs.Implicit hiding (args)
 
+#if __GLASGOW_HASKELL__ < 706
 import Prelude hiding      (catch)
+#else
+import Prelude
+#endif
 
 import Data.Maybe          (fromMaybe)
 import Control.Monad       (when, forM_, mplus)
