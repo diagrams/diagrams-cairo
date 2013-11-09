@@ -36,10 +36,10 @@
 -- particular backend.  For @b ~ Cairo@ and @v ~ R2@, we have
 --
 -- > data family Options Cairo R2 = CairoOptions
--- >          { cairoFileName     :: String     -- ^ The name of the file you want generated
--- >          , cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
--- >          , cairoOutputType   :: OutputType -- ^ the output format and associated options
--- >          , cairoBypassAdjust :: Bool       -- ^ Should the 'adjustDia' step be bypassed during rendering?
+-- >          { _cairoFileName     :: String     -- ^ The name of the file you want generated
+-- >          , _cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
+-- >          , _cairoOutputType   :: OutputType -- ^ the output format and associated options
+-- >          , _cairoBypassAdjust :: Bool       -- ^ Should the 'adjustDia' step be bypassed during rendering?
 -- >          }
 --
 -- @
@@ -107,9 +107,9 @@ import Diagrams.Prelude
 -- This module defines
 --
 -- > data family Options Cairo R2 = CairoOptions
--- >           { cairoFileName   :: String     -- ^ The name of the file you want generated
--- >           , cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
--- >           , cairoOutputType :: OutputType -- ^ the output format and associated options
+-- >           { _cairoFileName   :: String     -- ^ The name of the file you want generated
+-- >           , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+-- >           , _cairoOutputType :: OutputType -- ^ the output format and associated options
 -- >           }
 --
 -- See the documentation at the top of "Diagrams.Backend.Cairo" for
