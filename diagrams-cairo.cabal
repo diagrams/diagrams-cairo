@@ -64,7 +64,8 @@ Library
                        containers >= 0.3 && < 0.6,
                        lens >= 3.8 && < 4,
                        data-default-class >= 0.0.1 && < 0.1,
-                       statestack >= 0.2 && < 0.3
+                       statestack >= 0.2 && < 0.3,
+                       transformers >= 0.3.0.0 && <0.4
   default-language:    Haskell2010
 
   if !os(windows)

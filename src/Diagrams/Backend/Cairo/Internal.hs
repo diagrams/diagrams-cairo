@@ -54,6 +54,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import           Control.Monad                   (when)
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift, liftIO)
+import           Control.Monad.IO.Class
 import           Data.Default.Class
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
@@ -311,9 +312,11 @@ instance Renderable (Path R2) Cairo where
 
     f <- getStyleAttrib (toAlphaColour . getFillColor)
     s <- getStyleAttrib (toAlphaColour . getLineColor)
+    g <- getStyleAttrib getFillTexture
     ign <- use ignoreFill
-    setSourceColor f
-    when (isJust f && not ign) $ liftC C.fillPreserve
+    --setSourceColor f
+    setFillTexture g
+    when (isJust g && not ign) $ liftC C.fillPreserve
     setSourceColor s
     liftC C.stroke
 
@@ -337,6 +340,38 @@ setSourceColor (Just c) = do
     o <- fromMaybe 1 <$> getStyleAttrib getOpacity
     liftC (C.setSourceRGBA r g b (o*a))
   where (r,g,b,a) = colorToSRGBA c
+
+addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
+addStop pat stop = C.patternAddColorStopRGBA pat 0 255 0 0 1
+
+setFillTexture :: Maybe Texture -> RenderM ()
+setFillTexture Nothing = return ()
+setFillTexture (Just (SC (SomeColor c))) = do
+    o <- fromMaybe 1 <$> getStyleAttrib getOpacity
+    liftC (C.setSourceRGBA r g b (o*a))
+  where (r,g,b,a) = colorToSRGBA c
+setFillTexture (Just (LG g)) = liftC $
+    C.withLinearPattern x0 y0 x1 y1 $ \pat -> do
+      C.patternAddColorStopRGBA pat 0 255 0 0 1
+      C.patternAddColorStopRGBA pat 1 0 0 255 1
+      C.patternSetMatrix pat m
+      C.setSource pat
+  where
+    m = CM.Matrix a1 a2 b1 b2 c1 c2
+    (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.lGradTrans))
+    (x0', y0') = unp2 (g^.lGradStart)
+    (x1', y1') = unp2 (g^.lGradEnd)
+    x0 = x0' - 0.5
+    y0 = y0' - 0.5
+    x1 = x1' - 0.5
+    y1 = y1' - 0.5
+
+getMatrix :: Transformation R2 -> (Double, Double, Double, Double, Double, Double)
+getMatrix t = (a1,a2,b1,b2,c1,c2)
+  where
+    (unr2 -> (a1,a2)) = apply t unitX
+    (unr2 -> (b1,b2)) = apply t unitY
+    (unr2 -> (c1,c2)) = transl t
 
 -- Can only do PNG files at the moment...
 instance Renderable Image Cairo where
