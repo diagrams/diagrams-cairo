@@ -57,9 +57,10 @@ module Diagrams.Backend.Cairo.Text
   ) where
 
 import           Diagrams.Backend.Cairo.Internal
-import           Diagrams.Prelude hiding (view, height)
+import           Diagrams.BoundingBox
+import           Diagrams.Prelude                hiding (height, view)
 
-import           Control.Lens (makeLenses, view)
+import           Control.Lens                    (makeLenses, view)
 import           System.IO.Unsafe
 
 import qualified Graphics.Rendering.Cairo        as C
