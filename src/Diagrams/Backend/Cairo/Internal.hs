@@ -53,7 +53,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 
 import           Control.Monad                   (when)
 import qualified Control.Monad.StateStack        as SS
-import           Control.Monad.Trans             (lift, liftIO)
+import           Control.Monad.Trans             (lift)
 import           Control.Monad.IO.Class
 import           Data.Default.Class
 import           Data.List                       (isSuffixOf)
@@ -356,6 +356,8 @@ setTexture (Just (LG g)) = liftC $
     y0 = y0' - 0.5
     x1 = x1' - 0.5
     y1 = y1' - 0.5
+-- XXX Cairo can handle more general radial gradients on a torus.
+-- Here we set the inner circle to a point.
 setTexture (Just (RG g)) = liftC $
     C.withRadialPattern x y 0 x y (g^.rGradRadius) $ \pat -> do
       mapM_ (addStop pat) (g^.rGradStops)
