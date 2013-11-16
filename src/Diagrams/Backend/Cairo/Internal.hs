@@ -309,15 +309,12 @@ instance Renderable (Trail R2) Cairo where
 instance Renderable (Path R2) Cairo where
   render _ p = C $ do
     cairoPath p
-
-    f <- getStyleAttrib (toAlphaColour . getFillColor)
-    s <- getStyleAttrib (toAlphaColour . getLineColor)
-    g <- getStyleAttrib getFillTexture
+    f <- getStyleAttrib getFillTexture
+    s <- getStyleAttrib getLineTexture
     ign <- use ignoreFill
-    --setSourceColor f
-    setFillTexture g
-    when (isJust g && not ign) $ liftC C.fillPreserve
-    setSourceColor s
+    setTexture f
+    when (isJust f && not ign) $ liftC C.fillPreserve
+    setTexture s
     liftC C.stroke
 
 -- Add a path to the Cairo context, without stroking or filling it.
@@ -331,29 +328,23 @@ cairoPath (Path trs) = do
       liftC $ uncurry C.moveTo p
       renderC tr
 
+addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
+addStop p s = C.patternAddColorStopRGBA p (s^.stopFraction) r g b a
+  where
+    (r,g,b,a) = colorToSRGBA (s^.stopColor)
+
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
 -- https://github.com/diagrams/diagrams-cairo/issues/15 .
-setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
-setSourceColor Nothing  = return ()
-setSourceColor (Just c) = do
+setTexture :: Maybe Texture -> RenderM ()
+setTexture Nothing = return ()
+setTexture (Just (SC (SomeColor c))) = do
     o <- fromMaybe 1 <$> getStyleAttrib getOpacity
     liftC (C.setSourceRGBA r g b (o*a))
   where (r,g,b,a) = colorToSRGBA c
-
-addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
-addStop pat stop = C.patternAddColorStopRGBA pat 0 255 0 0 1
-
-setFillTexture :: Maybe Texture -> RenderM ()
-setFillTexture Nothing = return ()
-setFillTexture (Just (SC (SomeColor c))) = do
-    o <- fromMaybe 1 <$> getStyleAttrib getOpacity
-    liftC (C.setSourceRGBA r g b (o*a))
-  where (r,g,b,a) = colorToSRGBA c
-setFillTexture (Just (LG g)) = liftC $
+setTexture (Just (LG g)) = liftC $
     C.withLinearPattern x0 y0 x1 y1 $ \pat -> do
-      C.patternAddColorStopRGBA pat 0 255 0 0 1
-      C.patternAddColorStopRGBA pat 1 0 0 255 1
+      mapM_ (addStop pat) (g^.lGradStops)
       C.patternSetMatrix pat m
       C.setSource pat
   where
@@ -365,6 +356,15 @@ setFillTexture (Just (LG g)) = liftC $
     y0 = y0' - 0.5
     x1 = x1' - 0.5
     y1 = y1' - 0.5
+setTexture (Just (RG g)) = liftC $
+    C.withRadialPattern x y 0 x y (g^.rGradRadius) $ \pat -> do
+      mapM_ (addStop pat) (g^.rGradStops)
+      C.patternSetMatrix pat m
+      C.setSource pat
+  where
+    m = CM.Matrix a1 a2 b1 b2 c1 c2
+    (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.rGradTrans))
+    (x, y) = unp2 (g^.rGradCenter)
 
 getMatrix :: Transformation R2 -> (Double, Double, Double, Double, Double, Double)
 getMatrix t = (a1,a2,b1,b2,c1,c2)
@@ -406,9 +406,9 @@ instance Renderable Text Cairo where
     ff <- fromMaybe "" <$> getStyleAttrib getFont
     fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
-    f  <- getStyleAttrib (toAlphaColour . getFillColor)
+    f  <- getStyleAttrib getFillTexture--getStyleAttrib (toAlphaColour . getFillColor)
     save
-    setSourceColor f
+    setTexture f
     liftC $ do
       C.selectFontFace ff fs fw
       -- XXX should use reflection font matrix here instead?
