@@ -352,21 +352,18 @@ setTexture (Just (LG g)) = liftC $
     (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.lGradTrans))
     (x0', y0') = unp2 (g^.lGradStart)
     (x1', y1') = unp2 (g^.lGradEnd)
-    x0 = x0' - 0.5
-    y0 = y0' - 0.5
-    x1 = x1' - 0.5
-    y1 = y1' - 0.5
--- XXX Cairo can handle more general radial gradients on a torus.
--- Here we set the inner circle to a point.
+    (x0, y0, x1, y1) = (x0'-0.5, y0'-0.5, x1'-0.5, y1'-0.5)
+
 setTexture (Just (RG g)) = liftC $
-    C.withRadialPattern x y 0 x y (g^.rGradRadius) $ \pat -> do
+    C.withRadialPattern x0 y0 (g^.rGradRadius0) x1 y1 (g^.rGradRadius1) $ \pat -> do
       mapM_ (addStop pat) (g^.rGradStops)
       C.patternSetMatrix pat m
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
     (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.rGradTrans))
-    (x, y) = unp2 (g^.rGradCenter)
+    (x0, y0) = unp2 (g^.rGradCenter0)
+    (x1, y1) = unp2 (g^.rGradCenter1)
 
 getMatrix :: Transformation R2 -> (Double, Double, Double, Double, Double, Double)
 getMatrix t = (a1,a2,b1,b2,c1,c2)
@@ -408,7 +405,7 @@ instance Renderable Text Cairo where
     ff <- fromMaybe "" <$> getStyleAttrib getFont
     fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
-    f  <- getStyleAttrib getFillTexture--getStyleAttrib (toAlphaColour . getFillColor)
+    f  <- getStyleAttrib getFillTexture
     save
     setTexture f
     liftC $ do
