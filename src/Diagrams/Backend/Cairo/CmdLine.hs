@@ -48,6 +48,9 @@
 --   function directly; see "Diagrams.Backend.Cairo" for more
 --   information.
 --
+-- For a tutorial on command-line diagram creation see
+-- <http://projects.haskell.org/diagrams/doc/cmdline.html>.
+-- 
 -----------------------------------------------------------------------------
 
 module Diagrams.Backend.Cairo.CmdLine
