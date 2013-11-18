@@ -172,14 +172,21 @@ getModuleTime = getClockTime
 defaultMain :: Diagram Cairo R2 -> IO ()
 defaultMain = mainWith
 
-instance Mainable (Diagram Cairo R2) where
 #ifdef CMDLINELOOP
+output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
+output' = _1 . output
+
+instance Mainable (Diagram Cairo R2) where
     type MainOpts (Diagram Cairo R2) = (DiagramOpts, DiagramLoopOpts)
 
     mainRender (opts,loopOpts) d = do
         chooseRender opts d
         when (loopOpts^.loop) (waitForChange Nothing loopOpts)
 #else
+output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
+output' = output
+
+instance Mainable (Diagram Cairo R2) where
     type MainOpts (Diagram Cairo R2) = DiagramOpts
 
     mainRender opts d = chooseRender opts d
@@ -258,9 +265,9 @@ animMain :: Animation Cairo R2 -> IO ()
 animMain = mainWith
 
 instance Mainable (Animation Cairo R2) where
-    type MainOpts (Animation Cairo R2) = (DiagramOpts, DiagramAnimOpts)
+    type MainOpts (Animation Cairo R2) = (MainOpts (Animation Cairo R2), DiagramAnimOpts)
 
-    mainRender = defaultAnimMainRender
+    mainRender = defaultAnimMainRender output'
 
 
 #ifdef CMDLINELOOP
