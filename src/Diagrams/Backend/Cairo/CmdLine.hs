@@ -1,8 +1,11 @@
-{-# LANGUAGE DeriveDataTypeable, CPP #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.CmdLine
--- Copyright   :  (c) 2011 Diagrams-cairo team (see LICENSE)
+-- Copyright   :  (c) 2013 Diagrams-cairo team (see LICENSE)
 -- License     :  BSD-style (see LICENSE)
 -- Maintainer  :  diagrams-discuss@googlegroups.com
 --
@@ -18,13 +21,25 @@
 -- * 'animMain' is like 'defaultMain' but for animations instead of
 --   diagrams.
 --
+-- * 'mainWith' is a generic form that does all of the above but with
+--   a slightly scarier type.  See "Diagrams.Backend.CmdLine".  This
+--   form can also take a function type that has a subtable final result
+--   (any of arguments to the above types) and 'Parseable' arguments.
+--
 -- If you want to generate diagrams programmatically---/i.e./ if you
 -- want to do anything more complex than what the below functions
 -- provide---you have several options.
 --
--- * A simple but somewhat inflexible approach is to wrap up
---   'defaultMain' (or 'multiMain', or 'animMain') in a call to
---   'System.Environment.withArgs'.
+-- * Use a function with 'mainWith'.  This may require making
+--   'Parseable' instances for custom argument types.
+--
+-- * Make a new 'Mainable' instance.  This may require a newtype
+--   wrapper on your diagram type to avoid the existing instances.
+--   This gives you more control over argument parsing, intervening
+--   steps, and diagram creation.
+--
+-- * Build option records and pass them along with a diagram to 'mainRender'
+--   from "Diagrams.Backend.CmdLine".
 --
 -- * A more flexible approach is to use the 'renderCairo' function
 --   provided in the "Diagrams.Backend.Cairo" module.
@@ -36,16 +51,26 @@
 -----------------------------------------------------------------------------
 
 module Diagrams.Backend.Cairo.CmdLine
-       ( defaultMain
+       (
+         -- * General form of @main@
+
+         mainWith
+        
+         -- * Supported forms of @main@
+
+       , defaultMain
        , multiMain
        , animMain
 
+        -- * Backend tokens
+
        , Cairo
+       , B
        ) where
 
-import Data.List (intercalate)
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
+import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
@@ -53,23 +78,20 @@ import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Internal
 #endif
 
-import System.Console.CmdArgs.Implicit hiding (args)
-
 #if __GLASGOW_HASKELL__ < 706
 import Prelude hiding      (catch)
 #else
 import Prelude
 #endif
 
-import Data.Maybe          (fromMaybe)
-import Control.Monad       (when, forM_, mplus)
 import Data.List.Split
 
-import Text.Printf
+#ifdef CMDLINELOOP
+import Data.Maybe          (fromMaybe)
+import Control.Monad       (when, mplus)
 
 import System.Environment  (getArgs, getProgName)
 import System.Directory    (getModificationTime)
-import System.FilePath     (addExtension, splitExtension)
 import System.Process      (runProcess, waitForProcess)
 import System.IO           (openFile, hClose, IOMode(..),
                             hSetBuffering, BufferMode(..), stdout)
@@ -77,7 +99,6 @@ import System.Exit         (ExitCode(..))
 import Control.Concurrent  (threadDelay)
 import Control.Exception   (catch, SomeException(..), bracket)
 
-#ifdef CMDLINELOOP
 import System.Posix.Process (executeFile)
 #if MIN_VERSION_directory(1,2,0)
 import Data.Time.Clock (UTCTime,getCurrentTime)
@@ -91,58 +112,6 @@ getModuleTime :: IO  ModuleTime
 getModuleTime = getClockTime
 #endif
 #endif
-
-data DiagramOpts = DiagramOpts
-                   { width     :: Maybe Int
-                   , height    :: Maybe Int
-                   , output    :: FilePath
-                   , list      :: Bool
-                   , selection :: Maybe String
-                   , fpu       :: Double
-#ifdef CMDLINELOOP
-                   , loop      :: Bool
-                   , src       :: Maybe String
-                   , interval  :: Int
-#endif
-                   }
-  deriving (Show, Data, Typeable)
-
-diagramOpts :: String -> Bool -> DiagramOpts
-diagramOpts prog sel = DiagramOpts
-  { width =  def
-             &= typ "INT"
-             &= help "Desired width of the output image"
-
-  , height = def
-             &= typ "INT"
-             &= help "Desired height of the output image"
-
-  , output = def
-           &= typFile
-           &= help "Output file"
-
-  , selection = def
-              &= help "Name of the diagram to render"
-              &= (if sel then typ "NAME" else ignore)
-
-  , list = def
-         &= (if sel then help "List all available diagrams" else ignore)
-
-  , fpu = 30
-          &= typ "FLOAT"
-          &= help "Frames per unit time (for animations)"
-#ifdef CMDLINELOOP
-  , loop = False
-            &= help "Run in a self-recompiling loop"
-  , src  = def
-            &= typFile
-            &= help "Source file to watch"
-  , interval = 1 &= typ "SECONDS"
-                 &= help "When running in a loop, check for changes every n seconds."
-#endif
-  }
-  &= summary "Command-line diagram generation."
-  &= program prog
 
 -- | This is the simplest way to render diagrams, and is intended to
 --   be used like so:
@@ -165,21 +134,20 @@ diagramOpts prog sel = DiagramOpts
 --   options.  Currently it looks something like
 --
 -- @
--- Command-line diagram generation.
+-- ./Program
 --
--- Foo [OPTIONS]
+-- Usage: ./Program [-w|--width WIDTH] [-h|--height HEIGHT] [-o|--output OUTPUT] [--loop] [-s|--src ARG] [-i|--inter
+val INTERVAL]
+--   Command-line diagram generation.
 --
--- Common flags:
---   -w --width=INT         Desired width of the output image
---   -h --height=INT        Desired height of the output image
---   -o --output=FILE       Output file
---   -f --fpu=FLOAT         Frames per unit time (for animations)
---   -l --loop              Run in a self-recompiling loop
---   -s --src=FILE          Source file to watch
---   -i --interval=SECONDS  When running in a loop, check for changes every n
---                          seconds.
---   -? --help              Display help message
---   -V --version           Print version information
+-- Available options:
+--   -?,--help                Show this help text
+--   -w,--width WIDTH         Desired WIDTH of the output image (default 400)
+--   -h,--height HEIGHT       Desired HEIGHT of the output image (default 400)
+--   -o,--output OUTPUT       OUTPUT file
+--   -l,--loop                Run in a self-recompiling loop
+--   -s,--src ARG             Source file to watch
+--   -i,--interval INTERVAL   When running in a loop, check for changes every INTERVAL seconds.
 -- @
 --
 --   For example, a couple common scenarios include
@@ -195,13 +163,19 @@ diagramOpts prog sel = DiagramOpts
 -- @
 
 defaultMain :: Diagram Cairo R2 -> IO ()
-defaultMain d = do
-  prog <- getProgName
-  args <- getArgs
-  opts <- cmdArgs (diagramOpts prog False)
-  chooseRender opts d
+defaultMain = mainWith
+
+instance Mainable (Diagram Cairo R2) where
 #ifdef CMDLINELOOP
-  when (loop opts) (waitForChange Nothing opts prog args)
+    type MainOpts (Diagram Cairo R2) = (DiagramOpts, DiagramLoopOpts)
+
+    mainRender (opts,loopOpts) d = do
+        chooseRender opts d
+        when (loopOpts^.loop) (waitForChange Nothing loopOpts)
+#else
+    type MainOpts (Diagram Cairo R2) = DiagramOpts
+
+    mainRender opts d = chooseRender opts d
 #endif
 
 chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
@@ -249,23 +223,13 @@ chooseRender opts d =
 -- @
 
 multiMain :: [(String, Diagram Cairo R2)] -> IO ()
-multiMain ds = do
-  prog <- getProgName
-  opts <- cmdArgs (diagramOpts prog True)
-  if list opts
-    then showDiaList (map fst ds)
-    else
-      case selection opts of
-        Nothing  -> putStrLn "No diagram selected." >> showDiaList (map fst ds)
-        Just sel -> case lookup sel ds of
-          Nothing -> putStrLn $ "Unknown diagram: " ++ sel
-          Just d  -> chooseRender opts d
+multiMain = mainWith
 
--- | Display the list of diagrams available for rendering.
-showDiaList :: [String] -> IO ()
-showDiaList ds = do
-  putStrLn "Available diagrams:"
-  putStrLn $ "  " ++ intercalate " " ds
+instance Mainable [(String, Diagram Cairo R2)] where
+    type MainOpts [(String, Diagram Cairo R2)]
+        = (MainOpts (Diagram Cairo R2), DiagramMultiOpts)
+
+    mainRender = defaultMultiMainRender
 
 -- | @animMain@ is like 'defaultMain', but renders an animation
 -- instead of a diagram.  It takes as input an animation and produces
@@ -284,35 +248,29 @@ showDiaList ds = do
 -- The @--fpu@ option can be used to control how many frames will be
 -- output for each second (unit time) of animation.
 animMain :: Animation Cairo R2 -> IO ()
-animMain anim = do
-  prog <- getProgName
-  opts <- cmdArgs (diagramOpts prog False)
-  let frames  = simulate (toRational $ fpu opts) anim
-      nDigits = length . show . length $ frames
-  forM_ (zip [1..] frames) $ \(i,d) ->
-    chooseRender (indexize nDigits i opts) d
+animMain = mainWith
 
--- | @indexize d n@ adds the integer index @n@ to the end of the
---   output file name, padding with zeros if necessary so that it uses
---   at least @d@ digits.
-indexize :: Int -> Integer -> DiagramOpts -> DiagramOpts
-indexize nDigits i opts = opts { output = output' }
-  where fmt         = "%0" ++ show nDigits ++ "d"
-        output'     = addExtension (base ++ printf fmt (i::Integer)) ext
-        (base, ext) = splitExtension (output opts)
+instance Mainable (Animation Cairo R2) where
+    type MainOpts (Animation Cairo R2)
+        = (MainOpts (Diagram Cairo R2), DiagramAnimOpts)
+
+    mainRender = defaultMultiMainRender
+
 
 #ifdef CMDLINELOOP
-waitForChange :: Maybe ModuleTime -> DiagramOpts -> String -> [String] -> IO ()
-waitForChange lastAttempt opts prog args = do
+waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
+waitForChange lastAttempt opts = do
+    prog <- getProgName
+    args <- getArgs
     hSetBuffering stdout NoBuffering
-    go lastAttempt
-  where go lastAtt = do
-          threadDelay (1000000 * interval opts)
+    go prog args lastAttempt
+  where go prog args lastAtt = do
+          threadDelay (1000000 * opts^.interval)
           -- putStrLn $ "Checking... (last attempt = " ++ show lastAttempt ++ ")"
-          (newBin, newAttempt) <- recompile lastAtt prog (src opts)
+          (newBin, newAttempt) <- recompile lastAtt prog (opts^.src)
           if newBin
             then executeFile prog False args Nothing
-            else go $ newAttempt `mplus` lastAtt
+            else go prog args $ newAttempt `mplus` lastAtt
 
 -- | @recompile t prog@ attempts to recompile @prog@, assuming the
 --   last attempt was made at time @t@.  If @t@ is @Nothing@ assume
