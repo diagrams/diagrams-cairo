@@ -58,6 +58,7 @@
 module Diagrams.Backend.Cairo.CmdLine
        (
          -- * General form of @main@
+         -- $mainwith
 
          mainWith
 
@@ -119,6 +120,28 @@ getModuleTime :: IO  ModuleTime
 getModuleTime = getClockTime
 #endif
 #endif
+
+-- $mainwith
+-- The 'mainWith' method unifies all of the other forms of @main@ and is now
+-- the recommended way to build a command-line diagrams program.  It works as a
+-- direct replacement for 'defaultMain', 'multiMain', or 'animMain' as well as
+-- allowing more general arguments.  For example, given a function that
+-- produces a diagram when given an @Int@ and a @'Colour' Double@, 'mainWith'
+-- will produce a program that looks for additional number and color arguments.
+--
+-- > ... definitions ...
+-- > f :: Int -> Colour Double -> Diagram Cairo R2
+-- > f i c = ...
+-- >
+-- > main = mainWith f
+--
+-- We can run this program as follows:
+--
+-- > $ ghc --make MyDiagram
+-- >
+-- > # output image.png built by `f 20 red`
+-- > $ ./MyDiagram -o image.png -w 200 20 red
+
 
 -- | This is the simplest way to render diagrams, and is intended to
 --   be used like so:
