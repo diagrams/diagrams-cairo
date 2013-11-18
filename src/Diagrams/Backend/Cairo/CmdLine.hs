@@ -52,7 +52,7 @@
 --
 -- For a tutorial on command-line diagram creation see
 -- <http://projects.haskell.org/diagrams/doc/cmdline.html>.
--- 
+--
 -----------------------------------------------------------------------------
 
 module Diagrams.Backend.Cairo.CmdLine
@@ -74,7 +74,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), Lens', _1)
 
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
@@ -288,7 +288,7 @@ animMain :: Animation Cairo R2 -> IO ()
 animMain = mainWith
 
 instance Mainable (Animation Cairo R2) where
-    type MainOpts (Animation Cairo R2) = (MainOpts (Animation Cairo R2), DiagramAnimOpts)
+    type MainOpts (Animation Cairo R2) = (MainOpts (Diagram Cairo R2), DiagramAnimOpts)
 
     mainRender = defaultAnimMainRender output'
 
