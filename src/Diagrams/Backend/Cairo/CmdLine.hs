@@ -1,7 +1,9 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilies      #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.CmdLine
@@ -58,7 +60,7 @@ module Diagrams.Backend.Cairo.CmdLine
          -- * General form of @main@
 
          mainWith
-        
+
          -- * Supported forms of @main@
 
        , defaultMain
@@ -70,6 +72,8 @@ module Diagrams.Backend.Cairo.CmdLine
        , Cairo
        , B
        ) where
+
+import Control.Lens ((^.))
 
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
@@ -139,8 +143,8 @@ getModuleTime = getClockTime
 -- @
 -- ./Program
 --
--- Usage: ./Program [-w|--width WIDTH] [-h|--height HEIGHT] [-o|--output OUTPUT] [--loop] [-s|--src ARG] [-i|--inter
-val INTERVAL]
+-- Usage: ./Program [-w|--width WIDTH] [-h|--height HEIGHT] [-o|--output OUTPUT]
+--                  [--loop] [-s|--src ARG] [-i|--interval INTERVAL]
 --   Command-line diagram generation.
 --
 -- Available options:
@@ -183,7 +187,7 @@ instance Mainable (Diagram Cairo R2) where
 
 chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
 chooseRender opts d =
-  case splitOn "." (output opts) of
+  case splitOn "." (opts ^. output) of
     [""] -> putStrLn "No output file given."
     ps | last ps `elem` ["png", "ps", "pdf", "svg"] -> do
            let outTy = case last ps of
@@ -195,10 +199,10 @@ chooseRender opts d =
            fst $ renderDia
                    Cairo
                    ( CairoOptions
-                     (output opts)
+                     (opts^.output)
                      (mkSizeSpec
-                       (fromIntegral <$> width opts)
-                       (fromIntegral <$> height opts)
+                       (fromIntegral <$> opts ^. width )
+                       (fromIntegral <$> opts ^. height)
                      )
                      outTy
                      False
@@ -254,10 +258,9 @@ animMain :: Animation Cairo R2 -> IO ()
 animMain = mainWith
 
 instance Mainable (Animation Cairo R2) where
-    type MainOpts (Animation Cairo R2)
-        = (MainOpts (Diagram Cairo R2), DiagramAnimOpts)
+    type MainOpts (Animation Cairo R2) = (DiagramOpts, DiagramAnimOpts)
 
-    mainRender = defaultMultiMainRender
+    mainRender = defaultAnimMainRender
 
 
 #ifdef CMDLINELOOP
