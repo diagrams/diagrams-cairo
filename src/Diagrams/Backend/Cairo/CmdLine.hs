@@ -74,7 +74,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Control.Lens        ((^.))
+import Control.Lens        ((^.),Lens')
 
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
@@ -97,7 +97,7 @@ import Data.List.Split
 #ifdef CMDLINELOOP
 import Data.Maybe          (fromMaybe)
 import Control.Monad       (when, mplus)
-import Control.Lens        (Lens', _1)
+import Control.Lens        (_1)
 
 import System.Environment  (getArgs, getProgName)
 import System.Directory    (getModificationTime)
