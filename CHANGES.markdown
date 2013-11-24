@@ -1,3 +1,10 @@
+1.0: 25 November 2013
+---------------------
+
+    - Re-implement via new backend `RTree` interface.
+    - Use new command-line interface from `diagrams-lib`.
+    - Export `B` as an alias for `Cairo` token.
+
 0.7: 9 August 2013
 ------------------
 
@@ -59,7 +66,7 @@
     - Add dependency on `colour`
 
     - Lower bound on `cairo` raised to 0.12.4
-    
+
 * **Bug fixes**
 
     - Fixed looped compile mode, which was repeatedly trying to compile
@@ -158,4 +165,3 @@
 ----------------
 
 * initial preview release
-
