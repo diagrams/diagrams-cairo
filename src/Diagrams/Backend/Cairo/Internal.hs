@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable        #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
@@ -51,21 +52,19 @@ import           Diagrams.TwoD.Text
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
+import           Control.Exception               (try)
+import           Control.Lens                    hiding (transform, ( # ))
 import           Control.Monad                   (when)
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift, liftIO)
 import           Data.Default.Class
+import qualified Data.Foldable                   as F
+import           Data.Hashable                   (Hashable)
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
-
-import           Control.Lens                    hiding (transform, ( # ))
-
-import           Control.Exception               (try)
-
-import qualified Data.Foldable                   as F
-
 import           Data.Typeable
+import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
@@ -89,7 +88,9 @@ data OutputType =
                 --   action will do nothing, but the @Render ()@
                 --   action can be used (/e.g./ to draw to a Gtk
                 --   window; see the @diagrams-gtk@ package).
-  deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable)
+  deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable, Generic)
+
+instance Hashable OutputType
 
 -- | Custom state tracked in the 'RenderM' monad.
 data CairoState
@@ -141,7 +142,7 @@ instance Backend Cairo R2 where
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
-    deriving Show
+    deriving (Show, Generic)
 
   doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
     where r' = runRenderM r
@@ -184,6 +185,8 @@ runC (C r) = r
 instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
+
+instance Hashable (Options Cairo R2)
 
 renderRTree :: RTree Cairo R2 a -> Render Cairo R2
 renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
