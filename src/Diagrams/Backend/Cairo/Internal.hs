@@ -295,15 +295,23 @@ instance Renderable (Segment Closed R2) Cairo where
     = C . liftC $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
-  render _ t = flip withLine t $ renderT . lineSegments
+  render _ = withTrail renderLine renderLoop
     where
-      renderT segs =
-        C $ do
-          mapM_ renderC segs
-          liftC $ when (isLoop t) C.closePath
+      renderLine ln = C $ do
+        mapM_ renderC (lineSegments ln)
 
-          when (isLine t) (ignoreFill .= True)
-            -- remember that we saw a Line, so we will ignore fill attribute
+        -- remember that we saw a Line, so we will ignore fill attribute
+        ignoreFill .= True
+
+      renderLoop lp = C $ do
+        case loopSegments lp of
+          -- let closePath handle the last segment if it is linear
+          (segs, Linear _) -> mapM_ renderC segs
+
+          -- otherwise we have to draw it explicitly
+          _ -> mapM_ renderC (lineSegments . cutLoop $ lp)
+
+        liftC C.closePath
 
 instance Renderable (Path R2) Cairo where
   render _ p = C $ do
