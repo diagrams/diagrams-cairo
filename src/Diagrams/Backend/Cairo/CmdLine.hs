@@ -75,15 +75,17 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Control.Monad                       ((<=<))
-import Codec.Picture                      (pixelMap, writeGifAnimation
-                                         , GifLooping( .. ), PixelRGB8)
+import Codec.Picture                      (writeGifAnimation, Image(..)
+                                         , GifLooping( .. ), PixelRGB8, PixelRGBA8)
 import Codec.Picture.Types                (dropAlphaLayer)
 import Codec.Picture.VectorByteConversion (imageFromUnsafePtr)
+import Data.Vector.Storable               (unsafeFromForeignPtr0)
+import Foreign.ForeignPtr.Safe            (ForeignPtr)
+import Data.Word                          (Word8)
 
 import Control.Lens        ((^.),Lens')
 
-import Diagrams.Prelude hiding (width, height, interval)
+import Diagrams.Prelude hiding (width, height, interval, Image)
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Ptr (renderForeignPtr)
 import Diagrams.Backend.CmdLine
@@ -312,6 +314,9 @@ instance Mainable [Diagram Cairo R2] where
 
     mainRender opts ds = gifRender opts ds
 
+imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
+imageRGBA8FromUnsafePtr width height ptr =
+  Image width height $ unsafeFromForeignPtr0 ptr (width * height * 4)
 
 gifRender :: DiagramOpts -> [Diagram Cairo R2] -> IO ()
 gifRender dOpts ds =
@@ -322,9 +327,7 @@ gifRender dOpts ds =
                                        (fromIntegral <$> dOpts ^. height)
                (w, h) = (round w', round h')
            fPtrs <- mapM (renderForeignPtr w h) ds
-           let imageRGB8s = map (imageFromUnsafePtr w h) fPtrs
-               -- I would thing that the above image would be of type
-               -- Image PixelRGBA8, i.e have alpha ?
+           let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
                result = writeGifAnimation (dOpts^.output) 5 LoopingForever imageRGB8s
            case result of
              Left s   -> putStrLn s
