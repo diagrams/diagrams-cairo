@@ -75,12 +75,12 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Codec.Picture                      (writeGifAnimation, Image(..)
-                                         , GifLooping( .. ), PixelRGB8, PixelRGBA8)
-import Codec.Picture.Types                (dropAlphaLayer)
-import Codec.Picture.VectorByteConversion (imageFromUnsafePtr)
+import Codec.Picture
+import Codec.Picture.ColorQuant (PaletteOptions (..), defaultPaletteOptions)
+import Codec.Picture.Types
 import Data.Vector.Storable               (unsafeFromForeignPtr0)
 import Foreign.ForeignPtr.Safe            (ForeignPtr)
+import qualified Data.ByteString.Lazy as L
 import Data.Word                          (Word8)
 
 import Control.Lens        ((^.),Lens')
@@ -303,14 +303,12 @@ instance Mainable (Animation Cairo R2) where
 
     mainRender = defaultAnimMainRender output'
 
--- [Diagram Cairo R2] is temporary, just to test the concept. Eventually we will
--- probably wrap in a newtype and may incude a delay list or delay list can be
--- command line options.
-gifMain :: [Diagram Cairo R2] -> IO ()
+-- GifDelay is a synonym for Int.
+gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
-instance Mainable [Diagram Cairo R2] where
-    type MainOpts [Diagram Cairo R2] = DiagramOpts
+instance Mainable [(Diagram Cairo R2, GifDelay)] where
+    type MainOpts [(Diagram Cairo R2, GifDelay)] = DiagramOpts
 
     mainRender opts ds = gifRender opts ds
 
@@ -318,17 +316,40 @@ imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
 imageRGBA8FromUnsafePtr width height ptr =
   Image width height $ unsafeFromForeignPtr0 ptr (width * height * 4)
 
-gifRender :: DiagramOpts -> [Diagram Cairo R2] -> IO ()
-gifRender dOpts ds =
+encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
+                   -> [Image PixelRGB8] -> Either String (L.ByteString)
+encodeGifAnimation' delays looping dithering lst =
+    encodeGifImages looping triples
+      where
+        triples = zipWith (\(x,z) y -> (x, y, z)) doubles delays
+        doubles = [(pal, img)
+                | (img, pal) <- palettize
+                   defaultPaletteOptions {enableImageDithering=dithering} <$> lst]
+
+writeGifAnimation' :: FilePath -> [GifDelay] -> GifLooping -> Bool
+                  -> [Image PixelRGB8] -> Either String (IO ())
+writeGifAnimation' path delays looping dithering img =
+    L.writeFile path <$> encodeGifAnimation' delays looping dithering img
+
+gifRender :: DiagramOpts -> [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifRender dOpts lst =
   case splitOn "." (dOpts^.output) of
     [""] -> putStrLn "No output file given"
     ps | last ps == "gif" -> do
-           let Dims w' h' = mkSizeSpec (fromIntegral <$> dOpts ^. width )
-                                       (fromIntegral <$> dOpts ^. height)
+           let Dims w' h' = mkSizeSpec
+                 (fromIntegral <$> dOpts ^. width )
+                 (fromIntegral <$> dOpts ^. height)
                (w, h) = (round w', round h')
+               ds = map fst lst
+               delays = map snd lst
            fPtrs <- mapM (renderForeignPtr w h) ds
            let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
-               result = writeGifAnimation (dOpts^.output) 5 LoopingForever imageRGB8s
+               result = writeGifAnimation'
+                 (dOpts^.output)
+                  delays
+                  LoopingForever
+                  False
+                  imageRGB8s
            case result of
              Left s   -> putStrLn s
              Right io -> io
