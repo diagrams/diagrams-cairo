@@ -67,6 +67,7 @@ module Diagrams.Backend.Cairo.CmdLine
        , defaultMain
        , multiMain
        , animMain
+       , gifMain
 
         -- * Backend tokens
 
@@ -74,10 +75,17 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
+import Control.Monad                       ((<=<))
+import Codec.Picture                      (pixelMap, writeGifAnimation
+                                         , GifLooping( .. ), PixelRGB8)
+import Codec.Picture.Types                (dropAlphaLayer)
+import Codec.Picture.VectorByteConversion (imageFromUnsafePtr)
+
 import Control.Lens        ((^.),Lens')
 
 import Diagrams.Prelude hiding (width, height, interval)
 import Diagrams.Backend.Cairo
+import Diagrams.Backend.Cairo.Ptr (renderForeignPtr)
 import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
@@ -293,6 +301,35 @@ instance Mainable (Animation Cairo R2) where
 
     mainRender = defaultAnimMainRender output'
 
+-- [Diagram Cairo R2] is temporary, just to test the concept. Eventually we will
+-- probably wrap in a newtype and may incude a delay list or delay list can be
+-- command line options.
+gifMain :: [Diagram Cairo R2] -> IO ()
+gifMain = mainWith
+
+instance Mainable [Diagram Cairo R2] where
+    type MainOpts [Diagram Cairo R2] = DiagramOpts
+
+    mainRender opts ds = gifRender opts ds
+
+
+gifRender :: DiagramOpts -> [Diagram Cairo R2] -> IO ()
+gifRender dOpts ds =
+  case splitOn "." (dOpts^.output) of
+    [""] -> putStrLn "No output file given"
+    ps | last ps == "gif" -> do
+           let Dims w' h' = mkSizeSpec (fromIntegral <$> dOpts ^. width )
+                                       (fromIntegral <$> dOpts ^. height)
+               (w, h) = (round w', round h')
+           fPtrs <- mapM (renderForeignPtr w h) ds
+           let imageRGB8s = map (imageFromUnsafePtr w h) fPtrs
+               -- I would thing that the above image would be of type
+               -- Image PixelRGBA8, i.e have alpha ?
+               result = writeGifAnimation (dOpts^.output) 5 LoopingForever imageRGB8s
+           case result of
+             Left s   -> putStrLn s
+             Right io -> io
+       | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
 
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
