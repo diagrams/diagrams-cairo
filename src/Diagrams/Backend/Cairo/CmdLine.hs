@@ -336,20 +336,21 @@ gifRender dOpts lst =
   case splitOn "." (dOpts^.output) of
     [""] -> putStrLn "No output file given"
     ps | last ps == "gif" -> do
-           let Dims w' h' = mkSizeSpec
-                 (fromIntegral <$> dOpts ^. width )
-                 (fromIntegral <$> dOpts ^. height)
-               (w, h) = (round w', round h')
-               ds = map fst lst
+           let (w, h) = case (dOpts^.width, dOpts^.height) of
+                          (Just w', Just h') -> (w', h')
+                          (Just w', Nothing) -> (w', w')
+                          (Nothing, Just h') -> (h', h')
+                          (Nothing, Nothing) -> (100, 100)
+               dias = map fst lst
                delays = map snd lst
-           fPtrs <- mapM (renderForeignPtr w h) ds
+           fPtrs <- mapM (renderForeignPtr w h) dias
            let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
                result = writeGifAnimation'
-                 (dOpts^.output)
-                  delays
-                  LoopingForever
-                  False
-                  imageRGB8s
+                           (dOpts^.output)
+                            delays
+                            LoopingForever
+                            False
+                            imageRGB8s
            case result of
              Left s   -> putStrLn s
              Right io -> io
