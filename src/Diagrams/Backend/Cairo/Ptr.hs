@@ -31,9 +31,9 @@ import Graphics.Rendering.Cairo ( Format (..)
 
 -- | Render a diagram to a new buffer in memory, with the format ARGB32.
 
-renderPtr :: Int -> Int -> Diagram Cairo R2 -> IO (Ptr Word8)
-renderPtr w h d = do
-  let stride = formatStrideForWidth FormatARGB32 w
+renderPtr :: Int -> Int -> Format -> Diagram Cairo R2 -> IO (Ptr Word8)
+renderPtr w h fmt d = do
+  let stride = formatStrideForWidth fmt w
       size   = stride * h
       opt    = CairoOptions
         { _cairoSizeSpec     = Dims (fromIntegral w) (fromIntegral h)
@@ -52,4 +52,7 @@ renderPtr w h d = do
 -- | Like 'renderPtr' but automatically garbage collected by Haskell.
 
 renderForeignPtr :: Int -> Int -> Diagram Cairo R2 -> IO (ForeignPtr Word8)
-renderForeignPtr w h d = renderPtr w h d >>= newForeignPtr finalizerFree
+renderForeignPtr w h d = renderPtr w h FormatARGB32 d >>= newForeignPtr finalizerFree
+
+renderForeignPtrOpaque :: Int -> Int -> Diagram Cairo R2 -> IO (ForeignPtr Word8)
+renderForeignPtrOpaque w h d = renderPtr w h FormatRGB24 d >>= newForeignPtr finalizerFree

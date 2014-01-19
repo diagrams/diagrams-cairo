@@ -78,7 +78,6 @@ module Diagrams.Backend.Cairo.CmdLine
 
 import Codec.Picture
 import Codec.Picture.ColorQuant            (defaultPaletteOptions)
-import Codec.Picture.Types                 (dropAlphaLayer)
 import Data.Vector.Storable                (unsafeFromForeignPtr0)
 import Foreign.ForeignPtr.Safe             (ForeignPtr)
 import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
@@ -90,7 +89,7 @@ import Control.Lens                        ((^.), Lens', makeLenses)
 import Diagrams.Prelude hiding             (width, height, interval, Image, (<>)
                                             , option)
 import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Ptr          (renderForeignPtr)
+import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
 import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
@@ -381,9 +380,12 @@ instance Mainable [(Diagram Cairo R2, GifDelay)] where
 
     mainRender (dOpts, gOpts) ds = gifRender (dOpts, gOpts) ds
 
-imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
-imageRGBA8FromUnsafePtr w h ptr =
-  Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
+imageRGB8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGB8
+imageRGB8FromUnsafePtr w h ptr = pixelMap f cImg
+  where
+    f (PixelRGBA8 b g r _) = PixelRGB8 r g b
+    cImg = Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
+
 
 encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
                    -> [Image PixelRGB8] -> Either String (L.ByteString)
@@ -417,8 +419,8 @@ gifRender (dOpts, gOpts) lst =
                                 Just n  -> LoopingRepeat (fromIntegral n)
                dias = map fst lst
                delays = map snd lst
-           fPtrs <- mapM (renderForeignPtr w h) dias
-           let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
+           fPtrs <- mapM (renderForeignPtrOpaque w h) dias
+           let imageRGB8s = map (imageRGB8FromUnsafePtr w h) fPtrs
                result = writeGifAnimation'
                            (dOpts^.output)
                             delays
