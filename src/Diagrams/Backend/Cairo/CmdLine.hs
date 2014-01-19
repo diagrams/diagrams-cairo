@@ -1,6 +1,7 @@
-{-# LANGUAGE CPP               #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeFamilies         #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -82,10 +83,12 @@ import Data.Vector.Storable                (unsafeFromForeignPtr0)
 import Foreign.ForeignPtr.Safe             (ForeignPtr)
 import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
 import Data.Word                           (Word8)
+import Options.Applicative
 
-import Control.Lens                        ((^.),Lens')
+import Control.Lens                        ((^.), Lens', makeLenses)
 
-import Diagrams.Prelude hiding             (width, height, interval, Image)
+import Diagrams.Prelude hiding             (width, height, interval, Image, (<>)
+                                            , option)
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Ptr          (renderForeignPtr)
 import Diagrams.Backend.CmdLine
@@ -303,60 +306,6 @@ instance Mainable (Animation Cairo R2) where
 
     mainRender = defaultAnimMainRender output'
 
--- GifDelay is a synonym for Int.
-gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
-gifMain = mainWith
-
-instance Mainable [(Diagram Cairo R2, GifDelay)] where
-    type MainOpts [(Diagram Cairo R2, GifDelay)] = DiagramOpts
-
-    mainRender opts ds = gifRender opts ds
-
-imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
-imageRGBA8FromUnsafePtr w h ptr =
-  Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
-
-encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
-                   -> [Image PixelRGB8] -> Either String (L.ByteString)
-encodeGifAnimation' delays looping dithering lst =
-    encodeGifImages looping triples
-      where
-        triples = zipWith (\(x,z) y -> (x, y, z)) doubles delays
-        doubles = [(pal, img)
-                | (img, pal) <- palettize
-                   defaultPaletteOptions {enableImageDithering=dithering} <$> lst]
-
-writeGifAnimation' :: FilePath -> [GifDelay] -> GifLooping -> Bool
-                  -> [Image PixelRGB8] -> Either String (IO ())
-writeGifAnimation' path delays looping dithering img =
-    L.writeFile path <$> encodeGifAnimation' delays looping dithering img
-
-gifRender :: DiagramOpts -> [(Diagram Cairo R2, GifDelay)] -> IO ()
-gifRender dOpts lst =
-  case splitOn "." (dOpts^.output) of
-    [""] -> putStrLn "No output file given"
-    ps | last ps == "gif" -> do
-           let (w, h) = case (dOpts^.width, dOpts^.height) of
-                          (Just w', Just h') -> (w', h')
-                          (Just w', Nothing) -> (w', w')
-                          (Nothing, Just h') -> (h', h')
-                          (Nothing, Nothing) -> (100, 100)
-               dias = map fst lst
-               delays = map snd lst
-           fPtrs <- mapM (renderForeignPtr w h) dias
-           let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
-               result = writeGifAnimation'
-                           (dOpts^.output)
-                            delays
-                            LoopingForever
-                            False
-                            imageRGB8s
-           case result of
-             Left s   -> putStrLn s
-             Right io -> io
-       | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
-
-
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
 waitForChange lastAttempt opts = do
@@ -405,3 +354,78 @@ recompile lastAttempt prog mSrc = do
  where getModTime f = catch (Just <$> getModificationTime f)
                             (\(SomeException _) -> return Nothing)
 #endif
+
+-- GifDelay is a synonym for Int.
+gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifMain = mainWith
+
+data GifOpts = GifOpts { _dither :: Bool
+                       , _noLooping :: Bool
+                       , _loopRepeat :: Maybe Int}
+
+makeLenses ''GifOpts
+
+instance Parseable GifOpts where
+  parser = GifOpts <$> switch
+                       ( long "dither"
+                      <> help "Turn on dithering." )
+                   <*> switch
+                       ( long "looping-off"
+                      <> help "Turn looping off" )
+                   <*> ( optional . option )
+                       ( long "loop-repeat"
+                      <> help "Number of times to repeat" )
+
+instance Mainable [(Diagram Cairo R2, GifDelay)] where
+    type MainOpts [(Diagram Cairo R2, GifDelay)] = (DiagramOpts, GifOpts)
+
+    mainRender (dOpts, gOpts) ds = gifRender (dOpts, gOpts) ds
+
+imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
+imageRGBA8FromUnsafePtr w h ptr =
+  Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
+
+encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
+                   -> [Image PixelRGB8] -> Either String (L.ByteString)
+encodeGifAnimation' delays looping dithering lst =
+    encodeGifImages looping triples
+      where
+        triples = zipWith (\(x,z) y -> (x, y, z)) doubles delays
+        doubles = [(pal, img)
+                | (img, pal) <- palettize
+                   defaultPaletteOptions {enableImageDithering=dithering} <$> lst]
+
+writeGifAnimation' :: FilePath -> [GifDelay] -> GifLooping -> Bool
+                  -> [Image PixelRGB8] -> Either String (IO ())
+writeGifAnimation' path delays looping dithering img =
+    L.writeFile path <$> encodeGifAnimation' delays looping dithering img
+
+gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifRender (dOpts, gOpts) lst =
+  case splitOn "." (dOpts^.output) of
+    [""] -> putStrLn "No output file given"
+    ps | last ps == "gif" -> do
+           let (w, h) = case (dOpts^.width, dOpts^.height) of
+                          (Just w', Just h') -> (w', h')
+                          (Just w', Nothing) -> (w', w')
+                          (Nothing, Just h') -> (h', h')
+                          (Nothing, Nothing) -> (100, 100)
+               looping = if gOpts^.noLooping
+                         then LoopingNever
+                         else case gOpts^.loopRepeat of
+                                Nothing -> LoopingForever
+                                Just n  -> LoopingRepeat (fromIntegral n)
+               dias = map fst lst
+               delays = map snd lst
+           fPtrs <- mapM (renderForeignPtr w h) dias
+           let imageRGB8s = map (dropAlphaLayer . imageRGBA8FromUnsafePtr w h) fPtrs
+               result = writeGifAnimation'
+                           (dOpts^.output)
+                            delays
+                            looping
+                           (gOpts^.dither)
+                            imageRGB8s
+           case result of
+             Left s   -> putStrLn s
+             Right io -> io
+       | otherwise -> putStrLn $ "File name must end with .gif"
