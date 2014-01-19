@@ -76,18 +76,18 @@ module Diagrams.Backend.Cairo.CmdLine
        ) where
 
 import Codec.Picture
-import Codec.Picture.ColorQuant (PaletteOptions (..), defaultPaletteOptions)
-import Codec.Picture.Types
-import Data.Vector.Storable               (unsafeFromForeignPtr0)
-import Foreign.ForeignPtr.Safe            (ForeignPtr)
-import qualified Data.ByteString.Lazy as L
-import Data.Word                          (Word8)
+import Codec.Picture.ColorQuant            (defaultPaletteOptions)
+import Codec.Picture.Types                 (dropAlphaLayer)
+import Data.Vector.Storable                (unsafeFromForeignPtr0)
+import Foreign.ForeignPtr.Safe             (ForeignPtr)
+import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
+import Data.Word                           (Word8)
 
-import Control.Lens        ((^.),Lens')
+import Control.Lens                        ((^.),Lens')
 
-import Diagrams.Prelude hiding (width, height, interval, Image)
+import Diagrams.Prelude hiding             (width, height, interval, Image)
 import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Ptr (renderForeignPtr)
+import Diagrams.Backend.Cairo.Ptr          (renderForeignPtr)
 import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
@@ -313,8 +313,8 @@ instance Mainable [(Diagram Cairo R2, GifDelay)] where
     mainRender opts ds = gifRender opts ds
 
 imageRGBA8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGBA8
-imageRGBA8FromUnsafePtr width height ptr =
-  Image width height $ unsafeFromForeignPtr0 ptr (width * height * 4)
+imageRGBA8FromUnsafePtr w h ptr =
+  Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
 
 encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
                    -> [Image PixelRGB8] -> Either String (L.ByteString)
@@ -355,6 +355,7 @@ gifRender dOpts lst =
              Left s   -> putStrLn s
              Right io -> io
        | otherwise -> putStrLn $ "Unknown file type: " ++ last ps
+
 
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
