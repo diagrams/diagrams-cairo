@@ -24,6 +24,8 @@
 -- * 'animMain' is like 'defaultMain' but for animations instead of
 --   diagrams.
 --
+-- * `gifMain` creates an executable to generate an animated GIF.
+--
 -- * 'mainWith' is a generic form that does all of the above but with
 --   a slightly scarier type.  See "Diagrams.Backend.CmdLine".  This
 --   form can also take a function type that has a subtable final result
@@ -370,6 +372,7 @@ makeLenses ''GifOpts
 --   @--dither@ turn dithering on.
 --   @--looping-off@ turn looping off, i.e play GIF once.
 --   @--loop-repeat@ number of times to repeat the GIF after the first playing.
+--   this option is only used if @--looping-off@ is not set.
 instance Parseable GifOpts where
   parser = GifOpts <$> switch
                        ( long "dither"
