@@ -87,7 +87,7 @@ import Codec.Picture.ColorQuant            (defaultPaletteOptions)
 import Data.Vector.Storable                (unsafeFromForeignPtr0)
 import Foreign.ForeignPtr.Safe             (ForeignPtr)
 import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
-import Data.Word                           (Word8, Word16)
+import Data.Word                           (Word8)
 import Options.Applicative
 
 import Control.Lens                        ((^.), Lens', makeLenses)
@@ -360,17 +360,9 @@ recompile lastAttempt prog mSrc = do
                             (\(SomeException _) -> return Nothing)
 #endif
 
--- | @gifMain@ takes a list of diagram and delay time pairs ("Delay times are
---   in 1/100ths of a second.") and produces a command line program to generate
---   an animated GIF. Optional command line
---   arguments: @GifOpts@.
---
---     Use @--dither@ to turn dithering on,
---     @--looping-off@ turn looping off, i.e play GIF once and
---     @--loop-repeat n@ to repeat the GIF n times after the first playing.
---     this option is only used if @--looping-off@ is not set. If the argument
---     of @--loop-repeat@ is not a positive integer then looping defaults to
---     forever.
+-- | @gifMain@ takes a list of diagram and delay time pairs and produces a
+--   command line program to generate an animated GIF, with options @GifOpts@.
+--   "Delay times are in 1/100ths of a second."
 --
 --   Example usage:
 --
@@ -400,10 +392,15 @@ gifMain = mainWith
 -- | Extra options for animated GIFs.
 data GifOpts = GifOpts { _dither :: Bool
                        , _noLooping :: Bool
-                       , _loopRepeat :: Word16}
+                       , _loopRepeat :: Maybe Int}
 
 makeLenses ''GifOpts
 
+-- | Command line parser for 'GifOpts'.
+--   @--dither@ turn dithering on.
+--   @--looping-off@ turn looping off, i.e play GIF once.
+--   @--loop-repeat@ number of times to repeat the GIF after the first playing.
+--   this option is only used if @--looping-off@ is not set.
 instance Parseable GifOpts where
   parser = GifOpts <$> switch
                        ( long "dither"
@@ -411,7 +408,7 @@ instance Parseable GifOpts where
                    <*> switch
                        ( long "looping-off"
                       <> help "Turn looping off" )
-                   <*> option
+                   <*> ( optional . option )
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
@@ -454,7 +451,9 @@ gifRender (dOpts, gOpts) lst =
                           (Nothing, Nothing) -> (100, 100)
                looping = if gOpts^.noLooping
                          then LoopingNever
-                         else LoopingRepeat (gOpts^.loopRepeat)
+                         else case gOpts^.loopRepeat of
+                                Nothing -> LoopingForever
+                                Just n  -> LoopingRepeat (fromIntegral n)
                dias = map fst lst
                delays = map snd lst
            fPtrs <- mapM (renderForeignPtrOpaque w h) dias
