@@ -362,6 +362,7 @@ recompile lastAttempt prog mSrc = do
 
 -- | @gifMain@ takes a list of diagram and delay time pairs and produces a
 --   command line program to generate an animated GIF, with options @GifOpts@.
+--   "Delay times are in 1/100ths of a second."
 --
 --   Example usage:
 --
