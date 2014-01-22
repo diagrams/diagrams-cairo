@@ -354,16 +354,22 @@ recompile lastAttempt prog mSrc = do
                             (\(SomeException _) -> return Nothing)
 #endif
 
--- GifDelay is a synonym for Int.
+-- | @gifMain takes a list of diagram and delay time pairs and produces a
+--   command line program to generate an animated GIF, with options @GifOpts@.
 gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
+-- | Extra options for animated GIFs.
 data GifOpts = GifOpts { _dither :: Bool
                        , _noLooping :: Bool
                        , _loopRepeat :: Maybe Int}
 
 makeLenses ''GifOpts
 
+-- | Command line parser for 'GifOpts'.
+--   @--dither@ turn dithering on.
+--   @--looping-off@ turn looping off, i.e play GIF once.
+--   @--loop-repeat@ number of times to repeat the GIF after the first playing.
 instance Parseable GifOpts where
   parser = GifOpts <$> switch
                        ( long "dither"
@@ -375,6 +381,9 @@ instance Parseable GifOpts where
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
+-- | This instance of @Mainable@ allows @mainWith@ to interpret
+--   @[(Diagram Cairo R2, GifDelay)] or equivalently [(Diagram Cairo R2, Int)]
+--   as an animated GIF.
 instance Mainable [(Diagram Cairo R2, GifDelay)] where
     type MainOpts [(Diagram Cairo R2, GifDelay)] = (DiagramOpts, GifOpts)
 
