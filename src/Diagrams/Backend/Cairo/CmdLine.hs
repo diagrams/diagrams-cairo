@@ -72,6 +72,10 @@ module Diagrams.Backend.Cairo.CmdLine
        , animMain
        , gifMain
 
+        -- * GIF support
+
+        , GifOpts(..)
+
         -- * Backend tokens
 
        , Cairo
@@ -356,8 +360,31 @@ recompile lastAttempt prog mSrc = do
                             (\(SomeException _) -> return Nothing)
 #endif
 
--- | @gifMain takes a list of diagram and delay time pairs and produces a
+-- | @gifMain@ takes a list of diagram and delay time pairs and produces a
 --   command line program to generate an animated GIF, with options @GifOpts@.
+--
+--   Example usage:
+--
+-- @
+--   $ ghc --make GifTest
+--   [1 of 1] Compiling Main             ( GifTest.hs, GifTest.o )
+--   Linking GifTest ...
+--   ./GifTest --help
+--   GifTest
+--
+--   Usage: GifTest [-w|--width WIDTH] [-h|--height HEIGHT] [-o|--output OUTPUT]
+--   [--dither] [--looping-off] [--loop-repeat ARG]
+--   Command-line diagram generation.
+--
+--   Available options:
+--    -?,--help                Show this help text
+--    -w,--width WIDTH         Desired WIDTH of the output image
+--    -h,--height HEIGHT       Desired HEIGHT of the output image
+--    -o,--output OUTPUT       OUTPUT file
+--    --dither                 Turn on dithering.
+--    --looping-off            Turn looping off
+--    --loop-repeat ARG        Number of times to repeat
+-- @
 gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
@@ -384,9 +411,6 @@ instance Parseable GifOpts where
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
--- | This instance of @Mainable@ allows @mainWith@ to interpret
---   @[(Diagram Cairo R2, GifDelay)] or equivalently [(Diagram Cairo R2, Int)]
---   as an animated GIF.
 instance Mainable [(Diagram Cairo R2, GifDelay)] where
     type MainOpts [(Diagram Cairo R2, GifDelay)] = (DiagramOpts, GifOpts)
 
