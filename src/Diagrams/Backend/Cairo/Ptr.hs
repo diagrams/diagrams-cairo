@@ -45,7 +45,7 @@ renderPtr w h fmt d = do
 
   b <- mallocArray size
   pokeArray b (replicate size 0)
-  withImageSurfaceForData b FormatARGB32 w h stride (`renderWith` r)
+  withImageSurfaceForData b fmt w h stride (`renderWith` r)
 
   return (castPtr b)
 
