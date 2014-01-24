@@ -439,6 +439,11 @@ writeGifAnimation' :: FilePath -> [GifDelay] -> GifLooping -> Bool
 writeGifAnimation' path delays looping dithering img =
     L.writeFile path <$> encodeGifAnimation' delays looping dithering img
 
+scaleInt :: Int -> Double -> Double -> Int
+scaleInt i num denom
+  | num == 0 || denom == 0 = i
+  | otherwise = round (num / denom * fromIntegral i)
+
 gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifRender (dOpts, gOpts) lst =
   case splitOn "." (dOpts^.output) of
@@ -446,8 +451,8 @@ gifRender (dOpts, gOpts) lst =
     ps | last ps == "gif" -> do
            let (w, h) = case (dOpts^.width, dOpts^.height) of
                           (Just w', Just h') -> (w', h')
-                          (Just w', Nothing) -> (w', w')
-                          (Nothing, Just h') -> (h', h')
+                          (Just w', Nothing) -> (w', scaleInt w' diaHeight diaWidth)
+                          (Nothing, Just h') -> (scaleInt h' diaWidth diaHeight, h')
                           (Nothing, Nothing) -> (100, 100)
                looping = if gOpts^.noLooping
                          then LoopingNever
@@ -456,6 +461,7 @@ gifRender (dOpts, gOpts) lst =
                                 Just n  -> LoopingRepeat (fromIntegral n)
                dias = map fst lst
                delays = map snd lst
+               (diaWidth, diaHeight) = size2D (head dias)
            fPtrs <- mapM (renderForeignPtrOpaque w h) dias
            let imageRGB8s = map (imageRGB8FromUnsafePtr w h) fPtrs
                result = writeGifAnimation'
