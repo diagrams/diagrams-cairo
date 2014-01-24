@@ -1,9 +1,3 @@
-1.x :
------
-
-     - Added direct support for making animated GIFs, `gifMain`.
-
-
 1.0: 25 November 2013
 ---------------------
 
