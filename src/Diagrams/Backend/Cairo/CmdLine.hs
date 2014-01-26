@@ -1,6 +1,7 @@
-{-# LANGUAGE CPP               #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE CPP                  #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeFamilies         #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -22,6 +23,8 @@
 --
 -- * 'animMain' is like 'defaultMain' but for animations instead of
 --   diagrams.
+--
+-- * `gifMain` creates an executable to generate an animated GIF.
 --
 -- * 'mainWith' is a generic form that does all of the above but with
 --   a slightly scarier type.  See "Diagrams.Backend.CmdLine".  This
@@ -67,6 +70,11 @@ module Diagrams.Backend.Cairo.CmdLine
        , defaultMain
        , multiMain
        , animMain
+       , gifMain
+
+        -- * GIF support
+
+        , GifOpts(..)
 
         -- * Backend tokens
 
@@ -74,10 +82,20 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Control.Lens        ((^.),Lens')
+import Codec.Picture
+import Codec.Picture.ColorQuant            (defaultPaletteOptions)
+import Data.Vector.Storable                (unsafeFromForeignPtr0)
+import Foreign.ForeignPtr.Safe             (ForeignPtr)
+import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
+import Data.Word                           (Word8)
+import Options.Applicative
 
-import Diagrams.Prelude hiding (width, height, interval)
+import Control.Lens                        ((^.), Lens', makeLenses)
+
+import Diagrams.Prelude hiding             (width, height, interval, Image, (<>)
+                                            , option)
 import Diagrams.Backend.Cairo
+import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
 import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
@@ -293,7 +311,6 @@ instance Mainable (Animation Cairo R2) where
 
     mainRender = defaultAnimMainRender output'
 
-
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
 waitForChange lastAttempt opts = do
@@ -342,3 +359,118 @@ recompile lastAttempt prog mSrc = do
  where getModTime f = catch (Just <$> getModificationTime f)
                             (\(SomeException _) -> return Nothing)
 #endif
+
+-- | @gifMain@ takes a list of diagram and delay time pairs and produces a
+--   command line program to generate an animated GIF, with options @GifOpts@.
+--   "Delay times are in 1/100ths of a second."
+--
+--   Example usage:
+--
+-- @
+--   $ ghc --make GifTest
+--   [1 of 1] Compiling Main             ( GifTest.hs, GifTest.o )
+--   Linking GifTest ...
+--   ./GifTest --help
+--   GifTest
+--
+--   Usage: GifTest [-w|--width WIDTH] [-h|--height HEIGHT] [-o|--output OUTPUT]
+--   [--dither] [--looping-off] [--loop-repeat ARG]
+--   Command-line diagram generation.
+--
+--   Available options:
+--    -?,--help                Show this help text
+--    -w,--width WIDTH         Desired WIDTH of the output image
+--    -h,--height HEIGHT       Desired HEIGHT of the output image
+--    -o,--output OUTPUT       OUTPUT file
+--    --dither                 Turn on dithering.
+--    --looping-off            Turn looping off
+--    --loop-repeat ARG        Number of times to repeat
+-- @
+gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifMain = mainWith
+
+-- | Extra options for animated GIFs.
+data GifOpts = GifOpts { _dither :: Bool
+                       , _noLooping :: Bool
+                       , _loopRepeat :: Maybe Int}
+
+makeLenses ''GifOpts
+
+-- | Command line parser for 'GifOpts'.
+--   @--dither@ turn dithering on.
+--   @--looping-off@ turn looping off, i.e play GIF once.
+--   @--loop-repeat@ number of times to repeat the GIF after the first playing.
+--   this option is only used if @--looping-off@ is not set.
+instance Parseable GifOpts where
+  parser = GifOpts <$> switch
+                       ( long "dither"
+                      <> help "Turn on dithering." )
+                   <*> switch
+                       ( long "looping-off"
+                      <> help "Turn looping off" )
+                   <*> ( optional . option )
+                       ( long "loop-repeat"
+                      <> help "Number of times to repeat" )
+
+instance Mainable [(Diagram Cairo R2, GifDelay)] where
+    type MainOpts [(Diagram Cairo R2, GifDelay)] = (DiagramOpts, GifOpts)
+
+    mainRender (dOpts, gOpts) ds = gifRender (dOpts, gOpts) ds
+
+imageRGB8FromUnsafePtr :: Int -> Int -> ForeignPtr Word8 -> Image PixelRGB8
+imageRGB8FromUnsafePtr w h ptr = pixelMap f cImg
+  where
+    f (PixelRGBA8 b g r _) = PixelRGB8 r g b
+    cImg = Image w h $ unsafeFromForeignPtr0 ptr (w * h * 4)
+
+
+encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
+                   -> [Image PixelRGB8] -> Either String (L.ByteString)
+encodeGifAnimation' delays looping dithering lst =
+    encodeGifImages looping triples
+      where
+        triples = zipWith (\(x,z) y -> (x, y, z)) doubles delays
+        doubles = [(pal, img)
+                | (img, pal) <- palettize
+                   defaultPaletteOptions {enableImageDithering=dithering} <$> lst]
+
+writeGifAnimation' :: FilePath -> [GifDelay] -> GifLooping -> Bool
+                  -> [Image PixelRGB8] -> Either String (IO ())
+writeGifAnimation' path delays looping dithering img =
+    L.writeFile path <$> encodeGifAnimation' delays looping dithering img
+
+scaleInt :: Int -> Double -> Double -> Int
+scaleInt i num denom
+  | num == 0 || denom == 0 = i
+  | otherwise = round (num / denom * fromIntegral i)
+
+gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifRender (dOpts, gOpts) lst =
+  case splitOn "." (dOpts^.output) of
+    [""] -> putStrLn "No output file given"
+    ps | last ps == "gif" -> do
+           let (w, h) = case (dOpts^.width, dOpts^.height) of
+                          (Just w', Just h') -> (w', h')
+                          (Just w', Nothing) -> (w', scaleInt w' diaHeight diaWidth)
+                          (Nothing, Just h') -> (scaleInt h' diaWidth diaHeight, h')
+                          (Nothing, Nothing) -> (100, 100)
+               looping = if gOpts^.noLooping
+                         then LoopingNever
+                         else case gOpts^.loopRepeat of
+                                Nothing -> LoopingForever
+                                Just n  -> LoopingRepeat (fromIntegral n)
+               dias = map fst lst
+               delays = map snd lst
+               (diaWidth, diaHeight) = size2D (head dias)
+           fPtrs <- mapM (renderForeignPtrOpaque w h) dias
+           let imageRGB8s = map (imageRGB8FromUnsafePtr w h) fPtrs
+               result = writeGifAnimation'
+                           (dOpts^.output)
+                            delays
+                            looping
+                           (gOpts^.dither)
+                            imageRGB8s
+           case result of
+             Left s   -> putStrLn s
+             Right io -> io
+       | otherwise -> putStrLn $ "File name must end with .gif"
