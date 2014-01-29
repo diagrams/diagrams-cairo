@@ -59,7 +59,7 @@ import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift, liftIO)
 import           Data.Default.Class
 import qualified Data.Foldable                   as F
-import           Data.Hashable                   (Hashable)
+import           Data.Hashable                   (Hashable(..))
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
@@ -142,7 +142,7 @@ instance Backend Cairo R2 where
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
-    deriving (Show, Generic)
+    deriving (Show)
 
   doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
     where r' = runRenderM r
@@ -186,7 +186,13 @@ instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
-instance Hashable (Options Cairo R2)
+instance Hashable (Options Cairo R2) where
+  hashWithSalt s (CairoOptions fn sz out adj)
+    = s   `hashWithSalt`
+      fn  `hashWithSalt`
+      sz  `hashWithSalt`
+      out `hashWithSalt`
+      adj
 
 renderRTree :: RTree Cairo R2 a -> Render Cairo R2
 renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
