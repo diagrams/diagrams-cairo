@@ -56,7 +56,7 @@ Library
                        old-time,
                        time,
                        diagrams-core >= 1.0 && < 1.1,
-                       diagrams-lib >= 1.0.1 && < 1.1,
+                       diagrams-lib >= 1.0.1 && < 1.2,
                        cairo >= 0.12.4 && < 0.13,
                        colour,
                        split >= 0.1.2 && < 0.3,
