@@ -76,4 +76,4 @@ Library
 
   if !os(windows)
     cpp-options: -DCMDLINELOOP
-    Build-depends:     unix >= 2.4 && < 2.7
+    Build-depends:     unix >= 2.4 && < 2.8
