@@ -28,7 +28,7 @@
 --
 -- * 'mainWith' is a generic form that does all of the above but with
 --   a slightly scarier type.  See "Diagrams.Backend.CmdLine".  This
---   form can also take a function type that has a subtable final result
+--   form can also take a function type that has a suitable final result
 --   (any of arguments to the above types) and 'Parseable' arguments.
 --
 -- If you want to generate diagrams programmatically---/i.e./ if you
