@@ -1,3 +1,22 @@
+1.1 (XXX)
+---------
+
+* **New features**
+
+    - It is now possible to directly output animated GIFs, using the
+      `gifMain` function.
+
+* **Dependency/version changes**
+
+    - allow `diagrams-core-1.1` and `diagrams-lib-1.1`
+    - allow `unix-2.7`
+    - allow `vector-0.10`
+
+* **Bug fixes**
+
+    - Don't explicitly draw final segment of a loop if it is straight
+      ([#38](https://github.com/diagrams/diagrams-cairo/issues/38))
+
 1.0.1.2 (6 February 2014)
 -------------------------
 
