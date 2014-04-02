@@ -38,7 +38,7 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import           Diagrams.Core.Compile           (RNode (..), RTree, toRTree)
+import           Diagrams.Core.Compile
 import           Diagrams.Core.Transform
 
 import           Diagrams.Prelude                hiding (opacity, view)
@@ -46,7 +46,7 @@ import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Image
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
-import           Diagrams.TwoD.Size              (requiredScaleT)
+import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
 import           Diagrams.TwoD.Text
 
 import qualified Graphics.Rendering.Cairo        as C
@@ -144,40 +144,25 @@ instance Backend Cairo R2 where
           }
     deriving (Show)
 
-  doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
-    where r' = runRenderM r
-          renderIO = do
-            let surfaceF s = C.renderWith s r'
-
-                -- Everything except Dims is arbitrary. The backend
-                -- should have first run 'adjustDia' to update the
-                -- final size of the diagram with explicit dimensions,
-                -- so normally we would only expect to get Dims anyway.
-                (w,h) = case size of
-                          Width w'   -> (w',w')
-                          Height h'  -> (h',h')
-                          Dims w' h' -> (w',h')
-                          Absolute   -> (100,100)
-
-            case out of
-              PNG ->
-                C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
-                  surfaceF surface
-                  C.surfaceWriteToPNG surface file
-              PS  -> C.withPSSurface  file w h surfaceF
-              PDF -> C.withPDFSurface file w h surfaceF
-              SVG -> C.withSVGSurface file w h surfaceF
-              RenderOnly -> return ()
-
-  -- renderData :: Monoid' m => b -> QDiagram b v m -> Render b v
-  renderData _ = renderRTree . toRTree
+  renderRTree _ opts t = (renderIO, r)
+    where
+      r = runRenderM .runC . toRender $ t
+      renderIO = do
+        let surfaceF s = C.renderWith s r
+            (w,h) = sizePair (opts^.cairoSizeSpec)
+        case opts^.cairoOutputType of
+          PNG ->
+            C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
+              surfaceF surface
+              C.surfaceWriteToPNG surface (opts^.cairoFileName)
+          PS  -> C.withPSSurface  (opts^.cairoFileName) w h surfaceF
+          PDF -> C.withPDFSurface (opts^.cairoFileName) w h surfaceF
+          SVG -> C.withSVGSurface (opts^.cairoFileName) w h surfaceF
+          RenderOnly -> return ()
 
   adjustDia c opts d = if _cairoBypassAdjust opts
-                         then (opts, d # setDefault2DAttributes)
-                         else adjustDia2D _cairoSizeSpec
-                                          setCairoSizeSpec
-                                          c opts (d # reflectY)
-    where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
+                         then (opts, mempty, d # setDefault2DAttributes)
+                         else adjustDia2D cairoSizeSpec c opts (d # reflectY)
 
 runC :: Render Cairo R2 -> RenderM ()
 runC (C r) = r
@@ -194,20 +179,15 @@ instance Hashable (Options Cairo R2) where
       out `hashWithSalt`
       adj
 
-renderRTree :: RTree Cairo R2 a -> Render Cairo R2
-renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
-renderRTree (Node (RStyle sty) ts)   = C $ do
+toRender :: RTree Cairo R2 a -> Render Cairo R2
+toRender (Node (RPrim p) _) = render Cairo p
+toRender (Node (RStyle sty) ts) = C $ do
   save
   cairoStyle sty
   accumStyle %= (<> sty)
-  runC $ F.foldMap renderRTree ts
+  runC $ F.foldMap toRender ts
   restore
-renderRTree (Node (RFrozenTr tr) ts) = C $ do
-  save
-  liftC $ cairoTransf tr
-  runC $ F.foldMap renderRTree ts
-  restore
-renderRTree (Node _ ts)              = F.foldMap renderRTree ts
+toRender (Node _ ts) = F.foldMap toRender ts
 
 cairoFileName :: Lens' (Options Cairo R2) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
@@ -252,13 +232,13 @@ cairoStyle s =
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
-        fSize      = liftC . C.setFontSize . getFontSize
+        fSize      = liftC . C.setFontSize . fromOutput . getFontSize
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
-        lWidth     = liftC . C.setLineWidth . getLineWidth
+        lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
         lDashing (getDashing -> Dashing ds offs) =
-          liftC $ C.setDash ds offs
+          liftC $ C.setDash (map fromOutput ds) (fromOutput offs)
 
 fromFontSlant :: FontSlant -> C.FontSlant
 fromFontSlant FontSlantNormal   = C.FontSlantNormal
