@@ -181,13 +181,13 @@ instance Hashable (Options Cairo R2) where
 
 toRender :: RTree Cairo R2 a -> Render Cairo R2
 toRender (Node (RPrim p) _) = render Cairo p
-toRender (Node (RStyle sty) ts) = C $ do
+toRender (Node (RStyle sty) rs) = C $ do
   save
   cairoStyle sty
   accumStyle %= (<> sty)
-  runC $ F.foldMap toRender ts
+  runC $ F.foldMap toRender rs
   restore
-toRender (Node _ ts) = F.foldMap toRender ts
+toRender (Node _ rs) = F.foldMap toRender rs
 
 cairoFileName :: Lens' (Options Cairo R2) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
