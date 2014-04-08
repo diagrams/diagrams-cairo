@@ -44,7 +44,6 @@ import           Diagrams.Core.Transform
 import           Diagrams.Prelude                hiding (opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
-import           Diagrams.TwoD.Image
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
 import           Diagrams.TwoD.Text
@@ -336,8 +335,9 @@ setSourceColor (Just c) = do
   where (r,g,b,a) = colorToSRGBA c
 
 -- Can only do PNG files at the moment...
-instance Renderable Image Cairo where
-  render _ (Image file sz tr) = C . liftC $ do
+instance Renderable (DImage External) Cairo where
+  render _ (DImage path w h tr) = C . liftC $ do
+    let ImageRef file = path
     if ".png" `isSuffixOf` file
       then do
         C.save
@@ -346,11 +346,12 @@ instance Renderable Image Cairo where
                               :: IO (Either IOError C.Surface))
         case pngSurfChk of
           Right pngSurf -> do
-            w <- C.imageSurfaceGetWidth pngSurf
-            h <- C.imageSurfaceGetHeight pngSurf
-            cairoTransf $ requiredScaleT sz (fromIntegral w, fromIntegral h)
-            C.setSourceSurface pngSurf (-fromIntegral w / 2)
-                                       (-fromIntegral h / 2)
+            w' <- C.imageSurfaceGetWidth pngSurf
+            h' <- C.imageSurfaceGetHeight pngSurf
+            let sz = Dims (fromIntegral w) (fromIntegral h)
+            cairoTransf $ requiredScaleT sz (fromIntegral w', fromIntegral h')
+            C.setSourceSurface pngSurf (-fromIntegral w' / 2)
+                                       (-fromIntegral h' / 2)
           Left _ ->
             liftIO . putStrLn $
               "Warning: can't read image file <" ++ file ++ ">"
