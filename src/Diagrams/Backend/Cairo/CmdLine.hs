@@ -92,8 +92,8 @@ import Options.Applicative
 
 import Control.Lens                        ((^.), Lens', makeLenses)
 
-import Diagrams.Prelude hiding             (width, height, interval, Image, (<>)
-                                            , option)
+import Diagrams.Prelude hiding             (width, height, interval, (<>)
+                                           ,option)
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
 import Diagrams.Backend.CmdLine
