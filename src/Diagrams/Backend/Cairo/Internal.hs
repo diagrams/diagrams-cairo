@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable        #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
@@ -37,36 +38,33 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Internal where
 
-import           Diagrams.Core.Compile           (RNode (..), RTree, toRTree)
+import           Diagrams.Core.Compile
 import           Diagrams.Core.Transform
 
 import           Diagrams.Prelude                hiding (opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
-import           Diagrams.TwoD.Image
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
-import           Diagrams.TwoD.Size              (requiredScaleT)
+import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
 import           Diagrams.TwoD.Text
 
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 
+import           Control.Exception               (try)
+import           Control.Lens                    hiding (transform, ( # ))
 import           Control.Monad                   (when)
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift)
 import           Control.Monad.IO.Class
 import           Data.Default.Class
+import qualified Data.Foldable                   as F
+import           Data.Hashable                   (Hashable(..))
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
-
-import           Control.Lens                    hiding (transform, ( # ))
-
-import           Control.Exception               (try)
-
-import qualified Data.Foldable                   as F
-
 import           Data.Typeable
+import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
@@ -90,7 +88,9 @@ data OutputType =
                 --   action will do nothing, but the @Render ()@
                 --   action can be used (/e.g./ to draw to a Gtk
                 --   window; see the @diagrams-gtk@ package).
-  deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable)
+  deriving (Eq, Ord, Read, Show, Bounded, Enum, Typeable, Generic)
+
+instance Hashable OutputType
 
 -- | Custom state tracked in the 'RenderM' monad.
 data CairoState
@@ -142,42 +142,27 @@ instance Backend Cairo R2 where
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
-    deriving Show
+    deriving (Show)
 
-  doRender _ (CairoOptions file size out _) (C r) = (renderIO, r')
-    where r' = runRenderM r
-          renderIO = do
-            let surfaceF s = C.renderWith s r'
-
-                -- Everything except Dims is arbitrary. The backend
-                -- should have first run 'adjustDia' to update the
-                -- final size of the diagram with explicit dimensions,
-                -- so normally we would only expect to get Dims anyway.
-                (w,h) = case size of
-                          Width w'   -> (w',w')
-                          Height h'  -> (h',h')
-                          Dims w' h' -> (w',h')
-                          Absolute   -> (100,100)
-
-            case out of
-              PNG ->
-                C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
-                  surfaceF surface
-                  C.surfaceWriteToPNG surface file
-              PS  -> C.withPSSurface  file w h surfaceF
-              PDF -> C.withPDFSurface file w h surfaceF
-              SVG -> C.withSVGSurface file w h surfaceF
-              RenderOnly -> return ()
-
-  -- renderData :: Monoid' m => b -> QDiagram b v m -> Render b v
-  renderData _ = renderRTree . toRTree
+  renderRTree _ opts t = (renderIO, r)
+    where
+      r = runRenderM .runC . toRender $ t
+      renderIO = do
+        let surfaceF s = C.renderWith s r
+            (w,h) = sizePair (opts^.cairoSizeSpec)
+        case opts^.cairoOutputType of
+          PNG ->
+            C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
+              surfaceF surface
+              C.surfaceWriteToPNG surface (opts^.cairoFileName)
+          PS  -> C.withPSSurface  (opts^.cairoFileName) w h surfaceF
+          PDF -> C.withPDFSurface (opts^.cairoFileName) w h surfaceF
+          SVG -> C.withSVGSurface (opts^.cairoFileName) w h surfaceF
+          RenderOnly -> return ()
 
   adjustDia c opts d = if _cairoBypassAdjust opts
-                         then (opts, d # setDefault2DAttributes)
-                         else adjustDia2D _cairoSizeSpec
-                                          setCairoSizeSpec
-                                          c opts (d # reflectY)
-    where setCairoSizeSpec sz o = o { _cairoSizeSpec = sz }
+                         then (opts, mempty, d # setDefault2DAttributes)
+                         else adjustDia2D cairoSizeSpec c opts (d # reflectY)
 
 runC :: Render Cairo R2 -> RenderM ()
 runC (C r) = r
@@ -186,20 +171,23 @@ instance Monoid (Render Cairo R2) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
-renderRTree :: RTree Cairo R2 a -> Render Cairo R2
-renderRTree (Node (RPrim accTr p) _) = render Cairo (transform accTr p)
-renderRTree (Node (RStyle sty) ts)   = C $ do
+instance Hashable (Options Cairo R2) where
+  hashWithSalt s (CairoOptions fn sz out adj)
+    = s   `hashWithSalt`
+      fn  `hashWithSalt`
+      sz  `hashWithSalt`
+      out `hashWithSalt`
+      adj
+
+toRender :: RTree Cairo R2 a -> Render Cairo R2
+toRender (Node (RPrim p) _) = render Cairo p
+toRender (Node (RStyle sty) rs) = C $ do
   save
   cairoStyle sty
   accumStyle %= (<> sty)
-  runC $ F.foldMap renderRTree ts
+  runC $ F.foldMap toRender rs
   restore
-renderRTree (Node (RFrozenTr tr) ts) = C $ do
-  save
-  liftC $ cairoTransf tr
-  runC $ F.foldMap renderRTree ts
-  restore
-renderRTree (Node _ ts)              = F.foldMap renderRTree ts
+toRender (Node _ rs) = F.foldMap toRender rs
 
 cairoFileName :: Lens' (Options Cairo R2) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
@@ -244,13 +232,13 @@ cairoStyle s =
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
-        fSize      = liftC . C.setFontSize . getFontSize
+        fSize      = liftC . C.setFontSize . fromOutput . getFontSize
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
-        lWidth     = liftC . C.setLineWidth . getLineWidth
+        lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
         lDashing (getDashing -> Dashing ds offs) =
-          liftC $ C.setDash ds offs
+          liftC $ C.setDash (map fromOutput ds) (fromOutput offs)
 
 fromFontSlant :: FontSlant -> C.FontSlant
 fromFontSlant FontSlantNormal   = C.FontSlantNormal
@@ -296,15 +284,23 @@ instance Renderable (Segment Closed R2) Cairo where
     = C . liftC $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
 instance Renderable (Trail R2) Cairo where
-  render _ t = flip withLine t $ renderT . lineSegments
+  render _ = withTrail renderLine renderLoop
     where
-      renderT segs =
-        C $ do
-          mapM_ renderC segs
-          liftC $ when (isLoop t) C.closePath
+      renderLine ln = C $ do
+        mapM_ renderC (lineSegments ln)
 
-          when (isLine t) (ignoreFill .= True)
-            -- remember that we saw a Line, so we will ignore fill attribute
+        -- remember that we saw a Line, so we will ignore fill attribute
+        ignoreFill .= True
+
+      renderLoop lp = C $ do
+        case loopSegments lp of
+          -- let closePath handle the last segment if it is linear
+          (segs, Linear _) -> mapM_ renderC segs
+
+          -- otherwise we have to draw it explicitly
+          _ -> mapM_ renderC (lineSegments . cutLoop $ lp)
+
+        liftC C.closePath
 
 instance Renderable (Path R2) Cairo where
   render _ p = C $ do
@@ -373,8 +369,9 @@ getMatrix t = (a1,a2,b1,b2,c1,c2)
     (unr2 -> (c1,c2)) = transl t
 
 -- Can only do PNG files at the moment...
-instance Renderable Image Cairo where
-  render _ (Image file sz tr) = C . liftC $ do
+instance Renderable (DImage External) Cairo where
+  render _ (DImage path w h tr) = C . liftC $ do
+    let ImageRef file = path
     if ".png" `isSuffixOf` file
       then do
         C.save
@@ -383,11 +380,12 @@ instance Renderable Image Cairo where
                               :: IO (Either IOError C.Surface))
         case pngSurfChk of
           Right pngSurf -> do
-            w <- C.imageSurfaceGetWidth pngSurf
-            h <- C.imageSurfaceGetHeight pngSurf
-            cairoTransf $ requiredScaleT sz (fromIntegral w, fromIntegral h)
-            C.setSourceSurface pngSurf (-fromIntegral w / 2)
-                                       (-fromIntegral h / 2)
+            w' <- C.imageSurfaceGetWidth pngSurf
+            h' <- C.imageSurfaceGetHeight pngSurf
+            let sz = Dims (fromIntegral w) (fromIntegral h)
+            cairoTransf $ requiredScaleT sz (fromIntegral w', fromIntegral h')
+            C.setSourceSurface pngSurf (-fromIntegral w' / 2)
+                                       (-fromIntegral h' / 2)
           Left _ ->
             liftIO . putStrLn $
               "Warning: can't read image file <" ++ file ++ ">"

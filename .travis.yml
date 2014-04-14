@@ -6,9 +6,10 @@ env:
     - HPVER=2013.2.0.0
     - GHCVER=7.4.2
     - GHCVER=7.6.3
+    - GHCVER=7.8.1
     - GHCVER=head
   global:
-    - CABALVER=1.16
+    - CABALVER=1.18
     - UBUNTU_PKGS="libcairo2-dev"
     - HEAD_DEPS="diagrams-core diagrams-lib"
     - EXTRA_DEPS="gtk2hs-buildtools"

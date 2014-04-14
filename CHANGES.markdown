@@ -1,3 +1,55 @@
+1.1.0.2 (19 March 2014)
+----------------------
+
+  - Allow `lens-4.1`
+
+1.1.0.1 (18 March 2014)
+-----------------------
+
+    - Allow `optparse-applicative-0.8`
+
+1.1 (8 March 2014)
+------------------
+
+* **New features**
+
+    - It is now possible to directly output animated GIFs, using the
+      `gifMain` function.
+
+* **Dependency/version changes**
+
+    - allow `diagrams-core-1.1` and `diagrams-lib-1.1`
+    - allow `unix-2.7`
+    - allow `vector-0.10`
+
+* **Bug fixes**
+
+    - Don't explicitly draw final segment of a loop if it is straight
+      ([#38](https://github.com/diagrams/diagrams-cairo/issues/38))
+
+1.0.1.2 (6 February 2014)
+-------------------------
+
+    - Require diagrams-lib >= 1.0.1
+
+1.0.1.1: 30 January 2014
+------------------------
+
+    - Work around bug in GHC 7.4.2, which can't derive Generic for associated
+      data types.
+
+1.0.1: 26 January 2014
+----------------------
+
+    - Add `Hashable (Options Cairo R2)` instance
+
+1.0: 25 November 2013
+---------------------
+
+    - Re-implement via new backend `RTree` interface.
+    - Use new command-line interface from `diagrams-lib`.
+    - Export `B` as an alias for `Cairo` token.
+
 0.7: 9 August 2013
 ------------------
 
@@ -59,7 +111,7 @@
     - Add dependency on `colour`
 
     - Lower bound on `cairo` raised to 0.12.4
-    
+
 * **Bug fixes**
 
     - Fixed looped compile mode, which was repeatedly trying to compile
@@ -158,4 +210,3 @@
 ----------------
 
 * initial preview release
-
