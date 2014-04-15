@@ -329,6 +329,11 @@ addStop p s = C.patternAddColorStopRGBA p (s^.stopFraction) r g b a
   where
     (r,g,b,a) = colorToSRGBA (s^.stopColor)
 
+cairoSpreadMethod :: SpreadMethod -> C.Extend
+cairoSpreadMethod GradPad = C.ExtendPad
+cairoSpreadMethod GradReflect = C.ExtendReflect
+cairoSpreadMethod GradRepeat = C.ExtendRepeat
+
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
 -- https://github.com/diagrams/diagrams-cairo/issues/15 .
@@ -342,6 +347,7 @@ setTexture (Just (LG g)) = liftC $
     C.withLinearPattern x0 y0 x1 y1 $ \pat -> do
       mapM_ (addStop pat) (g^.lGradStops)
       C.patternSetMatrix pat m
+      C.patternSetExtend pat (cairoSpreadMethod (g^.lGradSpreadMethod))
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
@@ -354,6 +360,7 @@ setTexture (Just (RG g)) = liftC $
     C.withRadialPattern x0 y0 (g^.rGradRadius0) x1 y1 (g^.rGradRadius1) $ \pat -> do
       mapM_ (addStop pat) (g^.rGradStops)
       C.patternSetMatrix pat m
+      C.patternSetExtend pat (cairoSpreadMethod (g^.rGradSpreadMethod))
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
