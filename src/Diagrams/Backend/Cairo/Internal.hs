@@ -355,9 +355,8 @@ setTexture (Just (LG g)) = liftC $
     (x0', y0') = unp2 (g^.lGradStart)
     (x1', y1') = unp2 (g^.lGradEnd)
     (x0, y0, x1, y1) = (x0'-0.5, y0'-0.5, x1'-0.5, y1'-0.5)
-
 setTexture (Just (RG g)) = liftC $
-    C.withRadialPattern x0 y0 (g^.rGradRadius0) x1 y1 (g^.rGradRadius1) $ \pat -> do
+    C.withRadialPattern x0 y0 r0 x1 y1 r1 $ \pat -> do
       mapM_ (addStop pat) (g^.rGradStops)
       C.patternSetMatrix pat m
       C.patternSetExtend pat (cairoSpreadMethod (g^.rGradSpreadMethod))
@@ -365,8 +364,10 @@ setTexture (Just (RG g)) = liftC $
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
     (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.rGradTrans))
-    (x0, y0) = unp2 (g^.rGradCenter0)
-    (x1, y1) = unp2 (g^.rGradCenter1)
+    (r0, r1) = ((g^.rGradRadius0), (g^.rGradRadius1))
+    (x0', y0') = unp2 (g^.rGradCenter0)
+    (x1', y1') = unp2 (g^.rGradCenter1)
+    (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
 
 getMatrix :: Transformation R2 -> (Double, Double, Double, Double, Double, Double)
 getMatrix t = (a1,a2,b1,b2,c1,c2)
