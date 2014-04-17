@@ -352,9 +352,8 @@ setTexture (Just (LG g)) = liftC $
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
     (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.lGradTrans))
-    (x0', y0') = unp2 (g^.lGradStart)
-    (x1', y1') = unp2 (g^.lGradEnd)
-    (x0, y0, x1, y1) = (x0'-0.5, y0'-0.5, x1'-0.5, y1'-0.5)
+    (x0, y0) = unp2 (g^.lGradStart)
+    (x1, y1) = unp2 (g^.lGradEnd)
 setTexture (Just (RG g)) = liftC $
     C.withRadialPattern x0 y0 r0 x1 y1 r1 $ \pat -> do
       mapM_ (addStop pat) (g^.rGradStops)
