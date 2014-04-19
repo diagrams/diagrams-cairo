@@ -351,7 +351,7 @@ setTexture (Just (LG g)) = liftC $
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
-    [[a1, a2], [b1, b2], [c1, c2]] = matrixRep (inv (g^.lGradTrans))
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixHomRep (inv (g^.lGradTrans))
     (x0, y0) = unp2 (g^.lGradStart)
     (x1, y1) = unp2 (g^.lGradEnd)
 setTexture (Just (RG g)) = liftC $
@@ -362,7 +362,7 @@ setTexture (Just (RG g)) = liftC $
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
-    [[a1, a2], [b1, b2], [c1, c2]] = matrixRep (inv (g^.rGradTrans))
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixHomRep (inv (g^.rGradTrans))
     (r0, r1) = ((g^.rGradRadius0), (g^.rGradRadius1))
     (x0', y0') = unp2 (g^.rGradCenter0)
     (x1', y1') = unp2 (g^.rGradCenter1)
