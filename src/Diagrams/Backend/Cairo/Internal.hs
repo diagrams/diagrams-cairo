@@ -54,12 +54,12 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import           Control.Exception               (try)
 import           Control.Lens                    hiding (transform, ( # ))
 import           Control.Monad                   (when)
+import           Control.Monad.IO.Class
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift)
-import           Control.Monad.IO.Class
 import           Data.Default.Class
 import qualified Data.Foldable                   as F
-import           Data.Hashable                   (Hashable(..))
+import           Data.Hashable                   (Hashable (..))
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
@@ -351,7 +351,7 @@ setTexture (Just (LG g)) = liftC $
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
-    (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.lGradTrans))
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixRep (inv (g^.lGradTrans))
     (x0, y0) = unp2 (g^.lGradStart)
     (x1, y1) = unp2 (g^.lGradEnd)
 setTexture (Just (RG g)) = liftC $
@@ -362,18 +362,11 @@ setTexture (Just (RG g)) = liftC $
       C.setSource pat
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
-    (a1, a2, b1, b2, c1, c2) = getMatrix (inv (g^.rGradTrans))
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixRep (inv (g^.rGradTrans))
     (r0, r1) = ((g^.rGradRadius0), (g^.rGradRadius1))
     (x0', y0') = unp2 (g^.rGradCenter0)
     (x1', y1') = unp2 (g^.rGradCenter1)
     (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
-
-getMatrix :: Transformation R2 -> (Double, Double, Double, Double, Double, Double)
-getMatrix t = (a1,a2,b1,b2,c1,c2)
-  where
-    (unr2 -> (a1,a2)) = apply t unitX
-    (unr2 -> (b1,b2)) = apply t unitY
-    (unr2 -> (c1,c2)) = transl t
 
 -- Can only do PNG files at the moment...
 instance Renderable (DImage External) Cairo where
