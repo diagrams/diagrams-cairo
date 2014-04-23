@@ -54,11 +54,12 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import           Control.Exception               (try)
 import           Control.Lens                    hiding (transform, ( # ))
 import           Control.Monad                   (when)
+import           Control.Monad.IO.Class
 import qualified Control.Monad.StateStack        as SS
-import           Control.Monad.Trans             (lift, liftIO)
+import           Control.Monad.Trans             (lift)
 import           Data.Default.Class
 import qualified Data.Foldable                   as F
-import           Data.Hashable                   (Hashable(..))
+import           Data.Hashable                   (Hashable (..))
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
@@ -304,13 +305,12 @@ instance Renderable (Trail R2) Cairo where
 instance Renderable (Path R2) Cairo where
   render _ p = C $ do
     cairoPath p
-
-    f <- getStyleAttrib (toAlphaColour . getFillColor)
-    s <- getStyleAttrib (toAlphaColour . getLineColor)
+    f <- getStyleAttrib getFillTexture
+    s <- getStyleAttrib getLineTexture
     ign <- use ignoreFill
-    setSourceColor f
+    setTexture f
     when (isJust f && not ign) $ liftC C.fillPreserve
-    setSourceColor s
+    setTexture s
     liftC C.stroke
 
 -- Add a path to the Cairo context, without stroking or filling it.
@@ -324,15 +324,49 @@ cairoPath (Path trs) = do
       liftC $ uncurry C.moveTo p
       renderC tr
 
+addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
+addStop p s = C.patternAddColorStopRGBA p (s^.stopFraction) r g b a
+  where
+    (r,g,b,a) = colorToSRGBA (s^.stopColor)
+
+cairoSpreadMethod :: SpreadMethod -> C.Extend
+cairoSpreadMethod GradPad = C.ExtendPad
+cairoSpreadMethod GradReflect = C.ExtendReflect
+cairoSpreadMethod GradRepeat = C.ExtendRepeat
+
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
 -- https://github.com/diagrams/diagrams-cairo/issues/15 .
-setSourceColor :: Maybe (AlphaColour Double) -> RenderM ()
-setSourceColor Nothing  = return ()
-setSourceColor (Just c) = do
+setTexture :: Maybe Texture -> RenderM ()
+setTexture Nothing = return ()
+setTexture (Just (SC (SomeColor c))) = do
     o <- fromMaybe 1 <$> getStyleAttrib getOpacity
     liftC (C.setSourceRGBA r g b (o*a))
   where (r,g,b,a) = colorToSRGBA c
+setTexture (Just (LG g)) = liftC $
+    C.withLinearPattern x0 y0 x1 y1 $ \pat -> do
+      mapM_ (addStop pat) (g^.lGradStops)
+      C.patternSetMatrix pat m
+      C.patternSetExtend pat (cairoSpreadMethod (g^.lGradSpreadMethod))
+      C.setSource pat
+  where
+    m = CM.Matrix a1 a2 b1 b2 c1 c2
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixHomRep (inv (g^.lGradTrans))
+    (x0, y0) = unp2 (g^.lGradStart)
+    (x1, y1) = unp2 (g^.lGradEnd)
+setTexture (Just (RG g)) = liftC $
+    C.withRadialPattern x0 y0 r0 x1 y1 r1 $ \pat -> do
+      mapM_ (addStop pat) (g^.rGradStops)
+      C.patternSetMatrix pat m
+      C.patternSetExtend pat (cairoSpreadMethod (g^.rGradSpreadMethod))
+      C.setSource pat
+  where
+    m = CM.Matrix a1 a2 b1 b2 c1 c2
+    [[a1, a2], [b1, b2], [c1, c2]] = matrixHomRep (inv (g^.rGradTrans))
+    (r0, r1) = ((g^.rGradRadius0), (g^.rGradRadius1))
+    (x0', y0') = unp2 (g^.rGradCenter0)
+    (x1', y1') = unp2 (g^.rGradCenter1)
+    (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
 
 -- Can only do PNG files at the moment...
 instance Renderable (DImage External) Cairo where
@@ -369,9 +403,9 @@ instance Renderable Text Cairo where
     ff <- fromMaybe "" <$> getStyleAttrib getFont
     fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
-    f  <- getStyleAttrib (toAlphaColour . getFillColor)
+    f  <- getStyleAttrib getFillTexture
     save
-    setSourceColor f
+    setTexture f
     liftC $ do
       C.selectFontFace ff fs fw
       -- XXX should use reflection font matrix here instead?
