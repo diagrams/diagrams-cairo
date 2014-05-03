@@ -399,17 +399,20 @@ instance Renderable (DImage External) Cairo where
 
 -- see http://www.cairographics.org/tutorial/#L1understandingtext
 instance Renderable Text Cairo where
-  render _ (Text tr al str) = C $ do
+  render _ (Text tt tn al str) = C $ do
     ff <- fromMaybe "" <$> getStyleAttrib getFont
     fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
+    isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
     f  <- getStyleAttrib getFillTexture
     save
     setTexture f
     liftC $ do
       C.selectFontFace ff fs fw
       -- XXX should use reflection font matrix here instead?
-      cairoTransf (tr <> reflectionY)
+      let tr | isLocal   = tt <> reflectionY
+             | otherwise = tn <> reflectionY
+      cairoTransf tr
       (refX, refY) <- case al of
         BoxAlignedText xt yt -> do
           tExt <- C.textExtents str
