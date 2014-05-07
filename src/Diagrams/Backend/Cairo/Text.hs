@@ -22,7 +22,23 @@
 -- This works because there are instances of 'HasStyle' and 'Monoid' for
 -- @'Style' v@.
 --
------------------------------------------------------------------------------
+-- NOTE that this module has a couple significant caveats:
+--
+-- * There are some known bugs
+--   (<https://github.com/diagrams/diagrams-cairo/issues/19>) which
+--   are not easily fixable (they are probably bugs in cairo itself,
+--   but since we are using the \"toy text API\" they will never be
+--   fixed).
+--
+-- * The functions in this module will only
+--   work with text whose font size is measured in @Local@ units.
+--
+-- This module should thus be considered experimental/unsupported; if
+-- it works for you, great, but if not you are probably out of luck.
+-- See the @SVGFonts@ package for better-supported ways to accomplish
+-- similar things.
+--
+-------------------------------------------------------------------------------
 module Diagrams.Backend.Cairo.Text
   (
     -- * Primitives
