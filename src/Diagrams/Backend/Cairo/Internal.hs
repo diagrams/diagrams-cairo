@@ -408,13 +408,13 @@ instance Renderable Text Cairo where
     f  <- getStyleAttrib getFillTexture
     save
     setTexture f
-    layout <- liftC $ do
+    (layout, tr) <- liftC $ do
         layout <- P.createLayout str
         let tr | isLocal   = tt <> reflectionY
                  | otherwise = tn <> reflectionY
         cairoTransf tr
-        return layout
-    let (refX, refY) = unsafePerformIO $ do
+        return (layout, tr)
+    let ref = unsafePerformIO $ do
             font <- P.fontDescriptionNew
             P.fontDescriptionSetFamily font ff
             P.fontDescriptionSetStyle font fs
@@ -427,10 +427,11 @@ instance Renderable Text Cairo where
                     let
                         r = l + w
                         t = b + h
-                    return (lerp l r xt, lerp b t yt)
-                BaselineText -> return (0, 0)
+                    return $ r2 ((lerp l r xt)/avgScale tr, (-1) * (lerp b t yt)/avgScale tr)
+                BaselineText -> return $ r2 (0, 0)
+    return ()
     liftC $ do
-          cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
+          cairoTransf $ moveOriginBy ref mempty
           C.showText str
           C.newPath
     restore
