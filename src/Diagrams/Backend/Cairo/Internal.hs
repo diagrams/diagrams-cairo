@@ -41,12 +41,12 @@ module Diagrams.Backend.Cairo.Internal where
 import           Diagrams.Core.Compile
 import           Diagrams.Core.Transform
 
-import           Diagrams.Prelude                hiding (opacity, view)
+import           Diagrams.Prelude                hiding (font, opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
-import           Diagrams.TwoD.Text
+import           Diagrams.TwoD.Text hiding       (font)
 
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
@@ -224,7 +224,6 @@ cairoStyle :: Style v -> RenderM ()
 cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
-                , handle fSize
                 , handle lFillRule
                 , handle lWidth
                 , handle lCap
@@ -234,7 +233,6 @@ cairoStyle s =
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
-        fSize      = liftC . C.setFontSize . fromOutput . getFontSize
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
         lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
@@ -399,39 +397,49 @@ instance Renderable (DImage External) Cairo where
           , "  images in .png format.  Ignoring <" ++ file ++ ">."
           ]
 
+if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
+if' = maybe (return ())
+
 instance Renderable Text Cairo where
   render _ (Text tt tn al str) = C $ do
-    ff <- fromMaybe "" <$> getStyleAttrib getFont
-    fs <- fromMaybe P.StyleNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
-    fw <- fromMaybe P.WeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
+    let tr = tn <> reflectionY
+    ff <- getStyleAttrib getFont
+    fs <- getStyleAttrib (fromFontSlant . getFontSlant)
+    fw <- getStyleAttrib (fromFontWeight . getFontWeight)
     isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
-    f  <- getStyleAttrib getFillTexture
+    size <- getStyleAttrib (fromOutput . getFontSize)
+    let fSize | size == Nothing = Nothing
+              | isLocal = (avgScale tt *) <$> size
+              | otherwise = size
+    f <- getStyleAttrib getFillTexture
     save
     setTexture f
-    (layout, tr) <- liftC $ do
+    layout <- liftC $ do
         layout <- P.createLayout str
-        let tr | isLocal   = tt <> reflectionY
-                 | otherwise = tn <> reflectionY
         cairoTransf tr
-        return (layout, tr)
+        return layout
     let ref = unsafePerformIO $ do
             font <- P.fontDescriptionNew
-            P.fontDescriptionSetFamily font ff
-            P.fontDescriptionSetStyle font fs
-            P.fontDescriptionSetWeight font fw
+            if' (P.fontDescriptionSetFamily font) ff
+            if' (P.fontDescriptionSetStyle font) fs
+            if' (P.fontDescriptionSetWeight font) fw
+            if' (P.fontDescriptionSetSize font) fSize
             P.layoutSetFontDescription layout $ Just font
             -- XXX should use reflection font matrix here instead?
             case al of
                 BoxAlignedText xt yt -> do
-                    (P.PangoRectangle b l w h, _) <- P.layoutGetExtents layout
-                    let
-                        r = l + w
-                        t = b + h
-                    return $ r2 ((lerp l r xt)/avgScale tr, (-1) * (lerp b t yt)/avgScale tr)
+                    (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
+                    return $ r2 ((lerp 0 w xt), (lerp 0 h yt))
                 BaselineText -> return $ r2 (0, 0)
-    return ()
+    -- Uncomment the lines below to draw a rectangle at the extent of each Text
+    -- let (w, h) = unr2 $ ref ^* 2   -- XXX Debugging
+    -- cairoPath $ rect w h           -- XXX Debugging
     liftC $ do
+          -- C.setLineWidth 0.5 -- XXX Debugging
+          -- C.stroke -- XXX Debugging
+          -- C.newPath -- XXX Debugging
           cairoTransf $ moveOriginBy ref mempty
-          C.showText str
+          P.updateLayout layout
+          P.showLayout layout
           C.newPath
     restore
