@@ -415,7 +415,7 @@ instance Renderable Text Cairo where
                | otherwise = tn <> reflectionY
         cairoTransf tr
         P.createLayout str
-    let ref = unsafePerformIO $ do
+    ref <- liftC. liftIO $ do
             font <- P.fontDescriptionNew
             if' (P.fontDescriptionSetFamily font) ff
             if' (P.fontDescriptionSetStyle font) fs
