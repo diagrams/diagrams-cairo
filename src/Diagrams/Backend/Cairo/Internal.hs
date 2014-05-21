@@ -426,8 +426,10 @@ instance Renderable Text Cairo where
             case al of
                 BoxAlignedText xt yt -> do
                     (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
-                    return $ r2 ((lerp 0 w xt), (lerp 0 h yt))
-                BaselineText -> return $ r2 (0, 0)
+                    return $ r2 ((lerp 0 w xt), (lerp h 0 yt))
+                BaselineText -> do
+                    baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
+                    return $ r2 (0, baseline)
     -- Uncomment the lines below to draw a rectangle at the extent of each Text
     -- let (w, h) = unr2 $ ref ^* 2   -- XXX Debugging
     -- cairoPath $ rect w h           -- XXX Debugging
