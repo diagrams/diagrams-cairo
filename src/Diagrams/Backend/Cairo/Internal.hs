@@ -402,17 +402,20 @@ if' = maybe (return ())
 
 instance Renderable Text Cairo where
   render _ (Text tt tn al str) = C $ do
+    let tr = tn <> reflectionY
     ff <- getStyleAttrib getFont
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
     isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
-    fSize <- getStyleAttrib (fromOutput . getFontSize)
+    size <- getStyleAttrib (fromOutput . getFontSize)
+    let fSize | size == Nothing = Nothing
+              | isLocal = (avgScale tt *) <$> size
+              | otherwise = size
     f <- getStyleAttrib getFillTexture
     save
     setTexture f
     layout <- liftC $ do
-        let tr | isLocal   = tt <> reflectionY
-               | otherwise = tn <> reflectionY
+        layout <- P.createLayout str
         cairoTransf tr
         P.createLayout str
     ref <- liftC. liftIO $ do
