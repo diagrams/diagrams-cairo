@@ -41,15 +41,16 @@ module Diagrams.Backend.Cairo.Internal where
 import           Diagrams.Core.Compile
 import           Diagrams.Core.Transform
 
-import           Diagrams.Prelude                hiding (opacity, view)
+import           Diagrams.Prelude                hiding (font, opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
-import           Diagrams.TwoD.Text
+import           Diagrams.TwoD.Text hiding       (font)
 
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
+import qualified Graphics.Rendering.Pango as P
 
 import           Control.Exception               (try)
 import           Control.Lens                    hiding (transform, ( # ))
@@ -65,6 +66,7 @@ import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
 import           GHC.Generics                    (Generic)
+import           System.IO.Unsafe
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
@@ -222,7 +224,6 @@ cairoStyle :: Style v -> RenderM ()
 cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
-                , handle fSize
                 , handle lFillRule
                 , handle lWidth
                 , handle lCap
@@ -232,7 +233,6 @@ cairoStyle s =
   where handle :: AttributeClass a => (a -> RenderM ()) -> Maybe (RenderM ())
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
-        fSize      = liftC . C.setFontSize . fromOutput . getFontSize
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
         lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
@@ -240,14 +240,14 @@ cairoStyle s =
         lDashing (getDashing -> Dashing ds offs) =
           liftC $ C.setDash (map fromOutput ds) (fromOutput offs)
 
-fromFontSlant :: FontSlant -> C.FontSlant
-fromFontSlant FontSlantNormal   = C.FontSlantNormal
-fromFontSlant FontSlantItalic   = C.FontSlantItalic
-fromFontSlant FontSlantOblique  = C.FontSlantOblique
+fromFontSlant :: FontSlant -> P.FontStyle
+fromFontSlant FontSlantNormal   = P.StyleNormal
+fromFontSlant FontSlantItalic   = P.StyleItalic
+fromFontSlant FontSlantOblique  = P.StyleOblique
 
-fromFontWeight :: FontWeight -> C.FontWeight
-fromFontWeight FontWeightNormal = C.FontWeightNormal
-fromFontWeight FontWeightBold   = C.FontWeightBold
+fromFontWeight :: FontWeight -> P.Weight
+fromFontWeight FontWeightNormal = P.WeightNormal
+fromFontWeight FontWeightBold   = P.WeightBold
 
 -- | Apply the opacity from a style to a given color.
 applyOpacity :: Color c => c -> Style v -> AlphaColour Double
@@ -397,33 +397,51 @@ instance Renderable (DImage External) Cairo where
           , "  images in .png format.  Ignoring <" ++ file ++ ">."
           ]
 
--- see http://www.cairographics.org/tutorial/#L1understandingtext
+if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
+if' = maybe (return ())
+
 instance Renderable Text Cairo where
   render _ (Text tt tn al str) = C $ do
-    ff <- fromMaybe "" <$> getStyleAttrib getFont
-    fs <- fromMaybe C.FontSlantNormal <$> getStyleAttrib (fromFontSlant . getFontSlant)
-    fw <- fromMaybe C.FontWeightNormal <$> getStyleAttrib (fromFontWeight . getFontWeight)
+    let tr = tn <> reflectionY
+    ff <- getStyleAttrib getFont
+    fs <- getStyleAttrib (fromFontSlant . getFontSlant)
+    fw <- getStyleAttrib (fromFontWeight . getFontWeight)
     isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
-    f  <- getStyleAttrib getFillTexture
+    size <- getStyleAttrib (fromOutput . getFontSize)
+    let fSize | size == Nothing = Nothing
+              | isLocal = (avgScale tt *) <$> size
+              | otherwise = size
+    f <- getStyleAttrib getFillTexture
     save
     setTexture f
+    layout <- liftC $ do
+        layout <- P.createLayout str
+        cairoTransf tr
+        P.createLayout str
+    ref <- liftC. liftIO $ do
+            font <- P.fontDescriptionNew
+            if' (P.fontDescriptionSetFamily font) ff
+            if' (P.fontDescriptionSetStyle font) fs
+            if' (P.fontDescriptionSetWeight font) fw
+            if' (P.fontDescriptionSetSize font) fSize
+            P.layoutSetFontDescription layout $ Just font
+            -- XXX should use reflection font matrix here instead?
+            case al of
+                BoxAlignedText xt yt -> do
+                    (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
+                    return $ r2 ((lerp 0 w xt), (lerp h 0 yt))
+                BaselineText -> do
+                    baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
+                    return $ r2 (0, baseline)
+    -- Uncomment the lines below to draw a rectangle at the extent of each Text
+    -- let (w, h) = unr2 $ ref ^* 2   -- XXX Debugging
+    -- cairoPath $ rect w h           -- XXX Debugging
     liftC $ do
-      C.selectFontFace ff fs fw
-      -- XXX should use reflection font matrix here instead?
-      let tr | isLocal   = tt <> reflectionY
-             | otherwise = tn <> reflectionY
-      cairoTransf tr
-      (refX, refY) <- case al of
-        BoxAlignedText xt yt -> do
-          tExt <- C.textExtents str
-          fExt <- C.fontExtents
-          let l = C.textExtentsXbearing tExt
-              r = C.textExtentsXadvance tExt
-              b = C.fontExtentsDescent  fExt
-              t = C.fontExtentsAscent   fExt
-          return (lerp l r xt, lerp (-b) t yt)
-        BaselineText -> return (0, 0)
-      cairoTransf (moveOriginBy (r2 (refX, -refY)) mempty)
-      C.showText str
-      C.newPath
+          -- C.setLineWidth 0.5 -- XXX Debugging
+          -- C.stroke -- XXX Debugging
+          -- C.newPath -- XXX Debugging
+          cairoTransf $ moveOriginBy ref mempty
+          P.updateLayout layout
+          P.showLayout layout
+          C.newPath
     restore
