@@ -1,12 +1,22 @@
+1.2 (27 May 2014)
+-----------------
+
+* **New features**
+
+    - Much improved text support using the `pango` library instead of
+      cairo's "toy" text API.
+
+    - Support for linear and radial gradients on strokes and fills.
+
 1.1.0.2 (19 March 2014)
 ----------------------
 
-  - Allow `lens-4.1`
+- Allow `lens-4.1`
 
 1.1.0.1 (18 March 2014)
 -----------------------
 
-    - Allow `optparse-applicative-0.8`
+- Allow `optparse-applicative-0.8`
 
 1.1 (8 March 2014)
 ------------------
