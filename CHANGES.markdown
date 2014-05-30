@@ -8,6 +8,10 @@
 
     - Support for linear and radial gradients on strokes and fills.
 
+* **Dependency/version changes
+
+  - Allow `opt-parse-applicative-0.9`
+
 1.1.0.2 (19 March 2014)
 ----------------------
 
