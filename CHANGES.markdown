@@ -11,6 +11,9 @@
 * **Dependency/version changes
 
   - Allow `opt-parse-applicative-0.9`
+  - Allow `lens-4.2`
+  - Allow `mtl-2.2`
+  - Allow `transformers-0.4`
 
 1.1.0.2 (19 March 2014)
 ----------------------
