@@ -66,7 +66,6 @@ import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
 import           GHC.Generics                    (Generic)
-import           System.IO.Unsafe
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
@@ -415,7 +414,6 @@ instance Renderable Text Cairo where
     save
     setTexture f
     layout <- liftC $ do
-        layout <- P.createLayout str
         cairoTransf tr
         P.createLayout str
     ref <- liftC. liftIO $ do
