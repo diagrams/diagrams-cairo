@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/diagrams/diagrams-cairo.png)](http://travis-ci.org/diagrams/diagrams-cairo)
+[![Build Status](https://travis-ci.org/diagrams/diagrams-cairo.png?branch=master)](http://travis-ci.org/diagrams/diagrams-cairo)
 
 _diagrams-cairo_ is a rendering backend for [diagrams], a powerful,
 flexible, declarative domain-specific language for creating vector graphics,
