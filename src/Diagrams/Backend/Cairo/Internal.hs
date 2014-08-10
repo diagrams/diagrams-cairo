@@ -248,10 +248,6 @@ fromFontWeight :: FontWeight -> P.Weight
 fromFontWeight FontWeightNormal = P.WeightNormal
 fromFontWeight FontWeightBold   = P.WeightBold
 
--- | Apply the opacity from a style to a given color.
-applyOpacity :: Color c => c -> Style v -> AlphaColour Double
-applyOpacity c s = dissolve (fromMaybe 1 $ getOpacity <$> getAttr s) (toAlphaColour c)
-
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
 cairoTransf :: T2 -> C.Render ()
