@@ -1,4 +1,3 @@
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.Ptr
@@ -14,7 +13,9 @@ module Diagrams.Backend.Cairo.Ptr where
 
 import Data.Word (Word8)
 
-import Diagrams.Prelude (Diagram, R2, SizeSpec2D (..), renderDia)
+import Diagrams.Prelude (Diagram, SizeSpec2D (..), renderDia)
+import           Diagrams.TwoD.Types.Double (R2)
+
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Internal
 

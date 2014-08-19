@@ -75,6 +75,7 @@ module Diagrams.Backend.Cairo.Text
 import           Diagrams.Backend.Cairo.Internal
 import           Diagrams.BoundingBox
 import           Diagrams.Prelude                hiding (height, view)
+import           Diagrams.TwoD.Types.Double
 
 import           Control.Lens                    (makeLenses, view)
 import           System.IO.Unsafe

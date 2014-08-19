@@ -94,6 +94,7 @@ import Control.Lens                        ((^.), Lens', makeLenses)
 
 import Diagrams.Prelude hiding             (width, height, interval, (<>)
                                            ,option)
+import           Diagrams.TwoD.Types.Double
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
 import Diagrams.Backend.CmdLine

@@ -46,7 +46,9 @@ import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
+import           Diagrams.TwoD.Attributes
 import           Diagrams.TwoD.Text hiding       (font)
+import           Diagrams.TwoD.Types.Double
 
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
@@ -139,7 +141,7 @@ instance Backend Cairo R2 where
   type Result  Cairo R2 = (IO (), C.Render ())
   data Options Cairo R2 = CairoOptions
           { _cairoFileName   :: String     -- ^ The name of the file you want generated
-          , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+          , _cairoSizeSpec   :: SizeSpec2D Double -- ^ The requested size of the output
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
@@ -194,7 +196,7 @@ cairoFileName :: Lens' (Options Cairo R2) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
                      (\o f -> o {_cairoFileName = f})
 
-cairoSizeSpec :: Lens' (Options Cairo R2) SizeSpec2D
+cairoSizeSpec :: Lens' (Options Cairo R2) (SizeSpec2D Double)
 cairoSizeSpec = lens (\(CairoOptions {_cairoSizeSpec = s}) -> s)
                      (\o s -> o {_cairoSizeSpec = s})
 
@@ -233,9 +235,11 @@ cairoStyle s =
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
+        lWidth :: LineWidth R2 -> RenderM ()
         lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
+        lDashing ::  DashingA R2 -> RenderM ()
         lDashing (getDashing -> Dashing ds offs) =
           liftC $ C.setDash (map fromOutput ds) (fromOutput offs)
 
@@ -300,8 +304,8 @@ instance Renderable (Trail R2) Cairo where
 instance Renderable (Path R2) Cairo where
   render _ p = C $ do
     cairoPath p
-    f <- getStyleAttrib getFillTexture
-    s <- getStyleAttrib getLineTexture
+    f <- getStyleAttrib (getFillTexture :: FillTexture R2 -> Texture R2)
+    s <- getStyleAttrib (getLineTexture :: LineTexture R2 -> Texture R2)
     ign <- use ignoreFill
     setTexture f
     when (isJust f && not ign) $ liftC C.fillPreserve
@@ -319,7 +323,7 @@ cairoPath (Path trs) = do
       liftC $ uncurry C.moveTo p
       renderC tr
 
-addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
+addStop :: MonadIO m => C.Pattern -> (GradientStop Double) -> m ()
 addStop p s = C.patternAddColorStopRGBA p (s^.stopFraction) r g b a
   where
     (r,g,b,a) = colorToSRGBA (s^.stopColor)
@@ -332,7 +336,7 @@ cairoSpreadMethod GradRepeat = C.ExtendRepeat
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
 -- https://github.com/diagrams/diagrams-cairo/issues/15 .
-setTexture :: Maybe Texture -> RenderM ()
+setTexture :: Maybe (Texture R2) -> RenderM ()
 setTexture Nothing = return ()
 setTexture (Just (SC (SomeColor c))) = do
     o <- fromMaybe 1 <$> getStyleAttrib getOpacity
@@ -340,7 +344,7 @@ setTexture (Just (SC (SomeColor c))) = do
   where (r,g,b,a) = colorToSRGBA c
 setTexture (Just (LG g)) = liftC $
     C.withLinearPattern x0 y0 x1 y1 $ \pat -> do
-      mapM_ (addStop pat) (g^.lGradStops)
+      mapM_ (addStop pat) (g^.lGradStops :: [GradientStop Double])
       C.patternSetMatrix pat m
       C.patternSetExtend pat (cairoSpreadMethod (g^.lGradSpreadMethod))
       C.setSource pat
@@ -364,7 +368,7 @@ setTexture (Just (RG g)) = liftC $
     (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
 
 -- Can only do PNG files at the moment...
-instance Renderable (DImage External) Cairo where
+instance Renderable (DImage R2 External) Cairo where
   render _ (DImage path w h tr) = C . liftC $ do
     let ImageRef file = path
     if ".png" `isSuffixOf` file
@@ -395,14 +399,14 @@ instance Renderable (DImage External) Cairo where
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
 
-instance Renderable Text Cairo where
+instance Renderable (Text R2) Cairo where
   render _ (Text tt tn al str) = C $ do
     let tr = tn <> reflectionY
     ff <- getStyleAttrib getFont
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
-    isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
-    size <- getStyleAttrib (fromOutput . getFontSize)
+    isLocal <- fromMaybe True <$> getStyleAttrib (getFontSizeIsLocal :: FontSize R2 -> Bool)
+    size <- getStyleAttrib (fromOutput . getFontSize :: FontSize R2 -> Double)
     let fSize | size == Nothing = Nothing
               | isLocal = (avgScale tt *) <$> size
               | otherwise = size

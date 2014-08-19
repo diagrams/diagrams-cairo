@@ -99,6 +99,7 @@ import System.FilePath (takeExtension)
 
 import Diagrams.Backend.Cairo.Internal
 import Diagrams.Prelude
+import           Diagrams.TwoD.Types.Double
 
 -- $CairoOptions
 --
@@ -129,7 +130,7 @@ import Diagrams.Prelude
 --   This function is provided as a convenience; if you need more
 --   flexibility than it provides, you can call 'renderDia' directly,
 --   as described above.
-renderCairo :: FilePath -> SizeSpec2D -> Diagram Cairo R2 -> IO ()
+renderCairo :: FilePath -> SizeSpec2D Double -> Diagram Cairo R2 -> IO ()
 renderCairo outFile sizeSpec d
   = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
   where

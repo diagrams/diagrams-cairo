@@ -1,4 +1,3 @@
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.List
@@ -23,7 +22,8 @@ import           Data.Word                  (Word8)
 import           Diagrams.Backend.Cairo     (Cairo)
 import           Diagrams.Backend.Cairo.Ptr (renderPtr)
 import           Graphics.Rendering.Cairo   (Format (..))
-import           Diagrams.Prelude           (Diagram, R2)
+import           Diagrams.Prelude           (Diagram)
+import           Diagrams.TwoD.Types.Double (R2)
 
 import           Foreign.Marshal.Alloc      (free)
 import           Foreign.Marshal.Array      (peekArray)
