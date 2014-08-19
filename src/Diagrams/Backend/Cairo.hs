@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies, CPP #-}
+{-# LANGUAGE CPP          #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -95,10 +96,10 @@ module Diagrams.Backend.Cairo
   , B
   ) where
 
-import System.FilePath (takeExtension)
+import           System.FilePath                 (takeExtension)
 
-import Diagrams.Backend.Cairo.Internal
-import Diagrams.Prelude
+import           Diagrams.Backend.Cairo.Internal
+import           Diagrams.Prelude
 import           Diagrams.TwoD.Types.Double
 
 -- $CairoOptions

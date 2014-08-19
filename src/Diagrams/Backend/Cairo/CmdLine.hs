@@ -1,7 +1,7 @@
-{-# LANGUAGE CPP                  #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -82,54 +82,56 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Codec.Picture
-import Codec.Picture.ColorQuant            (defaultPaletteOptions)
-import Data.Vector.Storable                (unsafeFromForeignPtr0)
-import Foreign.ForeignPtr.Safe             (ForeignPtr)
-import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
-import Data.Word                           (Word8)
-import Options.Applicative
+import           Codec.Picture
+import           Codec.Picture.ColorQuant        (defaultPaletteOptions)
+import qualified Data.ByteString.Lazy            as L (ByteString, writeFile)
+import           Data.Vector.Storable            (unsafeFromForeignPtr0)
+import           Data.Word                       (Word8)
+import           Foreign.ForeignPtr.Safe         (ForeignPtr)
+import           Options.Applicative
 
-import Control.Lens                        ((^.), Lens', makeLenses)
+import           Control.Lens                    (Lens', makeLenses, (^.))
 
-import Diagrams.Prelude hiding             (width, height, interval, (<>)
-                                           ,option)
+import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
+import           Diagrams.Backend.CmdLine
+import           Diagrams.Prelude                hiding (height, interval,
+                                                  option, width, (<>))
 import           Diagrams.TwoD.Types.Double
-import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
-import Diagrams.Backend.CmdLine
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
 #if __GLASGOW_HASKELL__ < 702 || __GLASGOW_HASKELL__ >= 704
-import Diagrams.Backend.Cairo.Internal
+import           Diagrams.Backend.Cairo.Internal
 #endif
 
 #if __GLASGOW_HASKELL__ < 706
-import Prelude hiding      (catch)
+import           Prelude                         hiding (catch)
 #else
-import Prelude
+import           Prelude
 #endif
 
-import Data.List.Split
+import           Data.List.Split
 
 #ifdef CMDLINELOOP
-import Data.Maybe          (fromMaybe)
-import Control.Monad       (when, mplus)
-import Control.Lens        (_1)
+import           Control.Lens                    (_1)
+import           Control.Monad                   (mplus, when)
+import           Data.Maybe                      (fromMaybe)
 
-import System.Environment  (getArgs, getProgName)
-import System.Directory    (getModificationTime)
-import System.Process      (runProcess, waitForProcess)
-import System.IO           (openFile, hClose, IOMode(..),
-                            hSetBuffering, BufferMode(..), stdout)
-import System.Exit         (ExitCode(..))
-import Control.Concurrent  (threadDelay)
-import Control.Exception   (catch, SomeException(..), bracket)
+import           Control.Concurrent              (threadDelay)
+import           Control.Exception               (SomeException (..), bracket,
+                                                  catch)
+import           System.Directory                (getModificationTime)
+import           System.Environment              (getArgs, getProgName)
+import           System.Exit                     (ExitCode (..))
+import           System.IO                       (BufferMode (..), IOMode (..),
+                                                  hClose, hSetBuffering,
+                                                  openFile, stdout)
+import           System.Process                  (runProcess, waitForProcess)
 
-import System.Posix.Process (executeFile)
+import           System.Posix.Process            (executeFile)
 #if MIN_VERSION_directory(1,2,0)
-import Data.Time.Clock (UTCTime,getCurrentTime)
+import           Data.Time.Clock                 (UTCTime, getCurrentTime)
 type ModuleTime = UTCTime
 getModuleTime :: IO  ModuleTime
 getModuleTime = getCurrentTime
@@ -391,8 +393,8 @@ gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
 -- | Extra options for animated GIFs.
-data GifOpts = GifOpts { _dither :: Bool
-                       , _noLooping :: Bool
+data GifOpts = GifOpts { _dither     :: Bool
+                       , _noLooping  :: Bool
                        , _loopRepeat :: Maybe Int}
 
 makeLenses ''GifOpts

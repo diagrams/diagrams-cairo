@@ -11,24 +11,24 @@
 
 module Diagrams.Backend.Cairo.Ptr where
 
-import Data.Word (Word8)
+import           Data.Word                       (Word8)
 
-import Diagrams.Prelude (Diagram, SizeSpec2D (..), renderDia)
-import           Diagrams.TwoD.Types.Double (R2)
+import           Diagrams.Prelude                (Diagram, SizeSpec2D (..),
+                                                  renderDia)
+import           Diagrams.TwoD.Types.Double      (R2)
 
-import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Internal
+import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.Cairo.Internal
 
-import Foreign.ForeignPtr.Safe (ForeignPtr, newForeignPtr)
-import Foreign.Marshal.Alloc   (finalizerFree)
-import Foreign.Marshal.Array   (mallocArray, pokeArray)
-import Foreign.Ptr             (Ptr, castPtr)
+import           Foreign.ForeignPtr.Safe         (ForeignPtr, newForeignPtr)
+import           Foreign.Marshal.Alloc           (finalizerFree)
+import           Foreign.Marshal.Array           (mallocArray, pokeArray)
+import           Foreign.Ptr                     (Ptr, castPtr)
 
-import Graphics.Rendering.Cairo ( Format (..)
-                                , formatStrideForWidth
-                                , renderWith
-                                , withImageSurfaceForData
-                                )
+import           Graphics.Rendering.Cairo        (Format (..),
+                                                  formatStrideForWidth,
+                                                  renderWith,
+                                                  withImageSurfaceForData)
 
 -- | Render a diagram to a new buffer in memory, with the format ARGB32.
 
