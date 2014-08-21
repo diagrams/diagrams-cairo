@@ -90,7 +90,7 @@ import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
 import Data.Word                           (Word8)
 import Options.Applicative
 
-import Control.Lens                        ((^.), Lens', makeLenses)
+import Control.Lens                        ((^.), Lens', makeLenses, ASetter', _2)
 
 import Diagrams.Prelude hiding             (width, height, interval, (<>)
                                            ,option)
@@ -218,6 +218,9 @@ defaultMain = mainWith
 output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
 output' = _1 . output
 
+loop' :: Maybe (ASetter' (MainOpts (Diagram Cairo R2)) DiagramLoopOpts)
+loop' = Just _2
+
 instance Mainable (Diagram Cairo R2) where
     type MainOpts (Diagram Cairo R2) = (DiagramOpts, DiagramLoopOpts)
 
@@ -227,6 +230,9 @@ instance Mainable (Diagram Cairo R2) where
 #else
 output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
 output' = output
+
+loop' :: Maybe (ASetter' (MainOpts (Diagram Cairo R2)) DiagramLoopOpts)
+loop' = Nothing
 
 instance Mainable (Diagram Cairo R2) where
     type MainOpts (Diagram Cairo R2) = DiagramOpts
@@ -309,7 +315,7 @@ animMain = mainWith
 instance Mainable (Animation Cairo R2) where
     type MainOpts (Animation Cairo R2) = (MainOpts (Diagram Cairo R2), DiagramAnimOpts)
 
-    mainRender = defaultAnimMainRender output'
+    mainRender = defaultAnimMainRender output' loop'
 
 #ifdef CMDLINELOOP
 waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
