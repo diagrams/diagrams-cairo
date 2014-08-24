@@ -1,7 +1,7 @@
-{-# LANGUAGE CPP                  #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -82,29 +82,29 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Codec.Picture
-import Codec.Picture.ColorQuant            (defaultPaletteOptions)
-import Data.Vector.Storable                (unsafeFromForeignPtr0)
-import Foreign.ForeignPtr.Safe             (ForeignPtr)
-import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
-import Data.Word                           (Word8)
-import Options.Applicative
+import           Codec.Picture
+import           Codec.Picture.ColorQuant        (defaultPaletteOptions)
+import qualified Data.ByteString.Lazy            as L (ByteString, writeFile)
+import           Data.Vector.Storable            (unsafeFromForeignPtr0)
+import           Data.Word                       (Word8)
+import           Foreign.ForeignPtr.Safe         (ForeignPtr)
+import           Options.Applicative
 
-import Control.Lens                        ((^.), Lens', makeLenses)
+import           Control.Lens                    (makeLenses, (^.))
 
-import Diagrams.Prelude hiding             (width, height, interval, (<>)
-                                           ,option)
-import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
-import Diagrams.Backend.CmdLine
+import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
+import           Diagrams.Backend.CmdLine
+import           Diagrams.Prelude                hiding (height, interval,
+                                                  option, width, (<>))
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
 #if __GLASGOW_HASKELL__ < 702 || __GLASGOW_HASKELL__ >= 704
-import Diagrams.Backend.Cairo.Internal
+import           Diagrams.Backend.Cairo.Internal
 #endif
 
-import Data.List.Split
+import           Data.List.Split
 
 -- $mainwith
 -- The 'mainWith' method unifies all of the other forms of @main@ and is now
@@ -292,8 +292,8 @@ gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
 -- | Extra options for animated GIFs.
-data GifOpts = GifOpts { _dither :: Bool
-                       , _noLooping :: Bool
+data GifOpts = GifOpts { _dither     :: Bool
+                       , _noLooping  :: Bool
                        , _loopRepeat :: Maybe Int}
 
 makeLenses ''GifOpts
