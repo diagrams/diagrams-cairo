@@ -104,12 +104,6 @@ import Diagrams.Backend.CmdLine
 import Diagrams.Backend.Cairo.Internal
 #endif
 
-#if __GLASGOW_HASKELL__ < 706
-import Prelude hiding      (catch)
-#else
-import Prelude
-#endif
-
 import Data.List.Split
 
 -- $mainwith
