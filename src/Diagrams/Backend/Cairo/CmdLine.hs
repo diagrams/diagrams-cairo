@@ -408,7 +408,7 @@ instance Parseable GifOpts where
                    <*> switch
                        ( long "looping-off"
                       <> help "Turn looping off" )
-                   <*> ( optional . option )
+                   <*> ( optional . option auto )
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
