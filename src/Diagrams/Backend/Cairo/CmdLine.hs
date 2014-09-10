@@ -1,7 +1,7 @@
-{-# LANGUAGE CPP                  #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -82,63 +82,29 @@ module Diagrams.Backend.Cairo.CmdLine
        , B
        ) where
 
-import Codec.Picture
-import Codec.Picture.ColorQuant            (defaultPaletteOptions)
-import Data.Vector.Storable                (unsafeFromForeignPtr0)
-import Foreign.ForeignPtr.Safe             (ForeignPtr)
-import qualified Data.ByteString.Lazy as L (ByteString, writeFile)
-import Data.Word                           (Word8)
-import Options.Applicative
+import           Codec.Picture
+import           Codec.Picture.ColorQuant        (defaultPaletteOptions)
+import qualified Data.ByteString.Lazy            as L (ByteString, writeFile)
+import           Data.Vector.Storable            (unsafeFromForeignPtr0)
+import           Data.Word                       (Word8)
+import           Foreign.ForeignPtr.Safe         (ForeignPtr)
+import           Options.Applicative
 
-import Control.Lens                        ((^.), Lens', makeLenses)
+import           Control.Lens                    (makeLenses, (^.))
 
-import Diagrams.Prelude hiding             (width, height, interval, (<>)
-                                           ,option)
-import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Ptr          (renderForeignPtrOpaque)
-import Diagrams.Backend.CmdLine
+import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
+import           Diagrams.Backend.CmdLine
+import           Diagrams.Prelude                hiding (height, interval,
+                                                  option, width, (<>))
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
 #if __GLASGOW_HASKELL__ < 702 || __GLASGOW_HASKELL__ >= 704
-import Diagrams.Backend.Cairo.Internal
+import           Diagrams.Backend.Cairo.Internal
 #endif
 
-#if __GLASGOW_HASKELL__ < 706
-import Prelude hiding      (catch)
-#else
-import Prelude
-#endif
-
-import Data.List.Split
-
-#ifdef CMDLINELOOP
-import Data.Maybe          (fromMaybe)
-import Control.Monad       (when, mplus)
-import Control.Lens        (_1)
-
-import System.Environment  (getArgs, getProgName)
-import System.Directory    (getModificationTime)
-import System.Process      (runProcess, waitForProcess)
-import System.IO           (openFile, hClose, IOMode(..),
-                            hSetBuffering, BufferMode(..), stdout)
-import System.Exit         (ExitCode(..))
-import Control.Concurrent  (threadDelay)
-import Control.Exception   (catch, SomeException(..), bracket)
-
-import System.Posix.Process (executeFile)
-#if MIN_VERSION_directory(1,2,0)
-import Data.Time.Clock (UTCTime,getCurrentTime)
-type ModuleTime = UTCTime
-getModuleTime :: IO  ModuleTime
-getModuleTime = getCurrentTime
-#else
-import System.Time         (ClockTime, getClockTime)
-type ModuleTime = ClockTime
-getModuleTime :: IO  ModuleTime
-getModuleTime = getClockTime
-#endif
-#endif
+import           Data.List.Split
 
 -- $mainwith
 -- The 'mainWith' method unifies all of the other forms of @main@ and is now
@@ -214,25 +180,10 @@ getModuleTime = getClockTime
 defaultMain :: Diagram Cairo R2 -> IO ()
 defaultMain = mainWith
 
-#ifdef CMDLINELOOP
-output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
-output' = _1 . output
-
 instance Mainable (Diagram Cairo R2) where
     type MainOpts (Diagram Cairo R2) = (DiagramOpts, DiagramLoopOpts)
 
-    mainRender (opts,loopOpts) d = do
-        chooseRender opts d
-        when (loopOpts^.loop) (waitForChange Nothing loopOpts)
-#else
-output' :: Lens' (MainOpts (Diagram Cairo R2)) FilePath
-output' = output
-
-instance Mainable (Diagram Cairo R2) where
-    type MainOpts (Diagram Cairo R2) = DiagramOpts
-
-    mainRender opts d = chooseRender opts d
-#endif
+    mainRender (opts, l) d = chooseRender opts d >> defaultLoopRender l
 
 chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
 chooseRender opts d =
@@ -307,58 +258,9 @@ animMain :: Animation Cairo R2 -> IO ()
 animMain = mainWith
 
 instance Mainable (Animation Cairo R2) where
-    type MainOpts (Animation Cairo R2) = (MainOpts (Diagram Cairo R2), DiagramAnimOpts)
+    type MainOpts (Animation Cairo R2) = ((DiagramOpts, DiagramAnimOpts), DiagramLoopOpts)
 
-    mainRender = defaultAnimMainRender output'
-
-#ifdef CMDLINELOOP
-waitForChange :: Maybe ModuleTime -> DiagramLoopOpts -> IO ()
-waitForChange lastAttempt opts = do
-    prog <- getProgName
-    args <- getArgs
-    hSetBuffering stdout NoBuffering
-    go prog args lastAttempt
-  where go prog args lastAtt = do
-          threadDelay (1000000 * opts^.interval)
-          -- putStrLn $ "Checking... (last attempt = " ++ show lastAttempt ++ ")"
-          (newBin, newAttempt) <- recompile lastAtt prog (opts^.src)
-          if newBin
-            then executeFile prog False args Nothing
-            else go prog args $ newAttempt `mplus` lastAtt
-
--- | @recompile t prog@ attempts to recompile @prog@, assuming the
---   last attempt was made at time @t@.  If @t@ is @Nothing@ assume
---   the last attempt time is the same as the modification time of the
---   binary.  If the source file modification time is later than the
---   last attempt time, then attempt to recompile, and return the time
---   of this attempt.  Otherwise (if nothing has changed since the
---   last attempt), return @Nothing@.  Also return a Bool saying
---   whether a successful recompilation happened.
-recompile :: Maybe ModuleTime -> String -> Maybe String -> IO (Bool, Maybe ModuleTime)
-recompile lastAttempt prog mSrc = do
-  let errFile = prog ++ ".errors"
-      srcFile = fromMaybe (prog ++ ".hs") mSrc
-  binT <- maybe (getModTime prog) (return . Just) lastAttempt
-  srcT <- getModTime srcFile
-  if (srcT > binT)
-    then do
-      putStr "Recompiling..."
-      status <- bracket (openFile errFile WriteMode) hClose $ \h ->
-        waitForProcess =<< runProcess "ghc" ["--make", srcFile]
-                           Nothing Nothing Nothing Nothing (Just h)
-
-      if (status /= ExitSuccess)
-        then putStrLn "" >> putStrLn (replicate 75 '-') >> readFile errFile >>= putStr
-        else putStrLn "done."
-
-      curTime <- getModuleTime
-      return (status == ExitSuccess, Just curTime)
-
-    else return (False, Nothing)
-
- where getModTime f = catch (Just <$> getModificationTime f)
-                            (\(SomeException _) -> return Nothing)
-#endif
+    mainRender (opts, l) d =  defaultAnimMainRender chooseRender output opts d >> defaultLoopRender l
 
 -- | @gifMain@ takes a list of diagram and delay time pairs and produces a
 --   command line program to generate an animated GIF, with options @GifOpts@.
@@ -390,8 +292,8 @@ gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
 gifMain = mainWith
 
 -- | Extra options for animated GIFs.
-data GifOpts = GifOpts { _dither :: Bool
-                       , _noLooping :: Bool
+data GifOpts = GifOpts { _dither     :: Bool
+                       , _noLooping  :: Bool
                        , _loopRepeat :: Maybe Int}
 
 makeLenses ''GifOpts
