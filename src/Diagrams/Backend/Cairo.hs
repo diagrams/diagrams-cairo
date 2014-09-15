@@ -29,13 +29,14 @@
 -- > renderDia :: b -> Options b v -> QDiagram b v m -> Result b v
 --
 -- (omitting a few type class constraints).  @b@ represents the
--- backend type, @v@ the vector space, and @m@ the type of monoidal
--- query annotations on the diagram.  'Options' and 'Result' are
--- associated data and type families, respectively, which yield the
--- type of option records and rendering results specific to any
--- particular backend.  For @b ~ Cairo@ and @v ~ R2@, we have
+-- backend type, @v@ the vector space, @n@ the numeric field, and @m@
+-- the type of monoidal query annotations on the diagram.  'Options'
+-- and 'Result' are associated data and type families, respectively,
+-- which yield the type of option records and rendering results
+-- specific to any particular backend.  For @b ~ Cairo@ @n ~ Double@,
+-- and @v ~ V2@, we have
 --
--- > data family Options Cairo R2 = CairoOptions
+-- > data family Options Cairo V2 Double = CairoOptions
 -- >          { _cairoFileName     :: String     -- ^ The name of the file you want generated
 -- >          , _cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
 -- >          , _cairoOutputType   :: OutputType -- ^ the output format and associated options
@@ -43,19 +44,19 @@
 -- >          }
 --
 -- @
--- type family Result Cairo R2 = (IO (), 'Graphics.Rendering.Cairo.Render' ())
+-- type family Result Cairo V2 Double = (IO (), 'Graphics.Rendering.Cairo.Render' ())
 -- @
 --
 -- So the type of 'renderDia' resolves to
 --
 -- @
--- renderDia :: Cairo -> Options Cairo R2 -> QDiagram Cairo R2 m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
+-- renderDia :: Cairo -> Options Cairo V2 Double -> QDiagram Cairo V2 Double m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
 -- @
 --
 -- which you could call like so:
 --
 -- @
--- renderDia Cairo (CairoOptions \"foo.png\" (Width 250) PNG False) (myDiagram :: Diagram Cairo R2)
+-- renderDia Cairo (CairoOptions \"foo.png\" (Width 250) PNG False) (myDiagram :: Diagram Cairo V2 Double)
 -- @
 --
 -- This would return a pair; the first element is an @IO ()@ action
@@ -106,7 +107,7 @@ import Diagrams.Prelude
 -- associated data families, so we must just provide it manually.
 -- This module defines
 --
--- > data family Options Cairo R2 = CairoOptions
+-- > data family Options Cairo V2 Double = CairoOptions
 -- >           { _cairoFileName   :: String     -- ^ The name of the file you want generated
 -- >           , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
 -- >           , _cairoOutputType :: OutputType -- ^ the output format and associated options
@@ -129,7 +130,7 @@ import Diagrams.Prelude
 --   This function is provided as a convenience; if you need more
 --   flexibility than it provides, you can call 'renderDia' directly,
 --   as described above.
-renderCairo :: FilePath -> SizeSpec2D -> Diagram Cairo R2 -> IO ()
+renderCairo :: FilePath -> SizeSpec2D Double -> Diagram Cairo V2 Double -> IO ()
 renderCairo outFile sizeSpec d
   = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
   where

@@ -115,7 +115,7 @@ import           Data.List.Split
 -- will produce a program that looks for additional number and color arguments.
 --
 -- > ... definitions ...
--- > f :: Int -> Colour Double -> Diagram Cairo R2
+-- > f :: Int -> Colour Double -> Diagram Cairo V2 Double
 -- > f i c = ...
 -- >
 -- > main = mainWith f
@@ -177,15 +177,15 @@ import           Data.List.Split
 -- $ ./MyDiagram -o dia.pdf -h 200 -w 200 -l -i 10
 -- @
 
-defaultMain :: Diagram Cairo R2 -> IO ()
+defaultMain :: Diagram Cairo V2 Double -> IO ()
 defaultMain = mainWith
 
-instance Mainable (Diagram Cairo R2) where
-    type MainOpts (Diagram Cairo R2) = (DiagramOpts, DiagramLoopOpts)
+instance Mainable (Diagram Cairo V2 Double) where
+    type MainOpts (Diagram Cairo V2 Double) = (DiagramOpts, DiagramLoopOpts)
 
     mainRender (opts, l) d = chooseRender opts d >> defaultLoopRender l
 
-chooseRender :: DiagramOpts -> Diagram Cairo R2 -> IO ()
+chooseRender :: DiagramOpts -> Diagram Cairo V2 Double -> IO ()
 chooseRender opts d =
   case splitOn "." (opts ^. output) of
     [""] -> putStrLn "No output file given."
@@ -229,12 +229,12 @@ chooseRender opts d =
 -- $ ./MultiTest --selection bar -o Bar.png -w 200
 -- @
 
-multiMain :: [(String, Diagram Cairo R2)] -> IO ()
+multiMain :: [(String, Diagram Cairo V2 Double)] -> IO ()
 multiMain = mainWith
 
-instance Mainable [(String, Diagram Cairo R2)] where
-    type MainOpts [(String, Diagram Cairo R2)]
-        = (MainOpts (Diagram Cairo R2), DiagramMultiOpts)
+instance Mainable [(String, Diagram Cairo V2 Double)] where
+    type MainOpts [(String, Diagram Cairo V2 Double)]
+        = (MainOpts (Diagram Cairo V2 Double), DiagramMultiOpts)
 
     mainRender = defaultMultiMainRender
 
@@ -254,11 +254,11 @@ instance Mainable [(String, Diagram Cairo R2)] where
 --
 -- The @--fpu@ option can be used to control how many frames will be
 -- output for each second (unit time) of animation.
-animMain :: Animation Cairo R2 -> IO ()
+animMain :: Animation Cairo V2 Double -> IO ()
 animMain = mainWith
 
-instance Mainable (Animation Cairo R2) where
-    type MainOpts (Animation Cairo R2) = ((DiagramOpts, DiagramAnimOpts), DiagramLoopOpts)
+instance Mainable (Animation Cairo V2 Double) where
+    type MainOpts (Animation Cairo V2 Double) = ((DiagramOpts, DiagramAnimOpts), DiagramLoopOpts)
 
     mainRender (opts, l) d =  defaultAnimMainRender chooseRender output opts d >> defaultLoopRender l
 
@@ -288,7 +288,7 @@ instance Mainable (Animation Cairo R2) where
 --    --looping-off            Turn looping off
 --    --loop-repeat ARG        Number of times to repeat
 -- @
-gifMain :: [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifMain :: [(Diagram Cairo V2 Double, GifDelay)] -> IO ()
 gifMain = mainWith
 
 -- | Extra options for animated GIFs.
@@ -314,8 +314,8 @@ instance Parseable GifOpts where
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
-instance Mainable [(Diagram Cairo R2, GifDelay)] where
-    type MainOpts [(Diagram Cairo R2, GifDelay)] = (DiagramOpts, GifOpts)
+instance Mainable [(Diagram Cairo V2 Double, GifDelay)] where
+    type MainOpts [(Diagram Cairo V2 Double, GifDelay)] = (DiagramOpts, GifOpts)
 
     mainRender (dOpts, gOpts) ds = gifRender (dOpts, gOpts) ds
 
@@ -346,7 +346,7 @@ scaleInt i num denom
   | num == 0 || denom == 0 = i
   | otherwise = round (num / denom * fromIntegral i)
 
-gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo R2, GifDelay)] -> IO ()
+gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo V2 Double, GifDelay)] -> IO ()
 gifRender (dOpts, gOpts) lst =
   case splitOn "." (dOpts^.output) of
     [""] -> putStrLn "No output file given"

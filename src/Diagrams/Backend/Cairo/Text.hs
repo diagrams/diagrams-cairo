@@ -14,9 +14,9 @@
 -- envelopes, use 'textLineBounded', 'textLineBoundedIO',
 -- 'textVisualBounded', or 'textVisualBoundedIO'.
 --
--- Many of these functions take a 'Style' 'R2' parameter, determining the
+-- Many of these functions take a 'Style' 'V2' 'Double' parameter, determining the
 -- style to apply to the text before rendering / querying information about
--- the text.  These 'Style' 'R2' parameters can be created a variety of ways,
+-- the text.  These 'Style' 'V2' 'Double' parameters can be created a variety of ways,
 -- but the most direct will likely be by applying style-transforming functions
 -- such as 'font', 'fontSize', 'fontSlant', and 'fontWeight' to 'mempty'.
 -- This works because there are instances of 'HasStyle' and 'Monoid' for
@@ -91,7 +91,7 @@ unsafeCairo :: C.Render a -> a
 unsafeCairo = unsafePerformIO . queryCairo
 
 -- | Executes the given cairo action, with styling applied.
-cairoWithStyle :: C.Render a -> Style R2 -> C.Render a
+cairoWithStyle :: C.Render a -> Style V2 Double -> C.Render a
 cairoWithStyle f style = do
   C.save
   runRenderM (cairoStyle style)
@@ -101,7 +101,7 @@ cairoWithStyle f style = do
 
 -- | A more convenient data structure for the results of a text-extents query.
 data TextExtents = TextExtents
-  { _bearing, _textSize, _advance :: R2 }
+  { _bearing, _textSize, _advance :: V2 Double }
 
 makeLenses ''TextExtents
 
@@ -110,14 +110,14 @@ processTextExtents (C.TextExtents  xb yb  w h  xa ya)
                     = TextExtents (r2 (xb,yb)) (r2 (w,h)) (r2 (xa,ya))
 
 -- | Get the extents of a string of text, given a style to render it with.
-getTextExtents :: Style R2 -> String -> C.Render TextExtents
+getTextExtents :: Style V2 Double -> String -> C.Render TextExtents
 getTextExtents style txt
   = cairoWithStyle (processTextExtents <$> C.textExtents txt) style
 
 -- | A more convenient data structure for the results of a font-extents query.
 data FontExtents = FontExtents
   { _ascent, _descent, _height :: Double
-  , _maxAdvance                :: R2
+  , _maxAdvance                :: V2 Double
   }
 
 makeLenses ''FontExtents
@@ -127,14 +127,14 @@ processFontExtents (C.FontExtents a d h  mx my)
                     = FontExtents a d h (r2 (mx,my))
 
 -- | Gets the intrinsic extents of a font.
-getFontExtents :: Style R2 -> C.Render FontExtents
+getFontExtents :: Style V2 Double -> C.Render FontExtents
 getFontExtents style
   = cairoWithStyle (processFontExtents <$> C.fontExtents) style
 
 -- | Gets both the 'FontExtents' and 'TextExtents' of the string with the a
 --   particular style applied.  This is more efficient than calling both
 --   'getFontExtents' and 'getTextExtents'.
-getExtents :: Style R2 -> String -> C.Render (FontExtents, TextExtents)
+getExtents :: Style V2 Double -> String -> C.Render (FontExtents, TextExtents)
 getExtents style str = cairoWithStyle (do
     fe <- processFontExtents <$> C.fontExtents
     te <- processTextExtents <$> C.textExtents str
@@ -144,7 +144,7 @@ getExtents style str = cairoWithStyle (do
 -- | Queries the amount of horizontal offset that needs to be applied in order to
 --   position the second character properly, in the event that it is 'hcat'-ed
 --   'baselineText'.
-kerningCorrectionIO :: Style R2 -> Char -> Char -> IO Double
+kerningCorrectionIO :: Style V2 Double -> Char -> Char -> IO Double
 kerningCorrectionIO style a b = do
   let ax t = fst . unr2 . view advance <$> queryCairo (getTextExtents style t)
   l  <- ax [a, b]
@@ -155,7 +155,7 @@ kerningCorrectionIO style a b = do
 -- | Creates text diagrams with their envelopes set such that using
 --   @'vcat' . map ('textLineBounded' style)@ stacks them in the way that
 --   the font designer intended.
-textLineBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
+textLineBoundedIO :: Style V2 Double -> String -> IO (Diagram Cairo V2 Double)
 textLineBoundedIO style str = do
   (fe, te) <- queryCairo $ getExtents style str
   let box = fromCorners (p2 (0,      negate $ view descent fe))
@@ -164,7 +164,7 @@ textLineBoundedIO style str = do
 
 -- | Creates a text diagram with its envelope set to enclose the glyphs of the text,
 --   including leading (though not trailing) whitespace.
-textVisualBoundedIO :: Style R2 -> String -> IO (Diagram Cairo R2)
+textVisualBoundedIO :: Style V2 Double -> String -> IO (Diagram Cairo V2 Double)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
   let box = fromCorners (origin .+^ view bearing te)
@@ -176,7 +176,7 @@ textVisualBoundedIO style str = do
 --   that it is 'hcat'-ed 'baselineText'.  See 'kerningCorrectionIO';
 --   this variant uses 'unsafePerformIO' but should be fairly safe in
 --   practice.
-kerningCorrection :: Style R2 -> Char -> Char -> Double
+kerningCorrection :: Style V2 Double -> Char -> Char -> Double
 kerningCorrection style a = unsafePerformIO . kerningCorrectionIO style a
 
 -- | Creates text diagrams with their envelopes set such that using
@@ -184,12 +184,12 @@ kerningCorrection style a = unsafePerformIO . kerningCorrectionIO style a
 --   that the font designer intended. See 'textLineBoundedIO'; this
 --   variant uses 'unsafePerformIO' but should be fairly safe in
 --   practice.
-textLineBounded :: Style R2 -> String -> Diagram Cairo R2
+textLineBounded :: Style V2 Double -> String -> Diagram Cairo V2 Double
 textLineBounded   style = unsafePerformIO . textLineBoundedIO   style
 
 -- | Creates a text diagram with its envelope set to enclose the
 --   glyphs of the text, including leading (though not trailing)
 --   whitespace. See 'textVisualBoundedIO'; this variant uses
 --   'unsafePerformIO' but should be fairly safe in practice.
-textVisualBounded :: Style R2 -> String -> Diagram Cairo R2
+textVisualBounded :: Style V2 Double -> String -> Diagram Cairo V2 Double
 textVisualBounded style = unsafePerformIO . textVisualBoundedIO style

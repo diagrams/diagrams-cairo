@@ -4,15 +4,15 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo R2
+type D = Diagram Cairo V2 Double
 
-t :: Trail R2
+t :: Trail V2 Double
 t = (polygonPath with {sides = 3, orientation = OrientToX})
 [v1,v2] = trailOffsets t
 
 seg = Cubic v1 v1 (v1 ^+^ v2)
 
-s :: Trail R2
+s :: Trail V2 Double
 s = fromSegments [seg]
 
 pts = map ((origin .+^) . (seg `atParam`)) [0,0.01..1]

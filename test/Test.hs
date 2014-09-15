@@ -2,7 +2,7 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo R2
+type D = Diagram Cairo V2 Double
 
 d = unitSquare `atop` unitCircle
     # lc red

@@ -95,7 +95,7 @@ instance Hashable OutputType
 
 -- | Custom state tracked in the 'RenderM' monad.
 data CairoState
-  = CairoState { _accumStyle :: Style R2
+  = CairoState { _accumStyle :: Style V2 Double
                  -- ^ The current accumulated style.
                , _ignoreFill :: Bool
                  -- ^ Whether or not we saw any lines in the most
@@ -134,12 +134,12 @@ save =  SS.save >> liftC C.save
 restore :: RenderM ()
 restore = liftC C.restore >> SS.restore
 
-instance Backend Cairo R2 where
-  data Render  Cairo R2 = C (RenderM ())
-  type Result  Cairo R2 = (IO (), C.Render ())
-  data Options Cairo R2 = CairoOptions
+instance Backend Cairo V2 Double where
+  data Render  Cairo V2 Double = C (RenderM ())
+  type Result  Cairo V2 Double = (IO (), C.Render ())
+  data Options Cairo V2 Double = CairoOptions
           { _cairoFileName   :: String     -- ^ The name of the file you want generated
-          , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
+          , _cairoSizeSpec   :: SizeSpec2D Double -- ^ The requested size of the output
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
@@ -165,14 +165,14 @@ instance Backend Cairo R2 where
                          then (opts, mempty, d # setDefault2DAttributes)
                          else adjustDia2D cairoSizeSpec c opts (d # reflectY)
 
-runC :: Render Cairo R2 -> RenderM ()
+runC :: Render Cairo V2 Double -> RenderM ()
 runC (C r) = r
 
-instance Monoid (Render Cairo R2) where
+instance Monoid (Render Cairo V2 Double) where
   mempty  = C $ return ()
   (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
 
-instance Hashable (Options Cairo R2) where
+instance Hashable (Options Cairo V2 Double) where
   hashWithSalt s (CairoOptions fn sz out adj)
     = s   `hashWithSalt`
       fn  `hashWithSalt`
@@ -180,7 +180,7 @@ instance Hashable (Options Cairo R2) where
       out `hashWithSalt`
       adj
 
-toRender :: RTree Cairo R2 a -> Render Cairo R2
+toRender :: RTree Cairo V2 Double a -> Render Cairo V2 Double
 toRender (Node (RPrim p) _) = render Cairo p
 toRender (Node (RStyle sty) rs) = C $ do
   save
@@ -190,24 +190,24 @@ toRender (Node (RStyle sty) rs) = C $ do
   restore
 toRender (Node _ rs) = F.foldMap toRender rs
 
-cairoFileName :: Lens' (Options Cairo R2) String
+cairoFileName :: Lens' (Options Cairo V2 Double) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
                      (\o f -> o {_cairoFileName = f})
 
-cairoSizeSpec :: Lens' (Options Cairo R2) SizeSpec2D
+cairoSizeSpec :: Lens' (Options Cairo V2 Double) (SizeSpec2D Double)
 cairoSizeSpec = lens (\(CairoOptions {_cairoSizeSpec = s}) -> s)
                      (\o s -> o {_cairoSizeSpec = s})
 
-cairoOutputType :: Lens' (Options Cairo R2) OutputType
+cairoOutputType :: Lens' (Options Cairo V2 Double) OutputType
 cairoOutputType = lens (\(CairoOptions {_cairoOutputType = t}) -> t)
                      (\o t -> o {_cairoOutputType = t})
 
-cairoBypassAdjust :: Lens' (Options Cairo R2) Bool
+cairoBypassAdjust :: Lens' (Options Cairo V2 Double) Bool
 cairoBypassAdjust = lens (\(CairoOptions {_cairoBypassAdjust = b}) -> b)
                      (\o b -> o {_cairoBypassAdjust = b})
 
 -- | Render an object that the cairo backend knows how to render.
-renderC :: (Renderable a Cairo, V a ~ R2) => a -> RenderM ()
+renderC :: (Renderable a Cairo, V a ~ V2, N a ~ Double) => a -> RenderM ()
 renderC = runC . render Cairo
 
 -- | Get an accumulated style attribute from the render monad state.
@@ -219,7 +219,7 @@ getStyleAttrib f = (fmap f . getAttr) <$> use accumStyle
 --   size, fill rule, line width, cap, join, and dashing).  Other
 --   attributes (font face, slant, weight; fill color, stroke color,
 --   opacity) must be accumulated.
-cairoStyle :: Style v -> RenderM ()
+cairoStyle :: Style v Double -> RenderM ()
 cairoStyle s =
   sequence_
   . catMaybes $ [ handle clip
@@ -250,7 +250,7 @@ fromFontWeight FontWeightBold   = P.WeightBold
 
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
-cairoTransf :: T2 -> C.Render ()
+cairoTransf :: T2 Double -> C.Render ()
 cairoTransf t = C.transform m
   where m = CM.Matrix a1 a2 b1 b2 c1 c2
         (unr2 -> (a1,a2)) = apply t unitX
@@ -271,14 +271,14 @@ fromFillRule :: FillRule -> C.FillRule
 fromFillRule Winding = C.FillRuleWinding
 fromFillRule EvenOdd = C.FillRuleEvenOdd
 
-instance Renderable (Segment Closed R2) Cairo where
+instance Renderable (Segment Closed V2 Double) Cairo where
   render _ (Linear (OffsetClosed v)) = C . liftC $ uncurry C.relLineTo (unr2 v)
   render _ (Cubic (unr2 -> (x1,y1))
                   (unr2 -> (x2,y2))
                   (OffsetClosed (unr2 -> (x3,y3))))
     = C . liftC $ C.relCurveTo x1 y1 x2 y2 x3 y3
 
-instance Renderable (Trail R2) Cairo where
+instance Renderable (Trail V2 Double) Cairo where
   render _ = withTrail renderLine renderLoop
     where
       renderLine ln = C $ do
@@ -297,7 +297,7 @@ instance Renderable (Trail R2) Cairo where
 
         liftC C.closePath
 
-instance Renderable (Path R2) Cairo where
+instance Renderable (Path V2 Double) Cairo where
   render _ p = C $ do
     cairoPath p
     f <- getStyleAttrib getFillTexture
@@ -309,7 +309,7 @@ instance Renderable (Path R2) Cairo where
     liftC C.stroke
 
 -- Add a path to the Cairo context, without stroking or filling it.
-cairoPath :: Path R2 -> RenderM ()
+cairoPath :: Path V2 Double -> RenderM ()
 cairoPath (Path trs) = do
     liftC C.newPath
     ignoreFill .= False
@@ -319,7 +319,7 @@ cairoPath (Path trs) = do
       liftC $ uncurry C.moveTo p
       renderC tr
 
-addStop :: MonadIO m => C.Pattern -> GradientStop -> m ()
+addStop :: MonadIO m => C.Pattern -> GradientStop Double -> m ()
 addStop p s = C.patternAddColorStopRGBA p (s^.stopFraction) r g b a
   where
     (r,g,b,a) = colorToSRGBA (s^.stopColor)
@@ -332,7 +332,7 @@ cairoSpreadMethod GradRepeat = C.ExtendRepeat
 -- XXX should handle opacity in a more straightforward way, using
 -- cairo's built-in support for transparency?  See also
 -- https://github.com/diagrams/diagrams-cairo/issues/15 .
-setTexture :: Maybe Texture -> RenderM ()
+setTexture :: Maybe (Texture Double) -> RenderM ()
 setTexture Nothing = return ()
 setTexture (Just (SC (SomeColor c))) = do
     o <- fromMaybe 1 <$> getStyleAttrib getOpacity
@@ -364,7 +364,7 @@ setTexture (Just (RG g)) = liftC $
     (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
 
 -- Can only do PNG files at the moment...
-instance Renderable (DImage External) Cairo where
+instance Renderable (DImage Double External) Cairo where
   render _ (DImage path w h tr) = C . liftC $ do
     let ImageRef file = path
     if ".png" `isSuffixOf` file
@@ -395,17 +395,17 @@ instance Renderable (DImage External) Cairo where
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
 
-instance Renderable Text Cairo where
+instance Renderable (Text Double) Cairo where
   render _ (Text tt tn al str) = C $ do
     let tr = tn <> reflectionY
     ff <- getStyleAttrib getFont
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
-    isLocal <- fromMaybe True <$> getStyleAttrib getFontSizeIsLocal
-    size <- getStyleAttrib (fromOutput . getFontSize)
-    let fSize | size == Nothing = Nothing
-              | isLocal = (avgScale tt *) <$> size
-              | otherwise = size
+    isLocal <- fromMaybe True <$> getStyleAttrib (getFontSizeIsLocal :: FontSize Double -> Bool )
+    size' <- getStyleAttrib (fromOutput . getFontSize)
+    let fSize | size' == Nothing = Nothing
+              | isLocal = (avgScale tt *) <$> size'
+              | otherwise = size'
     f <- getStyleAttrib getFillTexture
     save
     setTexture f
@@ -423,7 +423,7 @@ instance Renderable Text Cairo where
             case al of
                 BoxAlignedText xt yt -> do
                     (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
-                    return $ r2 ((lerp 0 w xt), (lerp h 0 yt))
+                    return $ r2 (w * xt, h * (1 - yt))
                 BaselineText -> do
                     baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
                     return $ r2 (0, baseline)
@@ -434,7 +434,8 @@ instance Renderable Text Cairo where
           -- C.setLineWidth 0.5 -- XXX Debugging
           -- C.stroke -- XXX Debugging
           -- C.newPath -- XXX Debugging
-          cairoTransf $ moveOriginBy ref mempty
+          let t = moveOriginBy ref mempty :: T2 Double
+          cairoTransf t
           P.updateLayout layout
           P.showLayout layout
           C.newPath
