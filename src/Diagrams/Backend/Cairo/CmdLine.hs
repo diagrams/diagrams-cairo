@@ -75,6 +75,7 @@ module Diagrams.Backend.Cairo.CmdLine
         -- * GIF support
 
         , GifOpts(..)
+        , gifRender
 
         -- * Backend tokens
 
