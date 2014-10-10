@@ -1,4 +1,3 @@
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.Ptr
@@ -14,7 +13,7 @@ module Diagrams.Backend.Cairo.Ptr where
 
 import Data.Word (Word8)
 
-import Diagrams.Prelude (Diagram, R2, SizeSpec2D (..), renderDia)
+import Diagrams.Prelude (Diagram, V2, SizeSpec2D (..), renderDia)
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Internal
 
@@ -31,7 +30,7 @@ import Graphics.Rendering.Cairo ( Format (..)
 
 -- | Render a diagram to a new buffer in memory, with the format ARGB32.
 
-renderPtr :: Int -> Int -> Format -> Diagram Cairo R2 -> IO (Ptr Word8)
+renderPtr :: Int -> Int -> Format -> Diagram Cairo V2 Double -> IO (Ptr Word8)
 renderPtr w h fmt d = do
   let stride = formatStrideForWidth fmt w
       size   = stride * h
@@ -51,8 +50,8 @@ renderPtr w h fmt d = do
 
 -- | Like 'renderPtr' but automatically garbage collected by Haskell.
 
-renderForeignPtr :: Int -> Int -> Diagram Cairo R2 -> IO (ForeignPtr Word8)
+renderForeignPtr :: Int -> Int -> Diagram Cairo V2 Double -> IO (ForeignPtr Word8)
 renderForeignPtr w h d = renderPtr w h FormatARGB32 d >>= newForeignPtr finalizerFree
 
-renderForeignPtrOpaque :: Int -> Int -> Diagram Cairo R2 -> IO (ForeignPtr Word8)
+renderForeignPtrOpaque :: Int -> Int -> Diagram Cairo V2 Double -> IO (ForeignPtr Word8)
 renderForeignPtrOpaque w h d = renderPtr w h FormatRGB24 d >>= newForeignPtr finalizerFree

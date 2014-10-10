@@ -2,9 +2,9 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = AnnDiagram Cairo R2 Any
+type D = AnnDiagram Cairo V2 Double Any
 
-p :: Trail R2
+p :: Trail V2 Double
 p = fromOffsets [(1,2), (1,-5)]
 
 burst n = close . mconcat . take n . iterate (rotateBy (-1/(fromIntegral n))) $ p

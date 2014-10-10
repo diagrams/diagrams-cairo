@@ -4,7 +4,7 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo R2
+type D = Diagram Cairo V2 Double
 
 p, bez, ell :: D
 p = stroke $ fromSegments [Linear (1.0,0.0),Linear (0.0,1.0)]
@@ -14,7 +14,7 @@ ell = scaleX 2 $ scaleY 0.5 unitCircle
 t = (polygonPath with {sides = 3, orientation = OrientToX})
 [v1,v2] = trailOffsets t
 
-s :: Trail R2
+s :: Trail V2 Double
 s = fromSegments [Cubic v1 v1 (v1 ^+^ v2)]
 
 s1 = (strokeT $ s)

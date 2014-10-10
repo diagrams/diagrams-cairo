@@ -24,7 +24,7 @@ newtype PlusMinusTwoPi = PlusMinusTwoPi Double
 
 data TEllipse = TEllipse [TStep] Ellipse
 
-mkTransformation :: [TStep] -> Transformation R2
+mkTransformation :: [TStep] -> Transformation V2 Double
 mkTransformation = mconcat . map step
   where
     step (Rotate     a) = rotation a
@@ -48,7 +48,7 @@ instance Arbitrary TSteps where
         y' <- arbitrary
         return [ Rotate a, ScaleX x, ScaleY y, TranslateX x', TranslateY y']
 
-instance Arbitrary (Transformation R2) where
+instance Arbitrary (Transformation V2 Double) where
     arbitrary = mkTransformation <$> arbitrary
 
 instance Arbitrary TEllipse where
