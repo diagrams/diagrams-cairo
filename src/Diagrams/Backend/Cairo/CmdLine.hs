@@ -178,15 +178,15 @@ import           Data.List.Split
 -- $ ./MyDiagram -o dia.pdf -h 200 -w 200 -l -i 10
 -- @
 
-defaultMain :: Diagram Cairo V2 Double -> IO ()
+defaultMain :: QDiagram Cairo V2 Double Any -> IO ()
 defaultMain = mainWith
 
-instance Mainable (Diagram Cairo V2 Double) where
-    type MainOpts (Diagram Cairo V2 Double) = (DiagramOpts, DiagramLoopOpts)
+instance Mainable (QDiagram Cairo V2 Double Any) where
+    type MainOpts (QDiagram Cairo V2 Double Any) = (DiagramOpts, DiagramLoopOpts)
 
     mainRender (opts, l) d = chooseRender opts d >> defaultLoopRender l
 
-chooseRender :: DiagramOpts -> Diagram Cairo V2 Double -> IO ()
+chooseRender :: DiagramOpts -> QDiagram Cairo V2 Double Any -> IO ()
 chooseRender opts d =
   case splitOn "." (opts ^. output) of
     [""] -> putStrLn "No output file given."
@@ -230,12 +230,12 @@ chooseRender opts d =
 -- $ ./MultiTest --selection bar -o Bar.png -w 200
 -- @
 
-multiMain :: [(String, Diagram Cairo V2 Double)] -> IO ()
+multiMain :: [(String, QDiagram Cairo V2 Double Any)] -> IO ()
 multiMain = mainWith
 
-instance Mainable [(String, Diagram Cairo V2 Double)] where
-    type MainOpts [(String, Diagram Cairo V2 Double)]
-        = (MainOpts (Diagram Cairo V2 Double), DiagramMultiOpts)
+instance Mainable [(String, QDiagram Cairo V2 Double Any)] where
+    type MainOpts [(String, QDiagram Cairo V2 Double Any)]
+        = (MainOpts (QDiagram Cairo V2 Double Any), DiagramMultiOpts)
 
     mainRender = defaultMultiMainRender
 
@@ -289,7 +289,7 @@ instance Mainable (Animation Cairo V2 Double) where
 --    --looping-off            Turn looping off
 --    --loop-repeat ARG        Number of times to repeat
 -- @
-gifMain :: [(Diagram Cairo V2 Double, GifDelay)] -> IO ()
+gifMain :: [(QDiagram Cairo V2 Double Any, GifDelay)] -> IO ()
 gifMain = mainWith
 
 -- | Extra options for animated GIFs.
@@ -315,8 +315,8 @@ instance Parseable GifOpts where
                        ( long "loop-repeat"
                       <> help "Number of times to repeat" )
 
-instance Mainable [(Diagram Cairo V2 Double, GifDelay)] where
-    type MainOpts [(Diagram Cairo V2 Double, GifDelay)] = (DiagramOpts, GifOpts)
+instance Mainable [(QDiagram Cairo V2 Double Any, GifDelay)] where
+    type MainOpts [(QDiagram Cairo V2 Double Any, GifDelay)] = (DiagramOpts, GifOpts)
 
     mainRender (dOpts, gOpts) ds = gifRender (dOpts, gOpts) ds
 
@@ -347,7 +347,7 @@ scaleInt i num denom
   | num == 0 || denom == 0 = i
   | otherwise = round (num / denom * fromIntegral i)
 
-gifRender :: (DiagramOpts, GifOpts) -> [(Diagram Cairo V2 Double, GifDelay)] -> IO ()
+gifRender :: (DiagramOpts, GifOpts) -> [(QDiagram Cairo V2 Double Any, GifDelay)] -> IO ()
 gifRender (dOpts, gOpts) lst =
   case splitOn "." (dOpts^.output) of
     [""] -> putStrLn "No output file given"
