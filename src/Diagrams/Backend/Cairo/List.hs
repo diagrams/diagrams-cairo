@@ -22,7 +22,7 @@ import           Data.Word                  (Word8)
 import           Diagrams.Backend.Cairo     (Cairo)
 import           Diagrams.Backend.Cairo.Ptr (renderPtr)
 import           Graphics.Rendering.Cairo   (Format (..))
-import           Diagrams.Prelude           (Diagram, V2)
+import           Diagrams.Prelude           (QDiagram, Any, V2)
 
 import           Foreign.Marshal.Alloc      (free)
 import           Foreign.Marshal.Array      (peekArray)
@@ -30,7 +30,7 @@ import           Foreign.Marshal.Array      (peekArray)
 -- | Render to a regular list of Colour values.
 
 renderToList :: (Ord a, Floating a) =>
-                  Int -> Int -> Diagram Cairo V2 Double -> IO [[AlphaColour a]]
+                  Int -> Int -> QDiagram Cairo V2 Double Any -> IO [[AlphaColour a]]
 renderToList w h d =
   f 0 <$> bracket (renderPtr w h FormatARGB32 d) free (peekArray $ w*h*4)
  where

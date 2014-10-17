@@ -77,6 +77,9 @@ data Cairo = Cairo
 
 type B = Cairo
 
+type instance V Cairo = V2
+type instance N Cairo = Double
+
 -- | Output types supported by cairo, including four different file
 --   types (PNG, PS, PDF, SVG).  If you want to output directly to GTK
 --   windows, see the @diagrams-gtk@ package.

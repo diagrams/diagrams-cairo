@@ -50,13 +50,13 @@
 -- So the type of 'renderDia' resolves to
 --
 -- @
--- renderDia :: Cairo -> Options Cairo V2 Double -> QDiagram Cairo V2 Double m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
+-- renderDia :: Cairo -> Options Cairo V2 Double -> QQDiagram Cairo V2 Double Any m -> (IO (), 'Graphics.Rendering.Cairo.Render' ())
 -- @
 --
 -- which you could call like so:
 --
 -- @
--- renderDia Cairo (CairoOptions \"foo.png\" (Width 250) PNG False) (myDiagram :: Diagram Cairo V2 Double)
+-- renderDia Cairo (CairoOptions \"foo.png\" (Width 250) PNG False) (myDiagram :: QDiagram Cairo V2 Double Any)
 -- @
 --
 -- This would return a pair; the first element is an @IO ()@ action
@@ -130,7 +130,7 @@ import Diagrams.Prelude
 --   This function is provided as a convenience; if you need more
 --   flexibility than it provides, you can call 'renderDia' directly,
 --   as described above.
-renderCairo :: FilePath -> SizeSpec2D Double -> Diagram Cairo V2 Double -> IO ()
+renderCairo :: FilePath -> SizeSpec2D Double -> QDiagram Cairo V2 Double Any -> IO ()
 renderCairo outFile sizeSpec d
   = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
   where

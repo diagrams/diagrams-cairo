@@ -155,7 +155,7 @@ kerningCorrectionIO style a b = do
 -- | Creates text diagrams with their envelopes set such that using
 --   @'vcat' . map ('textLineBounded' style)@ stacks them in the way that
 --   the font designer intended.
-textLineBoundedIO :: Style V2 Double -> String -> IO (Diagram Cairo V2 Double)
+textLineBoundedIO :: Style V2 Double -> String -> IO (QDiagram Cairo V2 Double Any)
 textLineBoundedIO style str = do
   (fe, te) <- queryCairo $ getExtents style str
   let box = fromCorners (p2 (0,      negate $ view descent fe))
@@ -164,7 +164,7 @@ textLineBoundedIO style str = do
 
 -- | Creates a text diagram with its envelope set to enclose the glyphs of the text,
 --   including leading (though not trailing) whitespace.
-textVisualBoundedIO :: Style V2 Double -> String -> IO (Diagram Cairo V2 Double)
+textVisualBoundedIO :: Style V2 Double -> String -> IO (QDiagram Cairo V2 Double Any)
 textVisualBoundedIO style str = do
   te <- queryCairo $ getTextExtents style str
   let box = fromCorners (origin .+^ view bearing te)
@@ -184,12 +184,12 @@ kerningCorrection style a = unsafePerformIO . kerningCorrectionIO style a
 --   that the font designer intended. See 'textLineBoundedIO'; this
 --   variant uses 'unsafePerformIO' but should be fairly safe in
 --   practice.
-textLineBounded :: Style V2 Double -> String -> Diagram Cairo V2 Double
+textLineBounded :: Style V2 Double -> String -> QDiagram Cairo V2 Double Any
 textLineBounded   style = unsafePerformIO . textLineBoundedIO   style
 
 -- | Creates a text diagram with its envelope set to enclose the
 --   glyphs of the text, including leading (though not trailing)
 --   whitespace. See 'textVisualBoundedIO'; this variant uses
 --   'unsafePerformIO' but should be fairly safe in practice.
-textVisualBounded :: Style V2 Double -> String -> Diagram Cairo V2 Double
+textVisualBounded :: Style V2 Double -> String -> QDiagram Cairo V2 Double Any
 textVisualBounded style = unsafePerformIO . textVisualBoundedIO style
