@@ -4,8 +4,6 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo V2 Double
-
 t :: Trail V2 Double
 t = (polygonPath with {sides = 3, orientation = OrientToX})
 [v1,v2] = trailOffsets t
@@ -22,7 +20,7 @@ showPts = position (pts `zip` repeat dot)
 -- s1 = (strokeT $ s <> (rotateBy (1/3) s) <> (rotateBy (2/3) s))
 --    # centerXY
 
-dia :: D
+dia :: Diagram Cairo
 dia = pad 1.1 (showPts `atop` strokeT s)
 
 main = defaultMain dia

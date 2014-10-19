@@ -4,7 +4,7 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo V2 Double
+type D = Diagram Cairo
 
 p, bez, ell :: D
 p = stroke $ fromSegments [Linear (1.0,0.0),Linear (0.0,1.0)]

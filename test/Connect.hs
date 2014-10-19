@@ -5,7 +5,7 @@ import Diagrams.Backend.Cairo.CmdLine
 
 import Data.Monoid
 
-type D = Diagram Cairo V2 Double
+type D = Diagram Cairo
 
 dot = circle 0.1
       # lw 0 # fc black

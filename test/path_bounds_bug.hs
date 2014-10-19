@@ -4,7 +4,7 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo V2 Double
+type D = Diagram Cairo
 
 t = (polygonPath with {sides = 3, orientation = OrientToX})
 [v1,v2] = trailOffsets t

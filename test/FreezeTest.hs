@@ -2,7 +2,7 @@ import Diagrams.Prelude
 
 import Diagrams.Backend.Cairo.CmdLine
 
-type D = Diagram Cairo V2 Double
+type D = Diagram Cairo
 
 s :: D
 s = unitSquare

@@ -116,7 +116,7 @@ import           Data.List.Split
 -- will produce a program that looks for additional number and color arguments.
 --
 -- > ... definitions ...
--- > f :: Int -> Colour Double -> Diagram Cairo V2 Double
+-- > f :: Int -> Colour Double -> Diagram Cairo
 -- > f i c = ...
 -- >
 -- > main = mainWith f

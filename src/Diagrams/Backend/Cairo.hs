@@ -26,21 +26,21 @@
 --   'Diagrams.Core.Types.Backend' instance for @Cairo@.  In particular,
 --   'Diagrams.Core.Types.renderDia' has the generic type
 --
--- > renderDia :: b -> Options b v -> QDiagram b v m -> Result b v
+-- > renderDia :: b -> Options b v n -> QDiagram b v n m -> Result b v n
 --
 -- (omitting a few type class constraints).  @b@ represents the
 -- backend type, @v@ the vector space, @n@ the numeric field, and @m@
 -- the type of monoidal query annotations on the diagram.  'Options'
 -- and 'Result' are associated data and type families, respectively,
 -- which yield the type of option records and rendering results
--- specific to any particular backend.  For @b ~ Cairo@ @n ~ Double@,
--- and @v ~ V2@, we have
+-- specific to any particular backend.  For @b ~ Cairo@, @v ~ V2@, and 
+-- @n ~ Double@, we have
 --
 -- > data family Options Cairo V2 Double = CairoOptions
--- >          { _cairoFileName     :: String     -- ^ The name of the file you want generated
--- >          , _cairoSizeSpec     :: SizeSpec2D -- ^ The requested size of the output
--- >          , _cairoOutputType   :: OutputType -- ^ the output format and associated options
--- >          , _cairoBypassAdjust :: Bool       -- ^ Should the 'adjustDia' step be bypassed during rendering?
+-- >          { _cairoFileName     :: String            -- ^ The name of the file you want generated
+-- >          , _cairoSizeSpec     :: SizeSpec2D Double -- ^ The requested size of the output
+-- >          , _cairoOutputType   :: OutputType        -- ^ the output format and associated options
+-- >          , _cairoBypassAdjust :: Bool              -- ^ Should the 'adjustDia' step be bypassed during rendering?
 -- >          }
 --
 -- @
@@ -64,7 +64,8 @@
 -- rendering action which can be used, for example, to directly draw
 -- to a Gtk window.  Note the type annotation on @myDiagram@ which may
 -- be necessary to fix the type variable @m@; this example uses the
--- type synonym @Diagram b v = QDiagram b v Any@ to fix @m = Any@.
+-- type synonym @Diagram b = QDiagram b (V b) (N b) Any@ to fix @m = Any@
+-- and fix @v@ and @n@ to backend specific types.
 --
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo
