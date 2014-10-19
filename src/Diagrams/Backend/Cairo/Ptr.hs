@@ -13,7 +13,7 @@ module Diagrams.Backend.Cairo.Ptr where
 
 import Data.Word (Word8)
 
-import Diagrams.Prelude (QDiagram, Any, V2, SizeSpec2D (..), renderDia)
+import Diagrams.Prelude (QDiagram, Any, V2, renderDia, dims2D, (<$>))
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Internal
 
@@ -35,7 +35,7 @@ renderPtr w h fmt d = do
   let stride = formatStrideForWidth fmt w
       size   = stride * h
       opt    = CairoOptions
-        { _cairoSizeSpec     = Dims (fromIntegral w) (fromIntegral h)
+        { _cairoSizeSpec     = fromIntegral <$> dims2D w h
         , _cairoOutputType   = RenderOnly
         , _cairoBypassAdjust = False
         , _cairoFileName     = ""

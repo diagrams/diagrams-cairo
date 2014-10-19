@@ -97,7 +97,7 @@ import           Diagrams.Backend.Cairo
 import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
 import           Diagrams.Backend.CmdLine
 import           Diagrams.Prelude                hiding (height, interval,
-                                                  option, width, (<>))
+                                                  option, width, (<>), output)
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
@@ -201,9 +201,9 @@ chooseRender opts d =
                    Cairo
                    ( CairoOptions
                      (opts^.output)
-                     (mkSizeSpec
-                       (fromIntegral <$> opts ^. width )
-                       (fromIntegral <$> opts ^. height)
+                     (fromIntegral <$> mkSizeSpec2D
+                       (opts ^. width )
+                       (opts ^. height)
                      )
                      outTy
                      False
@@ -328,7 +328,7 @@ imageRGB8FromUnsafePtr w h ptr = pixelMap f cImg
 
 
 encodeGifAnimation' :: [GifDelay] -> GifLooping -> Bool
-                   -> [Image PixelRGB8] -> Either String (L.ByteString)
+                   -> [Image PixelRGB8] -> Either String L.ByteString
 encodeGifAnimation' delays looping dithering lst =
     encodeGifImages looping triples
       where
@@ -364,7 +364,7 @@ gifRender (dOpts, gOpts) lst =
                                 Just n  -> LoopingRepeat (fromIntegral n)
                dias = map fst lst
                delays = map snd lst
-               (diaWidth, diaHeight) = size2D (head dias)
+               V2 diaWidth diaHeight = size (head dias)
            fPtrs <- mapM (renderForeignPtrOpaque w h) dias
            let imageRGB8s = map (imageRGB8FromUnsafePtr w h) fPtrs
                result = writeGifAnimation'
@@ -376,4 +376,4 @@ gifRender (dOpts, gOpts) lst =
            case result of
              Left s   -> putStrLn s
              Right io -> io
-       | otherwise -> putStrLn $ "File name must end with .gif"
+       | otherwise -> putStrLn "File name must end with .gif"
