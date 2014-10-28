@@ -45,7 +45,6 @@ import           Diagrams.Prelude                hiding (font, opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
-import           Diagrams.TwoD.Size              (requiredScaleT, sizePair)
 import           Diagrams.TwoD.Text hiding       (font)
 
 import qualified Graphics.Rendering.Cairo        as C
@@ -142,7 +141,7 @@ instance Backend Cairo V2 Double where
   type Result  Cairo V2 Double = (IO (), C.Render ())
   data Options Cairo V2 Double = CairoOptions
           { _cairoFileName   :: String     -- ^ The name of the file you want generated
-          , _cairoSizeSpec   :: SizeSpec2D Double -- ^ The requested size of the output
+          , _cairoSizeSpec   :: SizeSpec V2 Double -- ^ The requested size of the output
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
@@ -153,7 +152,7 @@ instance Backend Cairo V2 Double where
       r = runRenderM .runC . toRender $ t
       renderIO = do
         let surfaceF s = C.renderWith s r
-            (w,h) = sizePair (opts^.cairoSizeSpec)
+            V2 w h = specToSize 1 (opts^.cairoSizeSpec)
         case opts^.cairoOutputType of
           PNG ->
             C.withImageSurface C.FormatARGB32 (round w) (round h) $ \surface -> do
@@ -197,7 +196,7 @@ cairoFileName :: Lens' (Options Cairo V2 Double) String
 cairoFileName = lens (\(CairoOptions {_cairoFileName = f}) -> f)
                      (\o f -> o {_cairoFileName = f})
 
-cairoSizeSpec :: Lens' (Options Cairo V2 Double) (SizeSpec2D Double)
+cairoSizeSpec :: Lens' (Options Cairo V2 Double) (SizeSpec V2 Double)
 cairoSizeSpec = lens (\(CairoOptions {_cairoSizeSpec = s}) -> s)
                      (\o s -> o {_cairoSizeSpec = s})
 
@@ -236,11 +235,11 @@ cairoStyle s =
         handle f = f `fmap` getAttr s
         clip       = mapM_ (\p -> cairoPath p >> liftC C.clip) . op Clip
         lFillRule  = liftC . C.setFillRule . fromFillRule . getFillRule
-        lWidth     = liftC . C.setLineWidth . fromOutput . getLineWidth
+        lWidth     = liftC . C.setLineWidth . getLineWidth
         lCap       = liftC . C.setLineCap . fromLineCap . getLineCap
         lJoin      = liftC . C.setLineJoin . fromLineJoin . getLineJoin
         lDashing (getDashing -> Dashing ds offs) =
-          liftC $ C.setDash (map fromOutput ds) (fromOutput offs)
+          liftC $ C.setDash ds offs
 
 fromFontSlant :: FontSlant -> P.FontStyle
 fromFontSlant FontSlantNormal   = P.StyleNormal
@@ -361,10 +360,10 @@ setTexture (Just (RG g)) = liftC $
   where
     m = CM.Matrix a1 a2 b1 b2 c1 c2
     [[a1, a2], [b1, b2], [c1, c2]] = matrixHomRep (inv (g^.rGradTrans))
-    (r0, r1) = ((g^.rGradRadius0), (g^.rGradRadius1))
+    (r0, r1) = (g^.rGradRadius0, g^.rGradRadius1)
     (x0', y0') = unp2 (g^.rGradCenter0)
     (x1', y1') = unp2 (g^.rGradCenter1)
-    (x0, y0, x1, y1) = (x0' * (r1-r0) / r1, y0' * (r1-r0) / r1, x1' ,y1')
+    (x0, y0, x1, y1) = (x0' * (r1 - r0) / r1, y0' * (r1 - r0) / r1, x1' ,y1')
 
 -- Can only do PNG files at the moment...
 instance Renderable (DImage Double External) Cairo where
@@ -380,8 +379,8 @@ instance Renderable (DImage Double External) Cairo where
           Right pngSurf -> do
             w' <- C.imageSurfaceGetWidth pngSurf
             h' <- C.imageSurfaceGetHeight pngSurf
-            let sz = Dims (fromIntegral w) (fromIntegral h)
-            cairoTransf $ requiredScaleT sz (fromIntegral w', fromIntegral h')
+            let sz = fromIntegral <$> dims2D w h
+            cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
             C.setSourceSurface pngSurf (-fromIntegral w' / 2)
                                        (-fromIntegral h' / 2)
           Left _ ->
@@ -399,16 +398,13 @@ if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
 
 instance Renderable (Text Double) Cairo where
-  render _ (Text tt tn al str) = C $ do
-    let tr = tn <> reflectionY
+  render _ (Text tt al str) = C $ do
+    let tr = tr <> reflectionY
     ff <- getStyleAttrib getFont
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
-    isLocal <- fromMaybe True <$> getStyleAttrib (getFontSizeIsLocal :: FontSize Double -> Bool )
-    size' <- getStyleAttrib (fromOutput . getFontSize)
-    let fSize | size' == Nothing = Nothing
-              | isLocal = (avgScale tt *) <$> size'
-              | otherwise = size'
+    size' <- getStyleAttrib getFontSize
+    let fSize = (avgScale tt *) <$> size'
     f <- getStyleAttrib getFillTexture
     save
     setTexture f

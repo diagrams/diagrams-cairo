@@ -131,7 +131,7 @@ import Diagrams.Prelude
 --   This function is provided as a convenience; if you need more
 --   flexibility than it provides, you can call 'renderDia' directly,
 --   as described above.
-renderCairo :: FilePath -> SizeSpec2D Double -> QDiagram Cairo V2 Double Any -> IO ()
+renderCairo :: FilePath -> SizeSpec V2 Double -> QDiagram Cairo V2 Double Any -> IO ()
 renderCairo outFile sizeSpec d
   = fst (renderDia Cairo (CairoOptions outFile sizeSpec outTy False) d)
   where
