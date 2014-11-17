@@ -1,5 +1,5 @@
 Name:                diagrams-cairo
-Version:             1.2.0.3
+Version:             1.2.0.4
 Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         A full-featured backend for rendering
                      diagrams using the cairo rendering engine.
