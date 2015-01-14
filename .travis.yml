@@ -17,7 +17,7 @@ matrix:
 before_install:
   - git clone http://github.com/diagrams/diagrams-travis travis
   - source travis/scripts/set_env.sh
-  - echo "constraints:Cabal<1.22, cairo<=0.13.0.1" >> cabal.config
+  - echo "constraints:Cabal<1.22, cairo<0.13" >> cabal.config
   - ./travis/scripts/before_install.sh
 
 install: ./travis/scripts/install.sh
