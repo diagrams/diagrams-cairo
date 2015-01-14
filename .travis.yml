@@ -16,11 +16,14 @@ env:
 
 matrix:
   allow_failures:
-    - env: GHCVER=head
+    - env: GHCVER=7.10.1
+    - env: GHCVER=7.4.2
+    - env: HPVER=2012.4.0.0
 
 before_install:
   - git clone http://github.com/diagrams/diagrams-travis travis
   - source travis/scripts/set_env.sh
+  - echo "constraints:Cabal<1.22, cairo<0.13" >> cabal.config
   - ./travis/scripts/before_install.sh
 
 install: ./travis/scripts/install.sh
