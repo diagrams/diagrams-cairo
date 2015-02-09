@@ -399,7 +399,7 @@ if' = maybe (return ())
 
 instance Renderable (Text Double) Cairo where
   render _ (Text tt al str) = C $ do
-    let tr = tr <> reflectionY
+    let tr = tt <> reflectionY
     ff <- getStyleAttrib getFont
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
