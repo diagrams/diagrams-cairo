@@ -404,7 +404,6 @@ instance Renderable (Text Double) Cairo where
     fs <- getStyleAttrib (fromFontSlant . getFontSlant)
     fw <- getStyleAttrib (fromFontWeight . getFontWeight)
     size' <- getStyleAttrib getFontSize
-    let fSize = (avgScale tt *) <$> size'
     f <- getStyleAttrib getFillTexture
     save
     setTexture f
@@ -416,7 +415,7 @@ instance Renderable (Text Double) Cairo where
             if' (P.fontDescriptionSetFamily font) ff
             if' (P.fontDescriptionSetStyle font) fs
             if' (P.fontDescriptionSetWeight font) fw
-            if' (P.fontDescriptionSetSize font) fSize
+            if' (P.fontDescriptionSetSize font) size'
             P.layoutSetFontDescription layout $ Just font
             -- XXX should use reflection font matrix here instead?
             case al of
