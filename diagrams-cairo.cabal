@@ -15,10 +15,6 @@ Description:         A full-featured backend for rendering
                        Users should normally not need to import this
                        module.
                      .
-                     * "Diagrams.Backend.Cairo.Text" - cairo-specific
-                       text support, including automatic bounding
-                       boxes.
-                     .
                      * "Diagrams.Backend.Cairo.List" - render diagrams
                        to two-dimensional lists of colors (/i.e./
                        pixels).
@@ -46,7 +42,6 @@ Library
                        Diagrams.Backend.Cairo.Internal
                        Diagrams.Backend.Cairo.List
                        Diagrams.Backend.Cairo.Ptr 
-                      Diagrams.Backend.Cairo.Text
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.8,
                        mtl >= 2.0 && < 2.3,
