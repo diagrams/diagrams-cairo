@@ -45,11 +45,11 @@ import           Diagrams.Prelude                hiding (font, opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
-import           Diagrams.TwoD.Text hiding       (font)
+import           Diagrams.TwoD.Text              hiding (font)
 
 import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
-import qualified Graphics.Rendering.Pango as P
+import qualified Graphics.Rendering.Pango        as P
 
 import           Control.Exception               (try)
 import           Control.Monad                   (when)

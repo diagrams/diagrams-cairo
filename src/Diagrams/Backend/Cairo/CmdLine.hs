@@ -95,7 +95,7 @@ import           Diagrams.Backend.Cairo
 import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
 import           Diagrams.Backend.CmdLine
 import           Diagrams.Prelude                hiding (height, interval,
-                                                  option, width, (<>), output)
+                                                  option, output, width, (<>))
 
 -- Below hack is needed because GHC 7.0.x has a bug regarding export
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
