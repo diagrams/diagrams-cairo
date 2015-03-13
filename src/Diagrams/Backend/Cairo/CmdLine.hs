@@ -91,8 +91,6 @@ import           Data.Word                       (Word8)
 import           Foreign.ForeignPtr.Safe         (ForeignPtr)
 import           Options.Applicative
 
-import           Control.Lens                    (makeLenses, (^.))
-
 import           Diagrams.Backend.Cairo
 import           Diagrams.Backend.Cairo.Ptr      (renderForeignPtrOpaque)
 import           Diagrams.Backend.CmdLine

@@ -52,12 +52,10 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import qualified Graphics.Rendering.Pango as P
 
 import           Control.Exception               (try)
-import           Control.Lens                    hiding (transform, ( # ))
 import           Control.Monad                   (when)
 import           Control.Monad.IO.Class
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift)
-import           Data.Default.Class
 import qualified Data.Foldable                   as F
 import           Data.Hashable                   (Hashable (..))
 import           Data.List                       (isSuffixOf)
