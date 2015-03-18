@@ -43,7 +43,7 @@ Library
                        Diagrams.Backend.Cairo.List
                        Diagrams.Backend.Cairo.Ptr 
   Hs-source-dirs:      src
-  Build-depends:       base >= 4.2 && < 4.8,
+  Build-depends:       base >= 4.2 && < 4.9,
                        mtl >= 2.0 && < 2.3,
                        filepath,
                        diagrams-core >= 1.2 && < 1.3,
