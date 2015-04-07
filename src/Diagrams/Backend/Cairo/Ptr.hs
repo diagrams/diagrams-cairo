@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.Ptr
@@ -13,7 +14,6 @@ module Diagrams.Backend.Cairo.Ptr where
 
 import Data.Word (Word8)
 
-import Diagrams.Prelude (QDiagram, Any, V2, renderDia, dims2D, (<$>))
 import Diagrams.Backend.Cairo
 import Diagrams.Backend.Cairo.Internal
 
@@ -27,6 +27,13 @@ import Graphics.Rendering.Cairo ( Format (..)
                                 , renderWith
                                 , withImageSurfaceForData
                                 )
+
+#if __GLASGOW_HASKELL__ < 710
+import           Control.Applicative             ((<$>))
+import           Foreign.ForeignPtr.Safe         (ForeignPtr, newForeignPtr)
+#else
+import           Foreign.ForeignPtr              (ForeignPtr, newForeignPtr)
+#endif
 
 -- | Render a diagram to a new buffer in memory, with the format ARGB32.
 

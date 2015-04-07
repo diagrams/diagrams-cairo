@@ -88,7 +88,6 @@ import           Codec.Picture.ColorQuant        (defaultPaletteOptions)
 import qualified Data.ByteString.Lazy            as L (ByteString, writeFile)
 import           Data.Vector.Storable            (unsafeFromForeignPtr0)
 import           Data.Word                       (Word8)
-import           Foreign.ForeignPtr.Safe         (ForeignPtr)
 import           Options.Applicative
 
 import           Diagrams.Backend.Cairo
@@ -101,6 +100,12 @@ import           Diagrams.Prelude                hiding (height, interval,
 -- of data family constructors; see comments in Diagrams.Backend.Cairo
 #if __GLASGOW_HASKELL__ < 702 || __GLASGOW_HASKELL__ >= 704
 import           Diagrams.Backend.Cairo.Internal
+#endif
+
+#if __GLASGOW_HASKELL__ < 710
+import           Foreign.ForeignPtr.Safe         (ForeignPtr)
+#else
+import           Foreign.ForeignPtr              (ForeignPtr)
 #endif
 
 import           Data.List.Split
