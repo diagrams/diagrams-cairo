@@ -11,7 +11,7 @@ env:
     - GHCVER=head CABALVER=head
   global:
     - UBUNTU_PKGS="libcairo2-dev"
-    - HEAD_DEPS="diagrams-core diagrams-lib"
+    - HEAD_DEPS="diagrams-core diagrams-lib active diagrams-solve monoid-extras dual-tree"
     - EXTRA_DEPS_PRE="gtk2hs-buildtools Cabal"
 
 matrix:
