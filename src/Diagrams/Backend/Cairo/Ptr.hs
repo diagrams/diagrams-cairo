@@ -12,21 +12,21 @@
 
 module Diagrams.Backend.Cairo.Ptr where
 
-import Data.Word (Word8)
+import           Data.Word                       (Word8)
 
-import Diagrams.Backend.Cairo
-import Diagrams.Backend.Cairo.Internal
+import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.Cairo.Internal
+import           Diagrams.Prelude                (Any, QDiagram, V2, dims2D,
+                                                  renderDia)
 
-import Foreign.ForeignPtr.Safe (ForeignPtr, newForeignPtr)
-import Foreign.Marshal.Alloc   (finalizerFree)
-import Foreign.Marshal.Array   (mallocArray, pokeArray)
-import Foreign.Ptr             (Ptr, castPtr)
+import           Foreign.Marshal.Alloc           (finalizerFree)
+import           Foreign.Marshal.Array           (mallocArray, pokeArray)
+import           Foreign.Ptr                     (Ptr, castPtr)
 
-import Graphics.Rendering.Cairo ( Format (..)
-                                , formatStrideForWidth
-                                , renderWith
-                                , withImageSurfaceForData
-                                )
+import           Graphics.Rendering.Cairo        (Format (..),
+                                                  formatStrideForWidth,
+                                                  renderWith,
+                                                  withImageSurfaceForData)
 
 #if __GLASGOW_HASKELL__ < 710
 import           Control.Applicative             ((<$>))

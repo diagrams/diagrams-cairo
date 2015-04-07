@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Diagrams.Backend.Cairo.List
@@ -24,8 +25,8 @@ import           Data.Word                  (Word8)
 
 import           Diagrams.Backend.Cairo     (Cairo)
 import           Diagrams.Backend.Cairo.Ptr (renderPtr)
+import           Diagrams.Prelude           (Any, QDiagram, V2)
 import           Graphics.Rendering.Cairo   (Format (..))
-import           Diagrams.Prelude           (QDiagram, Any, V2)
 
 import           Foreign.Marshal.Alloc      (free)
 import           Foreign.Marshal.Array      (peekArray)
