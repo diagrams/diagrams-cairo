@@ -30,7 +30,7 @@ Bug-reports:         http://github.com/diagrams/diagrams-cairo/issues
 Category:            Graphics
 Build-type:          Simple
 Cabal-version:       >=1.10
-Extra-source-files:  CHANGES.markdown, README.markdown
+Extra-source-files:  CHANGELOG.md, README.markdown
 Tested-with:         GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.1
 Source-repository head
   type:     git
