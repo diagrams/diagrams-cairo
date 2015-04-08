@@ -73,7 +73,7 @@
 - Much improved text support using the `pango` library instead of
   cairo's "toy" text API.
 
-    - Support for linear and radial gradients on strokes and fills.
+- Support for linear and radial gradients on strokes and fills.
     
 **Fixed bugs:**
 
@@ -102,6 +102,7 @@
 ## [v1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.1) (2014-03-09)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.0.1.2...v1.1)
+
 **New features**
 
 - It is now possible to directly output animated GIFs, using the
