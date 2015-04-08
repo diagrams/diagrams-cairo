@@ -1,0 +1,205 @@
+# Change Log
+
+## [v1.2.0.7](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.7) (2015-04-04)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.5...v1.2.0.7)
+
+**Fixed bugs:**
+
+- loop when rendering text [\#59](https://github.com/diagrams/diagrams-cairo/issues/59)
+
+**Merged pull requests:**
+
+- remove Text module [\#60](https://github.com/diagrams/diagrams-cairo/pull/60) ([bergey](https://github.com/bergey))
+
+## [v1.2.0.5](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.5) (2014-12-25)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.4...v1.2.0.5)
+
+## [v1.2.0.4](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.4) (2014-11-17)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.3...v1.2.0.4)
+
+**Closed issues:**
+
+- expose gifRender [\#55](https://github.com/diagrams/diagrams-cairo/issues/55)
+
+**Merged pull requests:**
+
+- Bump lens upper version bounds [\#58](https://github.com/diagrams/diagrams-cairo/pull/58) ([RyanGlScott](https://github.com/RyanGlScott))
+
+- Update for new measure and size spec. [\#57](https://github.com/diagrams/diagrams-cairo/pull/57) ([cchalmers](https://github.com/cchalmers))
+
+- Diagram B [\#56](https://github.com/diagrams/diagrams-cairo/pull/56) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+- port to linear instead of vector-space [\#54](https://github.com/diagrams/diagrams-cairo/pull/54) ([bergey](https://github.com/bergey))
+
+## [v1.2.0.3](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.3) (2014-10-08)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.2-1...v1.2.0.3)
+
+**Fixed bugs:**
+
+- --loop disables generating multiple files [\#50](https://github.com/diagrams/diagrams-cairo/issues/50)
+
+**Merged pull requests:**
+
+- loop using fsnotify [\#53](https://github.com/diagrams/diagrams-cairo/pull/53) ([bergey](https://github.com/bergey))
+
+- Call defaultAnimMainRender with ASetter for loop options [\#52](https://github.com/diagrams/diagrams-cairo/pull/52) ([bergey](https://github.com/bergey))
+
+## [v1.2.0.2-1](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.2-1) (2014-09-08)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.2...v1.2.0.2-1)
+
+## [v1.2.0.2](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.2) (2014-09-07)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.1...v1.2.0.2)
+
+## [v1.2.0.1](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.1) (2014-08-22)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2...v1.2.0.1)
+
+**Closed issues:**
+
+- Problems with yellow color in gif animation [\#51](https://github.com/diagrams/diagrams-cairo/issues/51)
+
+## [v1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.2) (2014-06-02)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.1.0.1...v1.2)
+
+**Fixed bugs:**
+
+- textLineBoundedIO sometimes produces incorrect envelopes [\#19](https://github.com/diagrams/diagrams-cairo/issues/19)
+
+**Closed issues:**
+
+- Mac OS X/XQuartz: Can't render single letter [\#43](https://github.com/diagrams/diagrams-cairo/issues/43)
+
+**Merged pull requests:**
+
+- Pango [\#49](https://github.com/diagrams/diagrams-cairo/pull/49) ([bergey](https://github.com/bergey))
+
+- fix text scaling [\#48](https://github.com/diagrams/diagrams-cairo/pull/48) ([byorgey](https://github.com/byorgey))
+
+- DImage implemented [\#47](https://github.com/diagrams/diagrams-cairo/pull/47) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+- Units [\#46](https://github.com/diagrams/diagrams-cairo/pull/46) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+- Gradient [\#37](https://github.com/diagrams/diagrams-cairo/pull/37) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+## [v1.1.0.1](https://github.com/diagrams/diagrams-cairo/tree/v1.1.0.1) (2014-03-19)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.1...v1.1.0.1)
+
+## [v1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.1) (2014-03-09)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.0.1.2...v1.1)
+
+**Closed issues:**
+
+- Color conversions have huge impact on performance [\#44](https://github.com/diagrams/diagrams-cairo/issues/44)
+
+**Merged pull requests:**
+
+- Fix documentation typo \(subtable -\> suitable\) [\#45](https://github.com/diagrams/diagrams-cairo/pull/45) ([robx](https://github.com/robx))
+
+## [v1.0.1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.0.1.2) (2014-02-06)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.0.1.1...v1.0.1.2)
+
+**Closed issues:**
+
+- Build failure for GHC 7.4 [\#42](https://github.com/diagrams/diagrams-cairo/issues/42)
+
+## [v1.0.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.0.1.1) (2014-01-30)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.0.1...v1.0.1.1)
+
+## [v1.0.1](https://github.com/diagrams/diagrams-cairo/tree/v1.0.1) (2014-01-26)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.0...v1.0.1)
+
+**Merged pull requests:**
+
+- Add Hashable instance for Options Cairo R2 [\#41](https://github.com/diagrams/diagrams-cairo/pull/41) ([byorgey](https://github.com/byorgey))
+
+- Making animated GIFs directly from diagrams using Cairo. [\#40](https://github.com/diagrams/diagrams-cairo/pull/40) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+## [v1.0](https://github.com/diagrams/diagrams-cairo/tree/v1.0) (2013-11-25)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v0.7...v1.0)
+
+**Fixed bugs:**
+
+- opacity does not affect text [\#15](https://github.com/diagrams/diagrams-cairo/issues/15)
+
+**Merged pull requests:**
+
+- Backend tree conversion [\#36](https://github.com/diagrams/diagrams-cairo/pull/36) ([byorgey](https://github.com/byorgey))
+
+- Lens [\#35](https://github.com/diagrams/diagrams-cairo/pull/35) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
+
+- use new pathTrail Iso lens [\#34](https://github.com/diagrams/diagrams-cairo/pull/34) ([bergey](https://github.com/bergey))
+
+## [v0.7](https://github.com/diagrams/diagrams-cairo/tree/v0.7) (2013-08-09)
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v0.6...v0.7)
+
+**Fixed bugs:**
+
+- Lines should not be filled [\#32](https://github.com/diagrams/diagrams-cairo/issues/32)
+
+**Merged pull requests:**
+
+- Updates for new trail API. [\#31](https://github.com/diagrams/diagrams-cairo/pull/31) ([byorgey](https://github.com/byorgey))
+
+## [v0.6](https://github.com/diagrams/diagrams-cairo/tree/v0.6) (2012-12-12)
+
+**Implemented enhancements:**
+
+- Improve cairo command-line handling of width/height options [\#7](https://github.com/diagrams/diagrams-cairo/issues/7)
+
+- Convert Cairo examples to use new command-line utility [\#2](https://github.com/diagrams/diagrams-cairo/issues/2)
+
+**Fixed bugs:**
+
+- old-time and 7.6 [\#21](https://github.com/diagrams/diagrams-cairo/issues/21)
+
+- Use of deprecated 'try' function in Diagrams.Backend.Cairo.Internal [\#12](https://github.com/diagrams/diagrams-cairo/issues/12)
+
+- Better error message when image file does not exist [\#11](https://github.com/diagrams/diagrams-cairo/issues/11)
+
+- Path doesn't get resized correctly when no transformations are applied to it [\#6](https://github.com/diagrams/diagrams-cairo/issues/6)
+
+- Make Cairo backend smarter about missing attributes [\#4](https://github.com/diagrams/diagrams-cairo/issues/4)
+
+- Attribute transformations are not handled correctly when rendering [\#3](https://github.com/diagrams/diagrams-cairo/issues/3)
+
+**Closed issues:**
+
+- vector-space-0.8.5 breaks compilation [\#27](https://github.com/diagrams/diagrams-cairo/issues/27)
+
+- ‘cairoBypassAdjust’ undocumented [\#23](https://github.com/diagrams/diagrams-cairo/issues/23)
+
+- Improve diagrams-cairo documentation [\#10](https://github.com/diagrams/diagrams-cairo/issues/10)
+
+**Merged pull requests:**
+
+- Additional rendering functions, for Ptr Word8 and \[\[Colour a\]\] [\#25](https://github.com/diagrams/diagrams-cairo/pull/25) ([haasn](https://github.com/haasn))
+
+- `old-time` to `time` [\#22](https://github.com/diagrams/diagrams-cairo/pull/22) ([fryguybob](https://github.com/fryguybob))
+
+- split out gtk rendering into a separate package [\#20](https://github.com/diagrams/diagrams-cairo/pull/20) ([byorgey](https://github.com/byorgey))
+
+- use requiredScaleT in place of deprecated adjustSize [\#17](https://github.com/diagrams/diagrams-cairo/pull/17) ([byorgey](https://github.com/byorgey))
+
+- call setDefault2DAttributes even when bypassing size adjustments [\#16](https://github.com/diagrams/diagrams-cairo/pull/16) ([byorgey](https://github.com/byorgey))
+
+- Rename 'colorToSRGB' -\> 'colorToSRGBA' [\#26](https://github.com/diagrams/diagrams-cairo/pull/26) ([haasn](https://github.com/haasn))
+
+- Add module Diagrams.Backend.Cairo.Ptr [\#24](https://github.com/diagrams/diagrams-cairo/pull/24) ([haasn](https://github.com/haasn))
+
+
+
+\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
