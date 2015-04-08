@@ -12,6 +12,10 @@
 
 - remove Text module [\#60](https://github.com/diagrams/diagrams-cairo/pull/60) ([bergey](https://github.com/bergey))
 
+## [v1.2.0.6] () (2015-01-12)
+
+- allow `lens-4.7`
+
 ## [v1.2.0.5](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.5) (2014-12-25)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.4...v1.2.0.5)
@@ -169,7 +173,7 @@
 - New `renderCairo` function for more convenient use of the cairo
   backend.
 - Lots of Haddock documentation improvements.
-- 
+ 
 **Fixed bugs:**
 
 - Lines should not be filled [\#32](https://github.com/diagrams/diagrams-cairo/issues/32)
