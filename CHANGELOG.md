@@ -74,6 +74,7 @@
   cairo's "toy" text API.
 
     - Support for linear and radial gradients on strokes and fills.
+    
 **Fixed bugs:**
 
 - textLineBoundedIO sometimes produces incorrect envelopes [\#19](https://github.com/diagrams/diagrams-cairo/issues/19)
