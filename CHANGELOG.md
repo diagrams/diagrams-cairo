@@ -78,7 +78,7 @@
   cairo's "toy" text API.
 
 - Support for linear and radial gradients on strokes and fills.
-    
+
 **Fixed bugs:**
 
 - textLineBoundedIO sometimes produces incorrect envelopes [\#19](https://github.com/diagrams/diagrams-cairo/issues/19)
@@ -173,7 +173,7 @@
 - New `renderCairo` function for more convenient use of the cairo
   backend.
 - Lots of Haddock documentation improvements.
- 
+
 **Fixed bugs:**
 
 - Lines should not be filled [\#32](https://github.com/diagrams/diagrams-cairo/issues/32)
@@ -198,7 +198,7 @@
   + `Diagrams.Backend.Cairo.List`, for rendering to a list of lists
   of pixels.
 
-* **API changes**
+**API changes**
 
     - Removal of `StyleParam` from `Diagrams.Backend.Cairo.Text`, change
       functions in that module to accept `Style R2`.  Usage can be fixed
@@ -255,52 +255,62 @@
 
 - Add module Diagrams.Backend.Cairo.Ptr [\#24](https://github.com/diagrams/diagrams-cairo/pull/24) ([haasn](https://github.com/haasn))
 
-0.5.0.2 : 13 May 2012
+## [v0.5.0.2]() (13 May 2012)
 ---------------------
 
 * Allow building under `mtl` 2.1.*
 
-0.5.0.1 : 9 March 2012
+## [v0.5.0.1]() (9 March 2012)
 ----------------------
 
 * Remove statement in package description that a development version
     of `gtk2hs` must be used with GHC 7.4; this is no longer true as of
     the 0.12.3 release of `gtk2hs`.
 
-0.5: 9 March 2012
+## [v0.5]() (March 2012)
 -----------------
 
-* **New features**
-    - New `Diagrams.Backend.Cairo.Text` module by Michael Sloan, with
-      functions for creating appropriately sized text objects by
-      querying cairo for the size, and related supporting functions.
-    - Basic support for animation with `animMain` function, by
-      generating frames sampled at regular intervals.
-    - Proper vertical alignment of default text based on font
-      parameters (Michael Sloan).
-    - Requesting just a width or height now causes the other to be
-      computed appropriately.
+**New features**
 
-* **API changes**
-    - Move `Diagrams.Backend.Cairo` to
-      `Diagrams.Backend.Cairo.Internal` and export everything.
-      `Diagrams.Backend.Cairo` now just re-exports selected functions
-      from `Internal`.  This allows anyone who wants access to the
-      helper/utility functions to import `Internal`.
+- New `Diagrams.Backend.Cairo.Text` module by Michael Sloan, with
+  functions for creating appropriately sized text objects by
+  querying cairo for the size, and related supporting functions.
 
-* **Dependency/version changes**
-    - relax `cmdargs` upper bound
-    - GHC 7.4.1 compatibility: update `base`, `filepath`, and
-      `old-time` upper bounds
+- Basic support for animation with `animMain` function, by
+  generating frames sampled at regular intervals.
 
-* **Bug fixes**
-    - [\#54](http://code.google.com/p/diagrams/issues/detail?id=54): Generate warning for missing image files (Ian Ross).
+- Proper vertical alignment of default text based on font
+  parameters (Michael Sloan).
 
-0.4: 22 October 2011
+- Requesting just a width or height now causes the other to be
+  computed appropriately.
+
+**API changes**
+
+- Move `Diagrams.Backend.Cairo` to
+  `Diagrams.Backend.Cairo.Internal` and export everything.
+  `Diagrams.Backend.Cairo` now just re-exports selected functions
+  from `Internal`.  This allows anyone who wants access to the
+  helper/utility functions to import `Internal`.
+
+**Dependency/version changes**
+
+- relax `cmdargs` upper bound
+
+- GHC 7.4.1 compatibility: update `base`, `filepath`, and
+  `old-time` upper bounds
+
+**Bug fixes**
+
+- [\#54](http://code.google.com/p/diagrams/issues/detail?id=54): Generate warning for missing image files (Ian Ross).
+
+## [v0.4]() (22 October 2011)
 --------------------
 
 * New features:
-    + Support for drawing directly to Gtk widgets
+
+  + Support for drawing directly to Gtk widgets
+
     + Support for path fill rule attribute
 
 * New/improved examples
@@ -308,18 +318,21 @@
 * Improved documentation
 
 * Bug fixes:
+
     + Warning for unsupported image types (#41)
 
-0.3: 18 June 2011
+## [v0.3]() (18 June 2011)
 -----------------
 
 * Some new/improved examples
 
 * New features:
+
     + simple text support
+
     + simple support for external PNG images
 
-0.2: 3 June 2011
+## [v0.2]() (3 June 2011)
 ----------------
 
 * add `Typeable` and other instances for `Cairo` type
@@ -330,17 +343,17 @@
 
 * add support for opacity attribute and path clipping
 
-0.1.2: 18 May 2011
+## [v0.1.2]() (18 May 2011)
 ------------------
 
 * link to new website
 
-0.1.1: 18 May 2011
+## [v0.1.1]() (18 May 2011)
 ------------------
 
 * fix tic-tac-toe example
 
-0.1: 17 May 2011
+## [v0.1]() (17 May 2011)
 ----------------
 
 * initial preview release
