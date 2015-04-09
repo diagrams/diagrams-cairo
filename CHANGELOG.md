@@ -147,7 +147,9 @@
 **New Features**
 
 - Re-implement via new backend `RTree` interface.
+
 - Use new command-line interface from `diagrams-lib`.
+
 - Export `B` as an alias for `Cairo` token.
 
 **Fixed bugs:**
@@ -168,6 +170,7 @@
 
 - New `renderCairo` function for more convenient use of the cairo
   backend.
+
 - Lots of Haddock documentation improvements.
 
 **Fixed bugs:**
@@ -196,22 +199,22 @@
 
 **API changes**
 
-    - Removal of `StyleParam` from `Diagrams.Backend.Cairo.Text`, change
-      functions in that module to accept `Style R2`.  Usage can be fixed
-      by applying these style functions to `mempty`.
+- Removal of `StyleParam` from `Diagrams.Backend.Cairo.Text`, change
+  functions in that module to accept `Style R2`.  Usage can be fixed
+  by applying these style functions to `mempty`.
 
-    - GTK rendering has been split out into a new package, diagrams-gtk.
+- GTK rendering has been split out into a new package, diagrams-gtk.
 
-	+ The `Diagrams.Backend.Cairo.Gtk` module is now
-	  `Diagrams.Backend.Gtk` in the `diagrams-gtk` package.
++ The `Diagrams.Backend.Cairo.Gtk` module is now
+  `Diagrams.Backend.Gtk` in the `diagrams-gtk` package.
 
-	+ The `CairoOptions` record has a new boolean `cairoBypassAdjust`
-	  option; when set, the backend should bypass calling `adjustDia2D`.
++ The `CairoOptions` record has a new boolean `cairoBypassAdjust`
+  option; when set, the backend should bypass calling `adjustDia2D`.
 
-	+ The GTK output type is gone.
++ The GTK output type is gone.
 
-	+ There is a new `RenderOnly` output type, for when you don't
-	  care about the `IO` action but only want the cairo `Render` action.
++ There is a new `RenderOnly` output type, for when you don't
+  care about the `IO` action but only want the cairo `Render` action.
 
 **Fixed bugs:**
 
@@ -248,19 +251,16 @@
 - call setDefault2DAttributes even when bypassing size adjustments [\#16](https://github.com/diagrams/diagrams-cairo/pull/16) ([byorgey](https://github.com/byorgey))
 
 ## [v0.5.0.2]() (13 May 2012)
----------------------
 
 * Allow building under `mtl` 2.1.*
 
 ## [v0.5.0.1]() (9 March 2012)
-----------------------
 
 * Remove statement in package description that a development version
     of `gtk2hs` must be used with GHC 7.4; this is no longer true as of
     the 0.12.3 release of `gtk2hs`.
 
 ## [v0.5]() (March 2012)
------------------
 
 **New features**
 
@@ -297,7 +297,6 @@
 - [\#54](http://code.google.com/p/diagrams/issues/detail?id=54): Generate warning for missing image files (Ian Ross).
 
 ## [v0.4]() (22 October 2011)
---------------------
 
 * New features:
 
@@ -314,7 +313,6 @@
     + Warning for unsupported image types (#41)
 
 ## [v0.3]() (18 June 2011)
------------------
 
 * Some new/improved examples
 
@@ -325,7 +323,6 @@
     + simple support for external PNG images
 
 ## [v0.2]() (3 June 2011)
-----------------
 
 * add `Typeable` and other instances for `Cairo` type
 
@@ -336,17 +333,14 @@
 * add support for opacity attribute and path clipping
 
 ## [v0.1.2]() (18 May 2011)
-------------------
 
 * link to new website
 
 ## [v0.1.1]() (18 May 2011)
-------------------
 
 * fix tic-tac-toe example
 
 ## [v0.1]() (17 May 2011)
-----------------
 
 * initial preview release
 
