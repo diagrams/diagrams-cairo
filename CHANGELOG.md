@@ -50,8 +50,6 @@
 
 - loop using fsnotify [\#53](https://github.com/diagrams/diagrams-cairo/pull/53) ([bergey](https://github.com/bergey))
 
-- Call defaultAnimMainRender with ASetter for loop options [\#52](https://github.com/diagrams/diagrams-cairo/pull/52) ([bergey](https://github.com/bergey))
-
 ## [v1.2.0.2-1](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.2-1) (2014-09-08)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.2...v1.2.0.2-1)
@@ -162,8 +160,6 @@
 
 - Lens [\#35](https://github.com/diagrams/diagrams-cairo/pull/35) ([jeffreyrosenbluth](https://github.com/jeffreyrosenbluth))
 
-- use new pathTrail Iso lens [\#34](https://github.com/diagrams/diagrams-cairo/pull/34) ([bergey](https://github.com/bergey))
-
 ## [v0.7](https://github.com/diagrams/diagrams-cairo/tree/v0.7) (2013-08-09)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v0.6...v0.7)
@@ -250,10 +246,6 @@
 - use requiredScaleT in place of deprecated adjustSize [\#17](https://github.com/diagrams/diagrams-cairo/pull/17) ([byorgey](https://github.com/byorgey))
 
 - call setDefault2DAttributes even when bypassing size adjustments [\#16](https://github.com/diagrams/diagrams-cairo/pull/16) ([byorgey](https://github.com/byorgey))
-
-- Rename 'colorToSRGB' -\> 'colorToSRGBA' [\#26](https://github.com/diagrams/diagrams-cairo/pull/26) ([haasn](https://github.com/haasn))
-
-- Add module Diagrams.Backend.Cairo.Ptr [\#24](https://github.com/diagrams/diagrams-cairo/pull/24) ([haasn](https://github.com/haasn))
 
 ## [v0.5.0.2]() (13 May 2012)
 ---------------------
