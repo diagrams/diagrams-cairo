@@ -1,5 +1,7 @@
 # Change Log
 
+## [v1.3]()(2015-04-09)
+
 ## [v1.2.0.7](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.7) (2015-04-04)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.2.0.5...v1.2.0.7)
