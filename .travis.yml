@@ -2,7 +2,6 @@ language: haskell
 
 env:
   matrix:
-    - HPVER=2013.2.0.0 CABALVER=1.18
     - HPVER=2014.2.0.0 CABALVER=1.18
     - GHCVER=7.4.2 CABALVER=1.18
     - GHCVER=7.6.3 CABALVER=1.18
@@ -11,11 +10,12 @@ env:
     - GHCVER=head CABALVER=head
   global:
     - UBUNTU_PKGS="libcairo2-dev"
-    - HEAD_DEPS="diagrams-core diagrams-lib active diagrams-solve monoid-extras dual-tree"
+    - HEAD_DEPS="diagrams-core diagrams-lib active diagrams-solve monoid-extras dual-tree statestack"
     - EXTRA_DEPS_PRE="gtk2hs-buildtools Cabal"
 
 matrix:
   allow_failures:
+    - env: HPVER=2013.2.0.0 CABALVER=1.18
     - env: GHCVER=7.4.2 CABALVER=1.18
     - env: GHCVER=head CABALVER=head
 
