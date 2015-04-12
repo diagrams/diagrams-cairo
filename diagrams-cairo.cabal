@@ -4,6 +4,15 @@ Synopsis:            Cairo backend for diagrams drawing EDSL
 Description:         A full-featured backend for rendering
                      diagrams using the cairo rendering engine.
                      .
+                     This ultimately depends on a C library, via
+                     Haskell's FFI, and can be difficult to install on
+                     some platforms. If you are just looking for a
+                     quick way to visualize diagrams, try the
+                     diagrams-svg backend; if you want raster output
+                     like PNG, try the diagrams-rasterific backend; if
+                     you want to embed diagrams in LaTeX documents,
+                     try diagrams-pgf.
+                     .
                      * "Diagrams.Backend.Cairo.CmdLine" - if you're
                        just getting started with diagrams, begin here.
                      .
