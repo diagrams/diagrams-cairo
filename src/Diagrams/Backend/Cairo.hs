@@ -1,4 +1,5 @@
-{-# LANGUAGE TypeFamilies, CPP #-}
+{-# LANGUAGE CPP          #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -33,14 +34,14 @@
 -- the type of monoidal query annotations on the diagram.  'Options'
 -- and 'Result' are associated data and type families, respectively,
 -- which yield the type of option records and rendering results
--- specific to any particular backend.  For @b ~ Cairo@, @v ~ V2@, and 
+-- specific to any particular backend.  For @b ~ Cairo@, @v ~ V2@, and
 -- @n ~ Double@, we have
 --
 -- > data family Options Cairo V2 Double = CairoOptions
--- >          { _cairoFileName     :: String            -- ^ The name of the file you want generated
--- >          , _cairoSizeSpec     :: SizeSpec2D Double -- ^ The requested size of the output
--- >          , _cairoOutputType   :: OutputType        -- ^ the output format and associated options
--- >          , _cairoBypassAdjust :: Bool              -- ^ Should the 'adjustDia' step be bypassed during rendering?
+-- >          { _cairoFileName     :: String             -- ^ The name of the file you want generated
+-- >          , _cairoSizeSpec     :: SizeSpec V2 Double -- ^ The requested size of the output
+-- >          , _cairoOutputType   :: OutputType         -- ^ the output format and associated options
+-- >          , _cairoBypassAdjust :: Bool               -- ^ Should the 'adjustDia' step be bypassed during rendering?
 -- >          }
 --
 -- @
@@ -97,10 +98,10 @@ module Diagrams.Backend.Cairo
   , B
   ) where
 
-import System.FilePath (takeExtension)
+import           System.FilePath                 (takeExtension)
 
-import Diagrams.Backend.Cairo.Internal
-import Diagrams.Prelude
+import           Diagrams.Backend.Cairo.Internal
+import           Diagrams.Prelude
 
 -- $CairoOptions
 --
@@ -109,19 +110,15 @@ import Diagrams.Prelude
 -- This module defines
 --
 -- > data family Options Cairo V2 Double = CairoOptions
--- >           { _cairoFileName   :: String     -- ^ The name of the file you want generated
--- >           , _cairoSizeSpec   :: SizeSpec2D -- ^ The requested size of the output
--- >           , _cairoOutputType :: OutputType -- ^ the output format and associated options
--- >           }
+-- >   { _cairoFileName   :: String     -- ^ The name of the file you want generated
+-- >   , _cairoSizeSpec   :: SizeSpec V2 Double -- ^ The requested size of the output
+-- >   , _cairoOutputType :: OutputType -- ^ the output format and associated options
+-- >   , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
+-- >   }
 --
 -- See the documentation at the top of "Diagrams.Backend.Cairo" for
 -- information on how to make use of this.
---
--- /Important note/: a bug in GHC 7.0.x and 7.4.1 prevents
--- re-exporting this data family.  (Strangely, this bug seems to be
--- present in 7.0 and 7.4 but not 7.2.) To bring CairoOptions into
--- scope when using GHC 7.0.x or 7.4 you must import
--- "Diagrams.Backend.Cairo.Internal".
+
 
 -- | Render a diagram using the cairo backend, writing to the given
 --   output file and using the requested size.  The output type (PNG,
