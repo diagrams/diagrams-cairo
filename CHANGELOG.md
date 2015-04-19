@@ -1,6 +1,9 @@
 # Change Log
 
-## [v1.3]()(2015-04-09)
+## [v1.3](https://github.com/diagrams/diagrams-cairo/tree/v1.3)(2015-04-19)
+
+- allow `lens-4.9`
+- update for `diagrams-1.3`
 
 ## [v1.2.0.7](https://github.com/diagrams/diagrams-cairo/tree/v1.2.0.7) (2015-04-04)
 
