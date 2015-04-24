@@ -163,7 +163,8 @@ instance Backend Cairo V2 Double where
 
   adjustDia c opts d = if _cairoBypassAdjust opts
                          then (opts, mempty, d # setDefault2DAttributes)
-                         else adjustDia2D cairoSizeSpec c opts (d # reflectY)
+                         else let (opts', transformation, d') = adjustDia2D cairoSizeSpec c opts (d # reflectY)
+                              in (opts', transformation <> reflectionY, d')
 
 runC :: Render Cairo V2 Double -> RenderM ()
 runC (C r) = r
