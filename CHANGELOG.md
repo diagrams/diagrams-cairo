@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.3.0.1](https://github.com/diagrams/diagrams-cairo/tree/v1.3)(2015-04-25)
+
+**Fixed bug:**
+
+- Reflection should be included in transformation returned by adjustDia [\#63](https://github.com/diagrams/diagrams-cairo/issues/63)
+
 ## [v1.3](https://github.com/diagrams/diagrams-cairo/tree/v1.3)(2015-04-19)
 
 - allow `lens-4.9`
