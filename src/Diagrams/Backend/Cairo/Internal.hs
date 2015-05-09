@@ -44,6 +44,7 @@ import           Diagrams.Core.Transform
 import           Diagrams.Prelude                hiding (font, opacity, view)
 import           Diagrams.TwoD.Adjust            (adjustDia2D,
                                                   setDefault2DAttributes)
+import           Diagrams.TwoD.Image
 import           Diagrams.TwoD.Path              (Clip (Clip), getFillRule)
 import           Diagrams.TwoD.Text              hiding (font)
 
@@ -365,9 +366,9 @@ setTexture (Just (RG g)) = liftC $
     (x0, y0, x1, y1) = (x0' * (r1 - r0) / r1, y0' * (r1 - r0) / r1, x1' ,y1')
 
 -- Can only do PNG files at the moment...
-instance Renderable (DImage Double External) Cairo where
+instance Renderable (DImage b Double External) Cairo where
   render _ (DImage path w h tr) = C . liftC $ do
-    let ImageRef file = path
+    let ImageRef (FP file) = path
     if ".png" `isSuffixOf` file
       then do
         C.save
