@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
 {-# LANGUAGE ViewPatterns              #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -51,6 +52,10 @@ import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 import qualified Graphics.Rendering.Pango        as P
 
+import           Codec.Picture
+import           Codec.Picture.Types             (convertImage, promoteImage)
+
+
 import           Control.Exception               (try)
 import           Control.Monad                   (when)
 import           Control.Monad.IO.Class
@@ -62,6 +67,7 @@ import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
+import           Data.Word                       (Word32)
 import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
@@ -392,6 +398,52 @@ instance Renderable (DImage Double External) Cairo where
           [ "Warning: Cairo backend can currently only render embedded"
           , "  images in .png format.  Ignoring <" ++ file ++ ">."
           ]
+
+-- Copied from Rasterific backend. This function should probably be in JuicyPixels!
+toImageRGBA8 :: DynamicImage -> Image PixelRGBA8
+toImageRGBA8 (ImageRGBA8 i)  = i
+toImageRGBA8 (ImageRGB8 i)   = promoteImage i
+toImageRGBA8 (ImageYCbCr8 i) = promoteImage (convertImage i :: Image PixelRGB8)
+toImageRGBA8 (ImageY8 i)     = promoteImage i
+toImageRGBA8 (ImageYA8 i)    = promoteImage i
+toImageRGBA8 (ImageCMYK8 i)  = promoteImage (convertImage i :: Image PixelRGB8)
+toImageRGBA8 _               = error "Unsupported Pixel type"
+
+instance Renderable (DImage Double Embedded) Cairo where
+  -- render _ (DImage path w h tr) =
+  render _ (DImage iD w h tr) = C . liftC $ do
+     C.save
+     cairoTransf (tr <> reflectionY)
+     
+     let fmt = C.FormatARGB32
+     dataSurf <- liftIO $ C.createImageSurface fmt w h
+     surData :: C.SurfaceData Int Word32
+             <- liftIO $ C.imageSurfaceGetPixels dataSurf
+     stride <- C.imageSurfaceGetStride dataSurf
+     error "`instance Renderable (DImage R Embedded) Cairo` can't render pixels yet!"
+     
+     w' <- C.imageSurfaceGetWidth dataSurf
+     h' <- C.imageSurfaceGetHeight dataSurf
+     let sz = fromIntegral <$> dims2D w h
+     cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
+     C.setSourceSurface dataSurf (-fromIntegral w' / 2)
+                                 (-fromIntegral h' / 2)
+     
+     C.paint
+     C.restore
+    where
+      ImageRaster dImg = iD
+      img = toImageRGBA8 dImg
+--   render _ (DImage iD w h tr) = R $ liftR
+--                                (R.withTransformation
+--                                (rasterificMatTransf (tr <> reflectionY))
+--                                (R.drawImage img 0 p))
+--     where
+--       ImageRaster dImg = iD
+--       img = toImageRGBA8 dImg
+--       trl = moveOriginBy (r2 (fromIntegral w / 2, fromIntegral h / 2 :: n)) mempty
+--       p   = rasterificPtTransf trl (R.V2 0 0)
+
 
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
