@@ -53,7 +53,7 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import qualified Graphics.Rendering.Pango        as P
 
 import           Codec.Picture
-import           Codec.Picture.Types             (convertImage, promoteImage)
+import           Codec.Picture.Types             (convertImage, promoteImage, packPixel)
 
 
 import           Control.Exception               (try)
@@ -67,7 +67,9 @@ import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
-import           Data.Word                       (Word32)
+import qualified Data.Vector.Storable            as VS
+import qualified Data.Array.MArray               as MA
+import           Data.Word                       (Word8)
 import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
@@ -411,16 +413,27 @@ toImageRGBA8 _               = error "Unsupported Pixel type"
 
 instance Renderable (DImage Double Embedded) Cairo where
   -- render _ (DImage path w h tr) =
-  render _ (DImage iD w h tr) = C . liftC $ do
+  render _ (DImage iD _w _h tr) = C . liftC $ do
      C.save
      cairoTransf (tr <> reflectionY)
      
      let fmt = C.FormatARGB32
      dataSurf <- liftIO $ C.createImageSurface fmt w h
-     surData :: C.SurfaceData Int Word32
+     
+     surData :: C.SurfaceData Int Word8 -- Array of /pixel channels/. Cairo recommends
+                                        -- Word32, for array of pixels.
              <- liftIO $ C.imageSurfaceGetPixels dataSurf
+     
      stride <- C.imageSurfaceGetStride dataSurf
-     error "`instance Renderable (DImage R Embedded) Cairo` can't render pixels yet!"
+     
+     -- This is scarcely the most efficient way of copying the pixel data:
+     -- looping over /bytes/ to be copied incurs a lot of overhead.
+     viforM_ imgDat $ \i px -> do
+        let (y,x) = i`divMod`(w*4)  -- width times number of channels.
+        let p = y * stride + x
+        liftIO $ MA.writeArray surData p px
+     
+     C.surfaceMarkDirty dataSurf
      
      w' <- C.imageSurfaceGetWidth dataSurf
      h' <- C.imageSurfaceGetHeight dataSurf
@@ -433,7 +446,8 @@ instance Renderable (DImage Double Embedded) Cairo where
      C.restore
     where
       ImageRaster dImg = iD
-      img = toImageRGBA8 dImg
+      (Image w h imgDat) = toImageRGBA8 dImg
+      
 --   render _ (DImage iD w h tr) = R $ liftR
 --                                (R.withTransformation
 --                                (rasterificMatTransf (tr <> reflectionY))
@@ -443,6 +457,10 @@ instance Renderable (DImage Double Embedded) Cairo where
 --       img = toImageRGBA8 dImg
 --       trl = moveOriginBy (r2 (fromIntegral w / 2, fromIntegral h / 2 :: n)) mempty
 --       p   = rasterificPtTransf trl (R.V2 0 0)
+
+viforM_ :: (VS.Storable a, Monad m)
+             => VS.Vector a -> (Int -> a -> m ()) -> m ()
+viforM_ v f = VS.ifoldl' (\m i v -> m >> f i v) (pure()) v
 
 
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
