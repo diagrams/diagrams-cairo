@@ -397,43 +397,51 @@ if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
 
 instance Renderable (Text Double) Cairo where
-  render _ (Text tt al str) = C $ do
-    let tr = tt <> reflectionY
-    ff <- getStyleAttrib getFont
-    fs <- getStyleAttrib (fromFontSlant . getFontSlant)
-    fw <- getStyleAttrib (fromFontWeight . getFontWeight)
-    size' <- getStyleAttrib getFontSize
-    f <- getStyleAttrib getFillTexture
+  render _ txt = C $ do
     save
-    setTexture f
-    layout <- liftC $ do
-        cairoTransf tr
-        P.createLayout str
-    ref <- liftC. liftIO $ do
-            font <- P.fontDescriptionNew
-            if' (P.fontDescriptionSetFamily font) ff
-            if' (P.fontDescriptionSetStyle font) fs
-            if' (P.fontDescriptionSetWeight font) fw
-            if' (P.fontDescriptionSetSize font) size'
-            P.layoutSetFontDescription layout $ Just font
-            -- XXX should use reflection font matrix here instead?
-            case al of
-                BoxAlignedText xt yt -> do
-                    (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
-                    return $ r2 (w * xt, h * (1 - yt))
-                BaselineText -> do
-                    baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
-                    return $ r2 (0, baseline)
+    setTexture =<< getStyleAttrib getFillTexture
+    sty <- use accumStyle
+    layout <- liftC $ layoutStyledText sty txt
     -- Uncomment the lines below to draw a rectangle at the extent of each Text
     -- let (w, h) = unr2 $ ref ^* 2   -- XXX Debugging
     -- cairoPath $ rect w h           -- XXX Debugging
     liftC $ do
-          -- C.setLineWidth 0.5 -- XXX Debugging
-          -- C.stroke -- XXX Debugging
-          -- C.newPath -- XXX Debugging
-          let t = moveOriginBy ref mempty :: T2 Double
-          cairoTransf t
-          P.updateLayout layout
-          P.showLayout layout
-          C.newPath
+      -- C.setLineWidth 0.5 -- XXX Debugging
+      -- C.stroke -- XXX Debugging
+      -- C.newPath -- XXX Debugging
+      P.showLayout layout
+      C.newPath
     restore
+
+layoutStyledText :: Style V2 Double -> Text Double -> C.Render P.PangoLayout
+layoutStyledText sty (Text tt al str) =
+  let tr = tt <> reflectionY
+      styAttr :: AttributeClass a => (a -> b) -> Maybe b
+      styAttr f = fmap f $ getAttr sty
+      ff = styAttr getFont
+      fs = styAttr fromFontSlant
+      fw = styAttr fromFontWeight
+      size' = styAttr getFontSize
+  in do
+    cairoTransf tr -- non-uniform scale
+    layout <- P.createLayout str
+    -- set font, including size
+    liftIO $ do
+      font <- P.fontDescriptionNew
+      if' (P.fontDescriptionSetFamily font) ff
+      if' (P.fontDescriptionSetStyle font) fs
+      if' (P.fontDescriptionSetWeight font) fw
+      if' (P.fontDescriptionSetSize font) size'
+      P.layoutSetFontDescription layout $ Just font
+    -- geometric translation
+    ref <- liftIO $ case al of
+      BoxAlignedText xt yt -> do
+        (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
+        return $ r2 (w * xt, h * (1 - yt))
+      BaselineText -> do
+        baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
+        return $ r2 (0, baseline)
+    let t = moveOriginBy ref mempty :: T2 Double
+    cairoTransf t
+    P.updateLayout layout
+    return layout
