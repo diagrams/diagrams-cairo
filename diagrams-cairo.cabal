@@ -51,6 +51,7 @@ Library
                        Diagrams.Backend.Cairo.Internal
                        Diagrams.Backend.Cairo.List
                        Diagrams.Backend.Cairo.Ptr
+                       Diagrams.Backend.Cairo.Text
   Hs-source-dirs:      src
   Build-depends:       base >= 4.2 && < 4.9,
                        mtl >= 2.0 && < 2.3,
