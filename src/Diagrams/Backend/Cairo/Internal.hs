@@ -69,7 +69,8 @@ import           Data.Tree
 import           Data.Typeable
 import qualified Data.Vector.Storable            as VS
 import qualified Data.Array.MArray               as MA
-import           Data.Word                       (Word8)
+import           Data.Word                       (Word32)
+import           Data.Bits                       (rotateL, (.&.))
 import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
@@ -420,18 +421,15 @@ instance Renderable (DImage Double Embedded) Cairo where
      let fmt = C.FormatARGB32
      dataSurf <- liftIO $ C.createImageSurface fmt w h
      
-     surData :: C.SurfaceData Int Word8 -- Array of /pixel channels/. Cairo recommends
-                                        -- Word32, for array of pixels.
+     surData :: C.SurfaceData Int Word32
              <- liftIO $ C.imageSurfaceGetPixels dataSurf
      
      stride <- C.imageSurfaceGetStride dataSurf
      
-     -- This is scarcely the most efficient way of copying the pixel data:
-     -- looping over /bytes/ to be copied incurs a lot of overhead.
-     viforM_ imgDat $ \i px -> do
-        let (y,x) = i`divMod`(w*4)  -- width times number of channels.
-        let p = y * stride + x
-        liftIO $ MA.writeArray surData p px
+     _ <- forMOf imageIPixels img $ \(x, y, px) -> do
+        let p = y * (stride`div`4) + x
+        liftIO . MA.writeArray surData p $ toARGB px
+        return px
      
      C.surfaceMarkDirty dataSurf
      
@@ -446,22 +444,18 @@ instance Renderable (DImage Double Embedded) Cairo where
      C.restore
     where
       ImageRaster dImg = iD
-      (Image w h imgDat) = toImageRGBA8 dImg
+      img@(Image w h _) = toImageRGBA8 dImg
       
---   render _ (DImage iD w h tr) = R $ liftR
---                                (R.withTransformation
---                                (rasterificMatTransf (tr <> reflectionY))
---                                (R.drawImage img 0 p))
---     where
---       ImageRaster dImg = iD
---       img = toImageRGBA8 dImg
---       trl = moveOriginBy (r2 (fromIntegral w / 2, fromIntegral h / 2 :: n)) mempty
---       p   = rasterificPtTransf trl (R.V2 0 0)
 
-viforM_ :: (VS.Storable a, Monad m)
-             => VS.Vector a -> (Int -> a -> m ()) -> m ()
-viforM_ v f = VS.ifoldl' (\m i v -> m >> f i v) (pure()) v
-
+{-# INLINE toARGB #-}
+-- Actually the name should be toBGRA, since that's the component order used by Cairo.
+-- Really, what's happening here is just a swap of the R and B channels.
+-- It seems a lot like this is dependent on endianness; perhaps we should handle this...
+toARGB :: PixelRGBA8 -> Word32
+toARGB px = ga + rotateL rb 16
+ where rgba = packPixel px
+       rb = rgba .&. 0x00FF00FF
+       ga = rgba .&. 0xFF00FF00
 
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
