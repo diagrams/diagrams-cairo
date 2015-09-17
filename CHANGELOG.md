@@ -1,3 +1,9 @@
+## [v1.3.0.4](https://github.com/diagrams/diagrams-cairo/tree/v1.3.0.4) (2015-09-17)
+
+  - Allow `lens-4.13`
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.3.0.3...v1.3.0.4)
+
 ## [v1.3.0.3](https://github.com/diagrams/diagrams-cairo/tree/v1.3.0.3) (2015-07-19)
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.3.0.2...v1.3.0.3)
