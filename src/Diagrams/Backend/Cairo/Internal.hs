@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
 {-# LANGUAGE ViewPatterns              #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -51,6 +52,10 @@ import qualified Graphics.Rendering.Cairo        as C
 import qualified Graphics.Rendering.Cairo.Matrix as CM
 import qualified Graphics.Rendering.Pango        as P
 
+import           Codec.Picture
+import           Codec.Picture.Types             (convertImage, promoteImage, packPixel)
+
+
 import           Control.Exception               (try)
 import           Control.Monad                   (when)
 import           Control.Monad.IO.Class
@@ -62,6 +67,9 @@ import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
+import qualified Data.Array.MArray               as MA
+import           Data.Word                       (Word32)
+import           Data.Bits                       (rotateL, (.&.))
 import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
@@ -393,47 +401,110 @@ instance Renderable (DImage Double External) Cairo where
           , "  images in .png format.  Ignoring <" ++ file ++ ">."
           ]
 
+-- Copied from Rasterific backend. This function should probably be in JuicyPixels!
+toImageRGBA8 :: DynamicImage -> Image PixelRGBA8
+toImageRGBA8 (ImageRGBA8 i)  = i
+toImageRGBA8 (ImageRGB8 i)   = promoteImage i
+toImageRGBA8 (ImageYCbCr8 i) = promoteImage (convertImage i :: Image PixelRGB8)
+toImageRGBA8 (ImageY8 i)     = promoteImage i
+toImageRGBA8 (ImageYA8 i)    = promoteImage i
+toImageRGBA8 (ImageCMYK8 i)  = promoteImage (convertImage i :: Image PixelRGB8)
+toImageRGBA8 _               = error "Unsupported Pixel type"
+
+instance Renderable (DImage Double Embedded) Cairo where
+  -- render _ (DImage path w h tr) =
+  render _ (DImage iD _w _h tr) = C . liftC $ do
+     C.save
+     cairoTransf (tr <> reflectionY)
+     
+     let fmt = C.FormatARGB32
+     dataSurf <- liftIO $ C.createImageSurface fmt w h
+     
+     surData :: C.SurfaceData Int Word32
+             <- liftIO $ C.imageSurfaceGetPixels dataSurf
+     
+     stride <- C.imageSurfaceGetStride dataSurf
+     
+     _ <- forMOf imageIPixels img $ \(x, y, px) -> do
+        let p = y * (stride`div`4) + x
+        liftIO . MA.writeArray surData p $ toARGB px
+        return px
+     
+     C.surfaceMarkDirty dataSurf
+     
+     w' <- C.imageSurfaceGetWidth dataSurf
+     h' <- C.imageSurfaceGetHeight dataSurf
+     let sz = fromIntegral <$> dims2D w h
+     cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
+     C.setSourceSurface dataSurf (-fromIntegral w' / 2)
+                                 (-fromIntegral h' / 2)
+     
+     C.paint
+     C.restore
+    where
+      ImageRaster dImg = iD
+      img@(Image w h _) = toImageRGBA8 dImg
+      
+
+{-# INLINE toARGB #-}
+-- Actually the name should be toBGRA, since that's the component order used by Cairo.
+-- Really, what's happening here is just a swap of the R and B channels.
+-- It seems a lot like this is dependent on endianness; perhaps we should handle this...
+toARGB :: PixelRGBA8 -> Word32
+toARGB px = ga + rotateL rb 16
+ where rgba = packPixel px
+       rb = rgba .&. 0x00FF00FF
+       ga = rgba .&. 0xFF00FF00
+
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = maybe (return ())
 
 instance Renderable (Text Double) Cairo where
-  render _ (Text tt al str) = C $ do
-    let tr = tt <> reflectionY
-    ff <- getStyleAttrib getFont
-    fs <- getStyleAttrib (fromFontSlant . getFontSlant)
-    fw <- getStyleAttrib (fromFontWeight . getFontWeight)
-    size' <- getStyleAttrib getFontSize
-    f <- getStyleAttrib getFillTexture
+  render _ txt = C $ do
     save
-    setTexture f
-    layout <- liftC $ do
-        cairoTransf tr
-        P.createLayout str
-    ref <- liftC. liftIO $ do
-            font <- P.fontDescriptionNew
-            if' (P.fontDescriptionSetFamily font) ff
-            if' (P.fontDescriptionSetStyle font) fs
-            if' (P.fontDescriptionSetWeight font) fw
-            if' (P.fontDescriptionSetSize font) size'
-            P.layoutSetFontDescription layout $ Just font
-            -- XXX should use reflection font matrix here instead?
-            case al of
-                BoxAlignedText xt yt -> do
-                    (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
-                    return $ r2 (w * xt, h * (1 - yt))
-                BaselineText -> do
-                    baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
-                    return $ r2 (0, baseline)
+    setTexture =<< getStyleAttrib getFillTexture
+    sty <- use accumStyle
+    layout <- liftC $ layoutStyledText sty txt
     -- Uncomment the lines below to draw a rectangle at the extent of each Text
     -- let (w, h) = unr2 $ ref ^* 2   -- XXX Debugging
     -- cairoPath $ rect w h           -- XXX Debugging
     liftC $ do
-          -- C.setLineWidth 0.5 -- XXX Debugging
-          -- C.stroke -- XXX Debugging
-          -- C.newPath -- XXX Debugging
-          let t = moveOriginBy ref mempty :: T2 Double
-          cairoTransf t
-          P.updateLayout layout
-          P.showLayout layout
-          C.newPath
+      -- C.setLineWidth 0.5 -- XXX Debugging
+      -- C.stroke -- XXX Debugging
+      -- C.newPath -- XXX Debugging
+      P.showLayout layout
+      C.newPath
     restore
+
+layoutStyledText :: Style V2 Double -> Text Double -> C.Render P.PangoLayout
+layoutStyledText sty (Text tt al str) =
+  let tr = tt <> reflectionY
+      styAttr :: AttributeClass a => (a -> b) -> Maybe b
+      styAttr f = fmap f $ getAttr sty
+      ff = styAttr getFont
+      fs = styAttr fromFontSlant
+      fw = styAttr fromFontWeight
+      size' = styAttr getFontSize
+  in do
+    cairoTransf tr -- non-uniform scale
+    layout <- P.createLayout str
+    -- set font, including size
+    liftIO $ do
+      font <- P.fontDescriptionNew
+      if' (P.fontDescriptionSetFamily font) ff
+      if' (P.fontDescriptionSetStyle font) fs
+      if' (P.fontDescriptionSetWeight font) fw
+      if' (P.fontDescriptionSetSize font) size'
+      P.layoutSetFontDescription layout $ Just font
+    -- geometric translation
+    ref <- liftIO $ case al of
+      BoxAlignedText xt yt -> do
+        (_,P.PangoRectangle _ _ w h) <- P.layoutGetExtents layout
+        return $ r2 (w * xt, h * (1 - yt))
+      BaselineText -> do
+        baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
+        return $ r2 (0, baseline)
+    let t = moveOriginBy ref mempty :: T2 Double
+    cairoTransf t
+    P.updateLayout layout
+    return layout
