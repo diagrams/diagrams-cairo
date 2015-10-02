@@ -67,7 +67,6 @@ import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
-import qualified Data.Vector.Storable            as VS
 import qualified Data.Array.MArray               as MA
 import           Data.Word                       (Word32)
 import           Data.Bits                       (rotateL, (.&.))
