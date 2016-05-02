@@ -1,3 +1,9 @@
+## [v1.3.0.6](https://github.com/diagrams/diagrams-cairo/tree/v1.3.0.6) (2016-05-01)
+
+- allow `lens-4.14`
+
+[Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.3.0.5...v1.3.0.6)
+
 ## [v1.3.0.5](https://github.com/diagrams/diagrams-cairo/tree/v1.3.0.5) (2015-09-29)
 
   - Allow `optparse-applicative-0.12`
