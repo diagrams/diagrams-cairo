@@ -63,7 +63,7 @@ Library
                        colour,
                        split >= 0.1.2 && < 0.3,
                        containers >= 0.3 && < 0.6,
-                       lens >= 3.8 && < 4.14,
+                       lens >= 3.8 && < 4.15,
                        data-default-class >= 0.0.1 && < 0.1,
                        statestack >= 0.2 && < 0.3,
                        JuicyPixels >= 3.1.3.2 && < 3.3,
