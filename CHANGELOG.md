@@ -1,6 +1,19 @@
+## [v1.3.1](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1) (2016-06-16)
+
+- Bump upper bounds to allow:
+    - `base-4.9`
+    - `data-default-class-0.1`
+    - `transformers-0.5.x`
+
+- New module `Diagrams.Backend.Cairo.Text` with better text support
+  (based on `pango`)
+
 ## [v1.3.0.6](https://github.com/diagrams/diagrams-cairo/tree/v1.3.0.6) (2016-05-01)
 
 - allow `lens-4.14`
+- New module `Diagrams.Backend.Cairo.Text` (should have been minor
+  version bump; if you want to depend on this module please use
+  `diagrams-cairo-1.3.1` or later).
 
 [Full Changelog](https://github.com/diagrams/diagrams-cairo/compare/v1.3.0.5...v1.3.0.6)
 
