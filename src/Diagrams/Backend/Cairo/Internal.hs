@@ -256,6 +256,7 @@ fromFontSlant FontSlantOblique  = P.StyleOblique
 fromFontWeight :: FontWeight -> P.Weight
 fromFontWeight FontWeightNormal = P.WeightNormal
 fromFontWeight FontWeightBold   = P.WeightBold
+fromFontWeight _                = P.WeightNormal
 
 -- | Multiply the current transformation matrix by the given 2D
 --   transformation.
