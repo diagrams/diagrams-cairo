@@ -1,3 +1,7 @@
+## [v1.3.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.1) (2016-08-16)
+
+- Allow `optparse-applicative-0.13`
+
 ## [v1.3.1](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1) (2016-06-16)
 
 - Bump upper bounds to allow:
