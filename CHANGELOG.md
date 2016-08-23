@@ -1,3 +1,7 @@
+## [v1.3.1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.2) (2016-08-22)
+
+- Require `optparse-applicative-0.13` and fix compilation error
+
 ## [v1.3.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.1) (2016-08-16)
 
 - Allow `optparse-applicative-0.13`
