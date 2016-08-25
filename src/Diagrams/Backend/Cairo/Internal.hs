@@ -255,7 +255,6 @@ fromFontSlant FontSlantItalic   = P.StyleItalic
 fromFontSlant FontSlantOblique  = P.StyleOblique
 
 fromFontWeight :: FontWeight -> P.Weight
-fromFontWeight FontWeightNormal = P.WeightNormal
 fromFontWeight FontWeightBold   = P.WeightBold
 fromFontWeight _                = P.WeightNormal
 
