@@ -5,11 +5,11 @@
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
 {-# LANGUAGE ViewPatterns              #-}
-{-# LANGUAGE ScopedTypeVariables       #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -53,7 +53,8 @@ import qualified Graphics.Rendering.Cairo.Matrix as CM
 import qualified Graphics.Rendering.Pango        as P
 
 import           Codec.Picture
-import           Codec.Picture.Types             (convertImage, promoteImage, packPixel)
+import           Codec.Picture.Types             (convertImage, packPixel,
+                                                  promoteImage)
 
 
 import           Control.Exception               (try)
@@ -61,15 +62,15 @@ import           Control.Monad                   (when)
 import           Control.Monad.IO.Class
 import qualified Control.Monad.StateStack        as SS
 import           Control.Monad.Trans             (lift)
+import qualified Data.Array.MArray               as MA
+import           Data.Bits                       (rotateL, (.&.))
 import qualified Data.Foldable                   as F
 import           Data.Hashable                   (Hashable (..))
 import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (catMaybes, fromMaybe, isJust)
 import           Data.Tree
 import           Data.Typeable
-import qualified Data.Array.MArray               as MA
 import           Data.Word                       (Word32)
-import           Data.Bits                       (rotateL, (.&.))
 import           GHC.Generics                    (Generic)
 
 -- | This data declaration is simply used as a token to distinguish
