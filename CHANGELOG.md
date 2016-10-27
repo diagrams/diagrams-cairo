@@ -1,3 +1,7 @@
+## [v1.4](https://github.com/diagrams/diagrams-cairo/tree/v1.4) (XXX)
+
+- No significant changes, just bumping version for diagrams 1.4 release
+
 ## [v1.3.1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.2) (2016-08-22)
 
 - Require `optparse-applicative-0.13` and fix compilation error
