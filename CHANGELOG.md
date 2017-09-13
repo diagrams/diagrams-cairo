@@ -3,7 +3,8 @@
 - No significant changes, just bumping version for diagrams 1.4
   release
 
-- Allow `vector-0.12` (Hackage revision 2)
+- Allow `vector-0.12` (Hackage revision 1)
+- Allow `base-4.10` and `optparse-applicative-0.14` (Hackage rev 2)
 
 ## [v1.3.1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.2) (2016-08-22)
 
