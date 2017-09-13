@@ -1,6 +1,9 @@
 ## [v1.4](https://github.com/diagrams/diagrams-cairo/tree/v1.4) (2016-10-26)
 
-- No significant changes, just bumping version for diagrams 1.4 release
+- No significant changes, just bumping version for diagrams 1.4
+  release
+
+- Allow `vector-0.12` (Hackage revision 2)
 
 ## [v1.3.1.2](https://github.com/diagrams/diagrams-cairo/tree/v1.3.1.2) (2016-08-22)
 
