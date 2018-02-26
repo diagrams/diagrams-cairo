@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                       #-}
 {-# LANGUAGE DeriveDataTypeable        #-}
 {-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -178,9 +179,14 @@ instance Backend Cairo V2 Double where
 runC :: Render Cairo V2 Double -> RenderM ()
 runC (C r) = r
 
+instance Semigroup (Render Cairo V2 Double) where
+  C rd1 <> C rd2 = C (rd1 >> rd2)
+
 instance Monoid (Render Cairo V2 Double) where
   mempty  = C $ return ()
-  (C rd1) `mappend` (C rd2) = C (rd1 >> rd2)
+#if !(MIN_VERSION_base(4,11,0))
+  mappend = (<>)
+#endif
 
 instance Hashable (Options Cairo V2 Double) where
   hashWithSalt s (CairoOptions fn sz out adj)
