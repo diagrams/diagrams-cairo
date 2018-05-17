@@ -14,7 +14,7 @@ env:
 
 matrix:
   allow_failures:
-    - env: GHCVER=7.10.3 CABALVER=1.22
+    - env: GHCVER=7.10.3 CABALVER=2.0
     - env: GHCVER=head CABALVER=head
 
 before_install:
