@@ -46,36 +46,31 @@ Source-repository head
   location: http://github.com/diagrams/diagrams-cairo.git
 
 Library
-  Exposed-modules:     Diagrams.Backend.Cairo
-                       Diagrams.Backend.Cairo.CmdLine
-                       Diagrams.Backend.Cairo.Internal
-                       Diagrams.Backend.Cairo.List
-                       Diagrams.Backend.Cairo.Ptr
-                       Diagrams.Backend.Cairo.Text
-  Hs-source-dirs:      src
-  Build-depends:       base >= 4.2 && < 4.13,
-                       mtl >= 2.0 && < 2.3,
+  exposed-modules:     Diagrams.Backend.Cairo
+  hs-source-dirs:      src
+  build-depends:       base,
+                       mtl,
                        filepath,
-                       diagrams-core >= 1.3 && < 1.5,
-                       diagrams-lib >= 1.3 && < 1.5,
-                       cairo >= 0.12.4 && < 0.14,
-                       pango >= 0.12.5  && < 0.14,
+                       diagrams,
+                       geometry,
+                       cairo,
+                       pango,
                        colour,
-                       split >= 0.1.2 && < 0.3,
-                       containers >= 0.3 && < 0.7,
-                       lens >= 3.8 && < 4.18,
-                       data-default-class >= 0.0.1 && < 0.2,
-                       statestack >= 0.2 && < 0.3,
-                       JuicyPixels >= 3.1.3.2 && < 3.4,
-                       vector >= 0.10.0 && < 0.13,
-                       array >= 0.4.0 && < 0.6,
-                       bytestring >= 0.9 && < 0.11,
-                       optparse-applicative >= 0.13 && < 0.15,
-                       transformers >= 0.3 && <0.6,
-                       hashable >= 1.1 && < 1.3
+                       split,
+                       containers,
+                       lens,
+                       data-default-class,
+                       JuicyPixels,
+                       vector,
+                       array,
+                       bytestring,
+                       optparse-applicative,
+                       transformers,
+                       hashable
 
   default-language:    Haskell2010
+  ghc-options: -Wall
 
   if !os(windows)
     cpp-options: -DCMDLINELOOP
-    Build-depends:     unix >= 2.4 && < 2.8
+    build-depends:     unix >= 2.4 && < 2.8
