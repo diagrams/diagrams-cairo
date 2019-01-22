@@ -23,9 +23,14 @@ cabal update && cabal install gtk2hs-buildtools diagrams-cairo
 A simple example that uses _diagrams-cairo_ to draw a blue circle:
 
 ```haskell
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE TypeFamilies              #-}
+
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo.CmdLine
 
+d :: Diagram B
 d = circle 1 # fc blue
 
 main = mainWith (pad 1.1 d)
