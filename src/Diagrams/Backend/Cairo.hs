@@ -1,9 +1,10 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE FlexibleInstances  #-}
-{-# LANGUAGE LambdaCase         #-}
-{-# LANGUAGE TypeFamilies       #-}
-{-# LANGUAGE ViewPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable  #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -15,11 +16,14 @@
 -----------------------------------------------------------------------------
 module Diagrams.Backend.Cairo where
 
+import           Control.Exception               (try)
 import           Control.Monad                   (when)
 import           Control.Monad.IO.Class
+import qualified Data.Array.MArray               as MA
 import           Data.Bits                       (rotateL, (.&.))
 import qualified Data.Foldable                   as F
 import           Data.Hashable                   (Hashable (..))
+import           Data.List                       (isSuffixOf)
 import           Data.Maybe                      (fromMaybe, isJust)
 import           Data.Typeable
 import           Data.Word                       (Word32)
@@ -100,9 +104,11 @@ toRender = foldDiaA renderPrim renderAnnot
 renderPrimitive
   :: T2 Double -> Attributes -> Prim V2 Double -> Maybe (C.Render ())
 renderPrimitive t2 attrs = \case
-  Path_ path -> Just $ renderPath t2 attrs path
-  Text_ t    -> Just $ renderText t2 attrs t
-  Prim _     -> Nothing
+  Path_ path              -> Just $ renderPath t2 attrs path
+  Text_ t                 -> Just $ renderText t2 attrs t
+  ExternalImage_ w h path -> Just $ renderExternal t2 w h path
+  EmbeddedImage_  i       -> Just $ renderEmbedded t2 i
+  Prim _                  -> Nothing
 
 renderAnnot :: Annotation V2 Double -> C.Render () -> C.Render ()
 renderAnnot a r
@@ -266,33 +272,32 @@ setTexture o (Just t) = case t of
 setTexture _ _ = return ()
 
 -- Can only do PNG files at the moment...
--- instance Renderable (DImage Double External) Cairo where
---   render _ (DImage path w h tr) = do
---     let ImageRef file = path
---     if ".png" `isSuffixOf` file
---       then do
---         C.save
---         cairoTransf (tr <> reflectionY)
---         pngSurfChk <- liftIO (try $ C.imageSurfaceCreateFromPNG file
---                               :: IO (Either IOError C.Surface))
---         case pngSurfChk of
---           Right pngSurf -> do
---             w' <- C.imageSurfaceGetWidth pngSurf
---             h' <- C.imageSurfaceGetHeight pngSurf
---             let sz = fromIntegral <$> dims2D w h
---             cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
---             C.setSourceSurface pngSurf (-fromIntegral w' / 2)
---                                        (-fromIntegral h' / 2)
---           Left _ ->
---             liftIO . putStrLn $
---               "Warning: can't read image file <" ++ file ++ ">"
---         C.paint
---         C.restore
---       else
---         liftIO . putStr . unlines $
---           [ "Warning: Cairo backend can currently only render embedded"
---           , "  images in .png format.  Ignoring <" ++ file ++ ">."
---           ]
+renderExternal :: T2 Double -> Int -> Int -> FilePath -> C.Render ()
+renderExternal tr w h file = do
+  if ".png" `isSuffixOf` file
+    then do
+      C.save
+      cairoTransf (tr <> reflectionY)
+      pngSurfChk <- liftIO (try $ C.imageSurfaceCreateFromPNG file
+                            :: IO (Either IOError C.Surface))
+      case pngSurfChk of
+        Right pngSurf -> do
+          w' <- C.imageSurfaceGetWidth pngSurf
+          h' <- C.imageSurfaceGetHeight pngSurf
+          let sz = fromIntegral <$> dims2D w h
+          cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
+          C.setSourceSurface pngSurf (-fromIntegral w' / 2)
+                                     (-fromIntegral h' / 2)
+        Left _ ->
+          liftIO . putStrLn $
+            "Warning: can't read image file <" ++ file ++ ">"
+      C.paint
+      C.restore
+    else
+      liftIO . putStr . unlines $
+        [ "Warning: Cairo backend can currently only render embedded"
+        , " images in .png format. Ignoring <" ++ file ++ ">."
+        ]
 
 -- Copied from Rasterific backend. This function should probably be in JuicyPixels!
 toImageRGBA8 :: DynamicImage -> Image PixelRGBA8
@@ -304,39 +309,36 @@ toImageRGBA8 (ImageYA8 i)    = promoteImage i
 toImageRGBA8 (ImageCMYK8 i)  = promoteImage (convertImage i :: Image PixelRGB8)
 toImageRGBA8 _               = error "Unsupported Pixel type"
 
--- instance Renderable (DImage Double Embedded) Cairo where
---   -- render _ (DImage path w h tr) =
---   render _ (DImage iD _w _h tr) = do
---      C.save
---      cairoTransf (tr <> reflectionY)
+renderEmbedded :: T2 Double -> DynamicImage -> C.Render ()
+renderEmbedded tr dImg = do
+  let img@(Image w h _) = toImageRGBA8 dImg
+  C.save
+  cairoTransf (tr <> reflectionY)
 
---      let fmt = C.FormatARGB32
---      dataSurf <- liftIO $ C.createImageSurface fmt w h
+  let fmt = C.FormatARGB32
+  dataSurf <- liftIO $ C.createImageSurface fmt w h
 
---      surData :: C.SurfaceData Int Word32
---              <- liftIO $ C.imageSurfaceGetPixels dataSurf
+  surData :: C.SurfaceData Int Word32
+          <- liftIO $ C.imageSurfaceGetPixels dataSurf
 
---      stride <- C.imageSurfaceGetStride dataSurf
+  stride <- C.imageSurfaceGetStride dataSurf
 
---      _ <- forMOf imageIPixels img $ \(x, y, px) -> do
---         let p = y * (stride`div`4) + x
---         liftIO . MA.writeArray surData p $ toARGB px
---         return px
+  _ <- forMOf imageIPixels img $ \(x, y, px) -> do
+     let p = y * (stride`div`4) + x
+     liftIO . MA.writeArray surData p $ toARGB px
+     return px
 
---      C.surfaceMarkDirty dataSurf
+  C.surfaceMarkDirty dataSurf
 
---      w' <- C.imageSurfaceGetWidth dataSurf
---      h' <- C.imageSurfaceGetHeight dataSurf
---      let sz = fromIntegral <$> dims2D w h
---      cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
---      C.setSourceSurface dataSurf (-fromIntegral w' / 2)
---                                  (-fromIntegral h' / 2)
+  w' <- C.imageSurfaceGetWidth dataSurf
+  h' <- C.imageSurfaceGetHeight dataSurf
+  let sz = fromIntegral <$> dims2D w h
+  cairoTransf $ requiredScaling sz (fromIntegral <$> V2 w' h')
+  C.setSourceSurface dataSurf (-fromIntegral w' / 2)
+                              (-fromIntegral h' / 2)
 
---      C.paint
---      C.restore
---     where
---       ImageRaster dImg = iD
---       img@(Image w h _) = toImageRGBA8 dImg
+  C.paint
+  C.restore
 
 {-# INLINE toARGB #-}
 -- Actually the name should be toBGRA, since that's the component order used by Cairo.
