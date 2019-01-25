@@ -29,19 +29,31 @@ import           Data.Typeable
 import           Data.Word                       (Word32)
 import           System.FilePath
 
-import qualified Graphics.Rendering.Cairo        as C
-import qualified Graphics.Rendering.Cairo.Matrix as CM
-import qualified Graphics.Rendering.Pango        as P
-
 import           Codec.Picture
 import           Codec.Picture.Types             (convertImage, packPixel,
                                                   promoteImage)
+import qualified Data.Vector.Storable            as SV
+import           Foreign.ForeignPtr              (newForeignPtr)
+import           Foreign.Marshal.Alloc           (finalizerFree)
+import           Foreign.Marshal.Array           (callocArray)
+import           Foreign.Ptr                     (Ptr, castPtr)
+import           Graphics.Rendering.Cairo        (Format (..),
+                                                  formatStrideForWidth,
+                                                  renderWith,
+                                                  withImageSurfaceForData)
+import qualified Graphics.Rendering.Cairo        as C
+import qualified Graphics.Rendering.Cairo.Matrix as CM
+import qualified Graphics.Rendering.Pango        as P
 
 import           Diagrams.Backend
 import           Diagrams.Backend.Compile
 import           Diagrams.Prelude                hiding (clip, opacity, output)
 import           Diagrams.TwoD.Text              hiding (Font, font)
 import           Diagrams.Types                  hiding (local)
+
+import           Data.Word                       (Word8)
+
+
 
 -- | This data declaration is simply used as a token to distinguish
 --   the cairo backend: (1) when calling functions where the type
@@ -400,3 +412,31 @@ layoutStyledText tt sty (Text al str) = do
   cairoTransf t
   P.updateLayout layout
   return layout
+
+-- Rendering -----------------------------------------------------------
+
+-- | Rasterise a 'C.Render' to a raw pointer.
+rasterPtr :: Int -> Int -> Format -> C.Render () -> IO (Ptr Word8)
+rasterPtr w h fmt r = do
+  let stride = formatStrideForWidth fmt w
+  b <- callocArray (stride * h)
+  withImageSurfaceForData b fmt w h stride (`renderWith` r)
+  pure (castPtr b)
+
+-- | Rasterise a 'C.Render' to a JuicyPixels image.
+rasterImage :: Int -> Int -> C.Render () -> IO (Image PixelRGBA8)
+rasterImage w h r = do
+  ptr  <- rasterPtr w h FormatARGB32 r
+  fptr <- newForeignPtr finalizerFree ptr
+  let vec = SV.unsafeFromForeignPtr0 fptr (w*h*4)
+  pure (Image w h vec)
+
+-- | Rasterise a 'C.Render' to a JuicyPixels image.
+rasterDia :: SizeSpec V2 Int -> Diagram V2 -> IO (Image PixelRGBA8)
+rasterDia sz = rasterDia' (def & sizeSpec .~ sz)
+
+-- | Rasterise a 'C.Render' to a JuicyPixels image.
+rasterDia' :: Options Cairo -> Diagram V2 -> IO (Image PixelRGBA8)
+rasterDia' opts d = do
+  let (V2 w h, _, r) = renderDiaT opts d
+  rasterImage (ceiling w) (ceiling h) r
