@@ -305,11 +305,10 @@ renderExternal tr w h file = do
             "Warning: can't read image file <" ++ file ++ ">"
       C.paint
       C.restore
-    else
-      liftIO . putStr . unlines $
-        [ "Warning: Cairo backend can currently only render embedded"
-        , " images in .png format. Ignoring <" ++ file ++ ">."
-        ]
+    else do
+      liftIO (readImage file) >>= \case
+        Left err   -> liftIO (putStrLn err)
+        Right dImg -> renderEmbedded tr dImg
 
 -- Copied from Rasterific backend. This function should probably be in JuicyPixels!
 toImageRGBA8 :: DynamicImage -> Image PixelRGBA8
