@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE ViewPatterns        #-}
@@ -28,6 +29,7 @@ import           Data.Maybe                      (fromMaybe, isJust)
 import           Data.Typeable
 import           Data.Word                       (Word32)
 import           System.FilePath
+import           System.IO.Unsafe                (unsafePerformIO)
 
 import           Codec.Picture
 import           Codec.Picture.Types             (convertImage, packPixel,
@@ -48,7 +50,7 @@ import qualified Graphics.Rendering.Pango        as P
 import           Diagrams.Backend
 import           Diagrams.Backend.Compile
 import           Diagrams.Prelude                hiding (clip, opacity, output)
-import           Diagrams.TwoD.Text              hiding (Font, font)
+import           Diagrams.TwoD.Text              hiding (Font)
 import           Diagrams.Types                  hiding (local)
 
 import           Data.Word                       (Word8)
@@ -361,6 +363,8 @@ toARGB px = ga + rotateL rb 16
        rb = rgba .&. 0x00FF00FF
        ga = rgba .&. 0xFF00FF00
 
+-- text ----------------------------------------------------------------
+
 if' :: Monad m => (a -> m ()) -> Maybe a -> m ()
 if' = mapM_
 
@@ -393,12 +397,12 @@ layoutStyledText tt sty (Text al str) = do
   layout <- P.createLayout str
   -- set font, including size
   liftIO $ do
-    font <- P.fontDescriptionNew
-    if' (P.fontDescriptionSetFamily font) ff
-    if' (P.fontDescriptionSetStyle font) fs
-    if' (P.fontDescriptionSetWeight font) fw
-    if' (P.fontDescriptionSetSize font) size'
-    P.layoutSetFontDescription layout $ Just font
+    fontD <- P.fontDescriptionNew
+    if' (P.fontDescriptionSetFamily fontD) ff
+    if' (P.fontDescriptionSetStyle fontD) fs
+    if' (P.fontDescriptionSetWeight fontD) fw
+    if' (P.fontDescriptionSetSize fontD) size'
+    P.layoutSetFontDescription layout $ Just fontD
   -- geometric translation
   ref <- liftIO $ case al of
     BoxAlignedText xt yt -> do
@@ -411,6 +415,85 @@ layoutStyledText tt sty (Text al str) = do
   cairoTransf t
   P.updateLayout layout
   return layout
+
+data PangoOptions = PangoOptions
+  { pangoFont   :: Maybe String
+  , pangoSlant  :: FontSlant
+  , pangoWeight :: FontWeight
+  , pangoSize   :: Double
+  }
+
+instance Default PangoOptions where
+  def = PangoOptions
+    { pangoFont      = Nothing
+    , pangoSlant     = FontSlantNormal
+    , pangoWeight    = FontWeightNormal
+    , pangoSize      = 12
+    }
+
+lay
+  :: PangoOptions
+  -> String
+  -> C.Render P.PangoLayout
+lay PangoOptions {..} str = do
+  layout <- P.createLayout str
+  -- set font, including size
+  C.liftIO $ do
+    fontD <- P.fontDescriptionNew
+    mapM_ (P.fontDescriptionSetFamily fontD) pangoFont
+    P.fontDescriptionSetStyle fontD (fromFontSlant pangoSlant)
+    P.fontDescriptionSetWeight fontD (fromFontWeight pangoWeight)
+    P.fontDescriptionSetSize fontD pangoSize
+    P.layoutSetFontDescription layout $ Just fontD
+
+  P.updateLayout layout
+  return layout
+
+queryCairo :: C.Render a -> IO a
+queryCairo c = C.withImageSurface C.FormatA1 0 0 (`C.renderWith` c)
+
+-- | Get the bounding box for some pango text
+fontBB :: PangoOptions -> String -> IO (BoundingBox V2 Double)
+fontBB opts str = do
+  layout <- queryCairo $ lay opts str
+  -- x0 and y0 correspond to the top left of the text from the cairo origin (top left)
+  P.PangoRectangle x0 y0 w h <- fst <$> P.layoutGetExtents layout
+  -- the distance from the cairo origin to the diagrams baseline text origin
+  baseline <- P.layoutIterGetBaseline =<< P.layoutGetIter layout
+  -- y0 + h gives the distance of the cairo origin to the bottom of the
+  -- text, subtracting this from the baseline gives the distance from
+  -- the baseline to the bottom of the text
+  let y = baseline - (y0 + h)
+  pure $ fromCorners (P2 x0 y) (P2 (x0 + w) (y + h))
+
+pangoTextIO
+  :: PangoOptions
+  -> String
+  -> IO (Diagram V2)
+pangoTextIO opts@(PangoOptions {..}) str = do
+  bb <- fontBB opts str
+  return $ mkQD (Prim (Text BaselineText str)) (getEnvelope bb) mempty mempty
+    # fontSizeL pangoSize
+    # fontWeight pangoWeight
+    # fontSlant pangoSlant
+    # maybe id font pangoFont
+
+-- | Use pango to get the envelope of some text.
+--   Font styles do not apply to this text because they would affect the
+--   size.
+pangoText'
+  :: PangoOptions
+  -> String
+  -> Diagram V2
+pangoText' opts str = unsafePerformIO (pangoTextIO opts str)
+
+-- | Use pango to get the envelope of some text with default options.
+--   Font styles do not apply to this text because they would affect the
+--   size.
+pangoText
+  :: String
+  -> Diagram V2
+pangoText = pangoText' def
 
 -- Rendering -----------------------------------------------------------
 
