@@ -514,11 +514,13 @@ rasterPtr w h fmt r = do
 
 -- | Rasterise a 'C.Render' to a JuicyPixels image.
 rasterImage :: Int -> Int -> C.Render () -> IO (Image PixelRGBA8)
-rasterImage w h r = do
-  ptr  <- rasterPtr w h FormatARGB32 r
+rasterImage w h render = do
+  ptr  <- rasterPtr w h FormatARGB32 render
   fptr <- newForeignPtr finalizerFree ptr
   let vec = SV.unsafeFromForeignPtr0 fptr (w*h*4)
-  pure (Image w h vec)
+  -- cairo uses bgr
+  let fromBGR (PixelRGBA8 b g r a) = PixelRGBA8 r g b a
+  pure $ pixelMap fromBGR (Image w h vec)
 
 -- | Rasterise a 'C.Render' to a JuicyPixels image.
 rasterDia :: SizeSpec V2 Int -> Diagram V2 -> IO (Image PixelRGBA8)
