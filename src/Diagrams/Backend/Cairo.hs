@@ -1,11 +1,12 @@
-{-# LANGUAGE DeriveDataTypeable  #-}
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE RecordWildCards     #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -103,6 +104,12 @@ instance BackendBuild Cairo where
   mkOptions sz = def & sizeSpec .~ sz
   sizeSpec     = cairoSizeSpec
   showOptions  = show
+
+instance RenderOutcome Cairo (Diagram V2) where
+  type MainOpts Cairo (Diagram V2) = (FilePath, Options Cairo)
+
+  resultParser _ _ = (,) <$> outputParser <*> (CairoOptions <$> sizeParser)
+  renderOutcome _ (path, opts) = saveDiagram' path opts
 
 ------------------------------------------------------------------------
 -- Rendering
