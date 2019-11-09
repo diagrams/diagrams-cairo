@@ -5,12 +5,13 @@ env:
     - GHCVER=7.10.3 CABALVER=2.0
     - GHCVER=8.0.2 CABALVER=1.24
     - GHCVER=8.2.2 CABALVER=2.0
-    - GHCVER=8.4.2 CABALVER=2.2
-    - GHCVER=8.6.1 CABALVER=2.4
+    - GHCVER=8.4.3 CABALVER=2.2
+    - GHCVER=8.6.5 CABALVER=2.4
+    - GHCVER=8.8.1 CABALVER=3.0
     - GHCVER=head CABALVER=head
   global:
     - UBUNTU_PKGS="libcairo2-dev libpango1.0-dev"
-    - HEAD_DEPS="diagrams-core diagrams-lib active diagrams-solve monoid-extras dual-tree statestack"
+    - HEAD_DEPS="diagrams-core diagrams-lib diagrams-solve monoid-extras dual-tree statestack"
     - EXTRA_DEPS_PRE="gtk2hs-buildtools Cabal"
 
 matrix:
