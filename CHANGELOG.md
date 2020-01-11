@@ -1,3 +1,8 @@
+## [v1.4.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1.1) (2019-01-11)
+
+- Drop GHC 7.10 and 8.0 support
+- Test with GHC 8.6 and 8.8
+
 ## [v1.4.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1) (2018-05-17)
 
 - Allow `base-4.11` and `lens-4.16`
