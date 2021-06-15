@@ -27,7 +27,7 @@ jobs:
       matrix:
         include:
           - ghc: 9.0.1
-            allow-failure: false
+            allow-failure: true
           - ghc: 8.10.4
             allow-failure: false
           - ghc: 8.8.4
