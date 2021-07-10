@@ -110,6 +110,14 @@ import           Foreign.ForeignPtr              (ForeignPtr)
 
 import           Data.List.Split
 
+-- | Extra options for animated GIFs.
+data GifOpts = GifOpts { _dither     :: Bool
+                       , _noLooping  :: Bool
+                       , _loopRepeat :: Maybe Int}
+
+makeLenses ''GifOpts
+
+
 -- $mainwith
 -- The 'mainWith' method unifies all of the other forms of @main@ and is now
 -- the recommended way to build a command-line diagrams program.  It works as a
@@ -294,13 +302,6 @@ instance Mainable (Animation Cairo V2 Double) where
 -- @
 gifMain :: [(QDiagram Cairo V2 Double Any, GifDelay)] -> IO ()
 gifMain = mainWith
-
--- | Extra options for animated GIFs.
-data GifOpts = GifOpts { _dither     :: Bool
-                       , _noLooping  :: Bool
-                       , _loopRepeat :: Maybe Int}
-
-makeLenses ''GifOpts
 
 -- | Command line parser for 'GifOpts'.
 --   @--dither@ turn dithering on.
