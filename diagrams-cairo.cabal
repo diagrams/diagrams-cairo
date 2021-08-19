@@ -30,7 +30,7 @@ Description:         A full-featured backend for rendering
                      .
                      * "Diagrams.Backend.Cairo.Ptr" - render diagrams
                        to buffers in memory.
-Homepage:            http://projects.haskell.org/diagrams
+Homepage:            https://diagrams.github.io
 License:             BSD3
 License-file:        LICENSE
 Author:              Brent Yorgey
