@@ -1,10 +1,18 @@
+## [v1.4.2](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2) (2022-01-26)
+
+- Test with GHC 9.0 (requires `--allow-newer`)
+- Allow `base-4.15`, `lens-5.1`, `bytestring-0.11`,
+  `transformers-0.6`, `hashable-1.4`
+- Add `Eq Options` instance required for `Hashable`
+
 ## [v1.4.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1.1) (2019-01-11)
 
 - Drop GHC 7.10 and 8.0 support
 - Test with GHC 8.6 and 8.8
 
 - r1: allow `lens-4.19` and `linear-1.21`
-- r2: allow `base-4.14`, `diagrams-core-1.5`, `lens-5.0`, `optparse-applicative-0.16`
+- r2: allow `base-4.14`, `diagrams-core-1.5`, `lens-5.0`,
+  `optparse-applicative-0.16`
 
 ## [v1.4.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1) (2018-05-17)
 
