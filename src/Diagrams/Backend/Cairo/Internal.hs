@@ -153,7 +153,7 @@ instance Backend Cairo V2 Double where
           , _cairoOutputType :: OutputType -- ^ the output format and associated options
           , _cairoBypassAdjust  :: Bool    -- ^ Should the 'adjustDia' step be bypassed during rendering?
           }
-    deriving (Show)
+    deriving (Show, Eq)
 
   renderRTree _ opts t = (renderIO, r)
     where
