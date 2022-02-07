@@ -5,6 +5,8 @@
   `transformers-0.6`, `hashable-1.4`
 - Add `Eq Options` instance required for `Hashable`
 
+- r1 (6 Feb 2022): allow `optparse-applicative-0.17`
+
 ## [v1.4.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1.1) (2019-01-11)
 
 - Drop GHC 7.10 and 8.0 support
