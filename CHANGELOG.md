@@ -6,6 +6,7 @@
 - Add `Eq Options` instance required for `Hashable`
 
 - r1 (6 Feb 2022): allow `optparse-applicative-0.17`
+- r2 (19 Aug 2022): allow `vector-0.13`
 
 ## [v1.4.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1.1) (2019-01-11)
 
