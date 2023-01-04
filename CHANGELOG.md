@@ -7,6 +7,7 @@
 
 - r1 (6 Feb 2022): allow `optparse-applicative-0.17`
 - r2 (19 Aug 2022): allow `vector-0.13`
+- r3 (4 Jan 2023): allow `lens-5.2`, test with GHC 9.2, drop official support for GHC < 8.8
 
 ## [v1.4.1.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.1.1) (2019-01-11)
 
