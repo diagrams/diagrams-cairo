@@ -1,3 +1,9 @@
+## [v1.4.2.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1) (2023-07-10)
+
+- Allow `base-4.18`, `mtl-2.3`, `optparse-applicative-0.18`,
+  `unix-2.8`
+- Test with GHC 9.4 and 9.6
+
 ## [v1.4.2](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2) (2022-01-26)
 
 - Test with GHC 9.0 (requires `--allow-newer`)
