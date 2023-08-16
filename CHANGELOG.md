@@ -1,3 +1,7 @@
+## [v1.4.2.1-r1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r1) (2023-08-16)
+
+- Allow `bytestring-0.12`
+
 ## [v1.4.2.1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1) (2023-07-10)
 
 - Allow `base-4.18`, `mtl-2.3`, `optparse-applicative-0.18`,
