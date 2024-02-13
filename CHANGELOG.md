@@ -1,3 +1,8 @@
+## [v1.4.2.1-r2](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r2) (2024-02-13)
+
+- Allow `base-4.19`
+- Test on GHC 9.8
+
 ## [v1.4.2.1-r1](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r1) (2023-08-16)
 
 - Allow `bytestring-0.12`
