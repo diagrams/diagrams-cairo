@@ -1,3 +1,8 @@
+## [v1.4.2.1-r3](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r3) (2024-08-13)
+
+- Allow `base-4.20`, `containers-0.7`, `lens-5.3`, `hashable-1.5`
+- Test on GHC 9.10
+
 ## [v1.4.2.1-r2](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r2) (2024-02-13)
 
 - Allow `base-4.19`
