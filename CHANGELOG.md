@@ -1,3 +1,7 @@
+## [v1.4.3](https://github.com/diagrams/diagrams-cairo/tree/v1.4.3) (2024-11-06)
+
+- Require `data-default-0.8`
+
 ## [v1.4.2.1-r3](https://github.com/diagrams/diagrams-cairo/tree/v1.4.2.1-r3) (2024-08-13)
 
 - Allow `base-4.20`, `containers-0.7`, `lens-5.3`, `hashable-1.5`
