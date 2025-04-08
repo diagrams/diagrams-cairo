@@ -193,9 +193,9 @@ defaultMain :: QDiagram Cairo V2 Double Any -> IO ()
 defaultMain = mainWith
 
 instance Mainable (QDiagram Cairo V2 Double Any) where
-    type MainOpts (QDiagram Cairo V2 Double Any) = (DiagramOpts, DiagramLoopOpts)
+    type MainOpts (QDiagram Cairo V2 Double Any) = DiagramOpts
 
-    mainRender (opts, l) d = chooseRender opts d >> defaultLoopRender l
+    mainRender opts d = chooseRender opts d
 
 chooseRender :: DiagramOpts -> QDiagram Cairo V2 Double Any -> IO ()
 chooseRender opts d =
@@ -270,9 +270,9 @@ animMain :: Animation Cairo V2 Double -> IO ()
 animMain = mainWith
 
 instance Mainable (Animation Cairo V2 Double) where
-    type MainOpts (Animation Cairo V2 Double) = ((DiagramOpts, DiagramAnimOpts), DiagramLoopOpts)
+    type MainOpts (Animation Cairo V2 Double) = (DiagramOpts, DiagramAnimOpts)
 
-    mainRender (opts, l) d =  defaultAnimMainRender chooseRender output opts d >> defaultLoopRender l
+    mainRender opts d =  defaultAnimMainRender chooseRender output opts d
 
 -- | @gifMain@ takes a list of diagram and delay time pairs and produces a
 --   command line program to generate an animated GIF, with options @GifOpts@.
