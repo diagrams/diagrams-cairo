@@ -1,3 +1,9 @@
+## [v1.5](https://github.com/diagrams/diagrams-cairo/tree/v1.5) (2025-06-16)
+
+- Allow `diagrams-lib-1.5` and remove `DiagramLoopOpts` which is no
+  longer supported
+- Allow `optparse-applicative-0.19`
+
 ## [v1.4.3](https://github.com/diagrams/diagrams-cairo/tree/v1.4.3) (2024-11-06)
 
 - Require `data-default-0.8`
