@@ -1,3 +1,7 @@
+## [v1.5-r1](https://github.com/diagrams/diagrams-cairo/tree/v1.5-r1) (2025-06-25)
+
+- Allow `base-4.21` and test on GHC 9.12
+
 ## [v1.5](https://github.com/diagrams/diagrams-cairo/tree/v1.5) (2025-06-16)
 
 - Allow `diagrams-lib-1.5` and remove `DiagramLoopOpts` which is no
