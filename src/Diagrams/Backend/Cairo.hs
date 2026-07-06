@@ -79,7 +79,7 @@ instance Backend Cairo where
   data Options Cairo = CairoOptions
           { _cairoSizeSpec   :: SizeSpec V2 Int -- ^ The requested size of the output
           }
-    deriving (Show)
+    deriving (Show, Eq)  -- Eq required as a Hashable superclass (hashable >= 1.5)
 
   backendInfo = const cairoInfo
   renderDiaT opts dia = (sz, t2, r) where
